@@ -19,3 +19,5 @@ tags
 
 # Stack
 .stack-work/
+
+.ipynb_checkpoints
