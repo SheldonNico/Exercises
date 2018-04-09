@@ -21,3 +21,4 @@ tags
 .stack-work/
 
 .ipynb_checkpoints
+__pycache__
