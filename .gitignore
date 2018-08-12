@@ -16,6 +16,8 @@ TAGS
 tags
 
 *.swp
+*.o
+*.out
 
 # Stack
 .stack-work/
