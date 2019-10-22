@@ -17,10 +17,14 @@ tags
 
 *.swp
 *.o
+*.a
 *.out
 
 # Stack
 .stack-work/
+
+# cargo
+target/
 
 .ipynb_checkpoints
 __pycache__
