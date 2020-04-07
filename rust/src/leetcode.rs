@@ -1872,14 +1872,46 @@ pub fn p059_generate_matrix(n: i32) -> Vec<Vec<i32>> {
     res
 }
 
+fn p056_merge_(intervals: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
+    let mut out = vec![];
+    for (mut st, mut et) in intervals.into_iter() {
+        let old = std::mem::replace(&mut out, vec![]);
+        for (ost, oet) in old.into_iter() {
+            if ost > et || oet < st {
+                out.push( (ost, oet) );
+            } else {
+                st = std::cmp::min(ost, st);
+                et = std::cmp::max(oet, et);
+            }
+        }
 
+        out.push( (st, et) );
+        //println!("{:?}", out);
+    }
 
+    out
+}
 
+pub fn p056_merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    let mut intervals_checked = vec![];
+    for interv in intervals.into_iter() {
+        assert!(interv.len() == 2, "format not right");
+        intervals_checked.push( (interv[0], interv[1]) );
+    }
 
+    let mut out = vec![];
+    for (st, et) in p056_merge_(intervals_checked).into_iter() {
+        out.push(vec![st, et]);
+    }
+    out
+}
 
-
-
-
+pub fn p057_insert(mut intervals: Vec<Vec<i32>>, new_interval: Vec<i32>) -> Vec<Vec<i32>> {
+    intervals.push(new_interval);
+    let mut out = p056_merge(intervals);
+    out.sort();
+    out
+}
 
 pub fn p060_get_permutation_(n: i32, k: i32) -> Vec<i32> {
     let mut permutations: Vec<i32> = (1..n+1).collect();

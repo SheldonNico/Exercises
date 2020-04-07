@@ -1,4 +1,7 @@
 use std::collections::HashMap;
+use crate::util::{ListNode};
+
+
 pub fn p055_can_jump(nums: Vec<i32>) -> bool {
     let mut hist = HashMap::new();
     let nums: Vec<usize> = nums.into_iter().filter(|n| *n >= 0).map(|n| n as usize).collect();
@@ -24,44 +27,74 @@ fn p055_can_jump_rec(start: usize, stop: usize, nums: &Vec<usize>, mut hist: &mu
     hist[&(start, stop)]
 }
 
-fn p056_merge_(intervals: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
-    let mut out = vec![];
-    for (mut st, mut et) in intervals.into_iter() {
-        let old = std::mem::replace(&mut out, vec![]);
-        for (ost, oet) in old.into_iter() {
-            if ost > et || oet < st {
-                out.push( (ost, oet) );
-            } else {
-                st = std::cmp::min(ost, st);
-                et = std::cmp::max(oet, et);
+
+pub fn p061_rotate_right(head: Option<Box<ListNode>>, mut k: i32) -> Option<Box<ListNode>> {
+    head
+
+
+/*
+ *    if k <= 0 {
+ *        head
+ *    } else {
+ *        match head {
+ *            Some( ListNode { val } )
+ *        }
+ *
+ *        let mut len = 0;
+ *        while rest.is_ok() {
+ *            rest = rest.get();
+ *            len += 1;
+ *        }
+ *
+ *        k = k % len;
+ *        let right = head;
+ *        let mut count = 0;
+ *        while count < len - k {
+ *            let rest = rest.get();
+ *            count += 1;
+ *        }
+ *
+ *        rest.next = None;
+ *
+ *
+ *
+ *
+ *
+ *    }
+ */
+}
+
+pub fn p1223_die_simulator(n: i32, roll_max: Vec<i32>) -> i32 {
+    fn mod_add(a: i32, b: i32) -> i32 {
+        let modnum: i32 = i32::pow(10, 9)+7;
+        (a + b) % modnum
+    }
+    if n <= 0 { return 0; }
+
+    let n = n as usize;
+    let mut ways: Vec<Vec<i32>> = vec![vec![0; 6]; n+1];
+    for a in 0..6 {
+        for len in 1..=std::cmp::min(n, roll_max[a] as usize) {
+            ways[len][a] += 1;
+        }
+    }
+
+    for len in 1..n {
+        for prv in 0..6 {
+            for nxt in 0..6 {
+                if prv == nxt { continue; }
+                for cnt in 1..=std::cmp::min(n, roll_max[nxt] as usize) {
+                    if cnt + len > n { break; }
+                    ways[len+cnt][nxt] = mod_add(ways[len+cnt][nxt], ways[len][prv]);
+                }
             }
         }
-
-        out.push( (st, et) );
-        //println!("{:?}", out);
     }
 
-    out
-}
-
-pub fn p056_merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
-    let mut intervals_checked = vec![];
-    for interv in intervals.into_iter() {
-        assert!(interv.len() == 2, "format not right");
-        intervals_checked.push( (interv[0], interv[1]) );
+    let mut answer = 0;
+    for a in 0..6 {
+        answer = mod_add(answer, ways[n][a])
     }
 
-    let mut out = vec![];
-    for (st, et) in p056_merge_(intervals_checked).into_iter() {
-        out.push(vec![st, et]);
-    }
-    out
+    answer
 }
-
-pub fn p057_insert(mut intervals: Vec<Vec<i32>>, new_interval: Vec<i32>) -> Vec<Vec<i32>> {
-    intervals.push(new_interval);
-    let mut out = p056_merge(intervals);
-    out.sort();
-    out
-}
-

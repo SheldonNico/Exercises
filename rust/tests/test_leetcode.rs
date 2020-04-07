@@ -596,3 +596,13 @@ fn test_p060() {
     assert_eq!(p060_get_permutation(4, 9), "2314");
     assert_eq!(p060_get_permutation(9, 24479), "168975423");
 }
+
+#[test]
+fn test_p061() {
+    //assert_eq!( p061_rotate_right( Some(Box::new(listnode!(1, 2, 3, 4, 5))), 1 ), Some( Box::new(listnode!(2, 1, 4, 3, 5)) ));
+}
+
+#[test]
+fn test_p1223() {
+    assert_eq!( p1223_die_simulator( 2, vec![1, 1, 2, 2, 2, 3] ), 34 );
+}
