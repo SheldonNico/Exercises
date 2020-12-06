@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use {
     std::collections::{HashMap, LinkedList, BTreeSet, VecDeque, HashSet, BTreeMap},
     std::cmp::{Eq},
@@ -6,11 +7,9 @@ use {
     std::fmt,
 };
 
-mod util;
-pub use util::{ListNode};
+pub use crate::util::{ListNode};
 
-mod snippet;
-pub use snippet::*;
+pub use crate::snippet::*;
 
 pub fn p001_two_sum(nums: &Vec<isize>, target: isize) -> (usize, usize) {
     let mut founded: HashMap<isize, usize> = HashMap::new();
@@ -159,7 +158,7 @@ pub fn p010_regular_expression_matching(s: String, p: String) -> bool {
                         for i in 0..=maxlen {
                             if match_regex(&s[number..], &p[2..], p[0], maxlen-i) {
                                 return true;
-                            } 
+                            }
                         }
                         false
 
@@ -222,7 +221,7 @@ pub fn p012_int_to_roman(num: i32) -> String {
 
 pub fn p013_roman_to_int(s: String) -> i32 {
     let mut out = 0; let mut curr = 0; let mut curr_char = 0;
-    
+
     let mut split = |c: i32| {
         if c < curr_char {
             out += curr;
@@ -276,7 +275,7 @@ pub fn p014_longest_common_prefix(strs: Vec<String>) -> String {
 
 pub fn p015_three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
     let mut out: Vec<_> = vec![];
-    let mut record = BTreeSet::new(); 
+    let mut record = BTreeSet::new();
     let mut nums = nums; nums.sort();
 
     let len = nums.len(); if len < 3 {return out;};
@@ -291,7 +290,7 @@ pub fn p015_three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
             let rest = -nums[i]-nums[j];
             if rest < nums[j]  { break 'loopj; }
 
-            if record.contains( &(nums[i], nums[j]) ) { continue; } 
+            if record.contains( &(nums[i], nums[j]) ) { continue; }
             record.insert( (nums[i], nums[j]) );
 
             if nums[j+1..].iter().take_while(|&&v| v <= rest).filter(|&&v| v == rest).count() > 0 {
@@ -304,10 +303,10 @@ pub fn p015_three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
 }
 
 pub fn p016_three_sum_closest(nums: Vec<i32>, target: i32) -> i32 {
-    let mut nums = nums; nums.sort(); 
+    let mut nums = nums; nums.sort();
     let len = nums.len(); assert!(len >= 3, "input must be at least 3 numbers");
-    let mut start; let mut end; 
-    
+    let mut start; let mut end;
+
     let mut sum = nums[0]+nums[1]+nums.last().unwrap(); let mut delta = (sum-target).abs();
 
     for i in 0..len-2 {
@@ -315,11 +314,11 @@ pub fn p016_three_sum_closest(nums: Vec<i32>, target: i32) -> i32 {
         while start < end {
             let sum_ = nums[i] + nums[start] + nums[end];
             let delta_ = target - sum_;
-            
+
             //println!("{} {} {} {} {}", nums[i], nums[start], nums[end], sum_, delta_);
 
             if delta_ == 0 { return sum_; }
-            if delta_.abs() < delta { 
+            if delta_.abs() < delta {
                 sum = sum_; delta = delta_.abs();
             }
 
@@ -393,13 +392,13 @@ pub fn p018_four_sum(nums: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
                     if nums[l] == target-nums[i]-nums[j]-nums[k] {
                         out.push( vec![ nums[i], nums[j], nums[k], nums[l] ] );
                         record.insert( (nums[i], nums[j], nums[k]) );
-                    } 
+                    }
 
                 }
             }
         }
     }
-    
+
     out
 }
 
@@ -410,8 +409,8 @@ fn length(li: &Box<ListNode>) -> usize {
     }
 }
 pub fn p019_remove_nth_from_end(head: Option<Box<ListNode>>, n: i32) -> Option<Box<ListNode>> {
-    if let Some(h) = &head { 
-        let len = length(h); 
+    if let Some(h) = &head {
+        let len = length(h);
         if len < n as usize { return None; }
         remove_nth_from_begin(head, len-(n as usize))
     } else {
@@ -505,7 +504,7 @@ pub fn p022_generate_parenthesis(n: i32) -> Vec<String> {
                 for i in right_size..left_size {
                     let mut close = hist.clone();
                     for _ in 0..(left_size-i) {
-                        close.push(')'); 
+                        close.push(')');
                     }
                     close.push('(');
                     expand.push( close );
@@ -632,7 +631,7 @@ pub fn p029_divide(dividend: i32, divisor: i32) -> i32 {
 
     if dividend == LOW {
         if divisor == -1 {
-            UP 
+            UP
         } else if divisor < 0 {
             1 + p029_divide(dividend - divisor, divisor)
         } else {
@@ -650,7 +649,7 @@ pub fn p029_divide(dividend: i32, divisor: i32) -> i32 {
 
         let mut divisor_vec = vec![(divisor, sign)];
 
-        while dividend >= divisor { 
+        while dividend >= divisor {
             if let Some( (divisor_curr, sign_curr) ) = divisor_vec.pop() {
                 if dividend >= divisor_curr {
                     out += sign_curr;
@@ -672,7 +671,7 @@ pub fn p029_divide(dividend: i32, divisor: i32) -> i32 {
     }
 }
 
-pub fn p030_find_substring(s: String, words: Vec<String>) -> Vec<i32> { 
+pub fn p030_find_substring(s: String, words: Vec<String>) -> Vec<i32> {
     let mut word_map: HashMap<String, i32> = HashMap::new();
     let mut word_len = 0;
     let size = words.len();
@@ -768,7 +767,7 @@ pub fn p030_find_substring_helper(s: &str, words: &mut Vec<String>) -> bool {
         for i in 0..words.len() {
             let w = words.drain(i..i+1).next().unwrap();
             if w.len() <= s.len() && w == s[..w.len()] {
-                if p030_find_substring_helper(&s[w.len()..], words) { 
+                if p030_find_substring_helper(&s[w.len()..], words) {
                     // recovery origin string
                     words.insert(i, w);
                     return true;
@@ -807,7 +806,7 @@ pub fn p031_next_permutation(nums: &mut Vec<i32>) {
                 break;
             }
         }
-        
+
         nums.swap(ind_split - 1, ind_swap);
     }
     nums[ind_split..].reverse();
@@ -821,11 +820,11 @@ pub fn p032_longest_valid_parentheses(s: String) -> i32 {
 
     for (id, paren) in s.chars().enumerate() {
         match paren {
-            '(' => { 
+            '(' => {
                 stack += 1;
                 left.push(id);
             },
-            ')' => { 
+            ')' => {
                 stack -= 1;
 
                 if stack < 0 {
@@ -860,14 +859,14 @@ pub fn p033_search(nums: Vec<i32>, target: i32) -> i32 {
     let nums_len = nums.len();
     if nums_len == 0 { return -1; }
 
-    let mut st = 0; let mut ed = nums_len - 1; 
+    let mut st = 0; let mut ed = nums_len - 1;
     if nums[st] < nums[ed] || nums_len == 1 {
         ed += 1;
     } else {
         while nums[st] >= nums[ed] {
-            if ed - st == 1 { 
-                //st = ed; 
-                break; 
+            if ed - st == 1 {
+                //st = ed;
+                break;
             }
             let mid = (st + ed) / 2;
             if nums[st] <= nums[mid] {
@@ -1088,7 +1087,7 @@ impl Sudoku {
                     }
                 }
 
-                
+
                 println!("{}\n", self);
                 if !self.is_valid() {
                     panic!("Debug reason");
@@ -1244,7 +1243,7 @@ pub fn p042_trap(height: Vec<i32>) -> i32 {
         let mut stop = 0;
 
         for (idx, &right) in height[start+1..].iter().enumerate() {
-            if right >= h { 
+            if right >= h {
                 stop = idx;
                 break;
             } else {
@@ -1317,7 +1316,7 @@ pub fn p043_multiply(num1: String, num2: String) -> String {
                     }
                 }
             }
-            
+
             //res += nld * nrd * 10u32.pow(dl as u32) * 10u32.pow(dr as u32);
         }
     }
@@ -1339,7 +1338,7 @@ pub fn p044_is_match_rec(string: String, pattern: String) -> bool {
     p044_is_match_(&string, &pattern)
 }
 
-pub fn p044_is_match_(string: &[char], pattern: &[char]) -> bool { 
+pub fn p044_is_match_(string: &[char], pattern: &[char]) -> bool {
     //println!("{:?}, {:?}", string.iter().collect::<String>(), pattern.iter().collect::<String>());
     if pattern.len() > 0 {
         match pattern[0] {
@@ -1402,7 +1401,7 @@ pub fn p044_is_match(string: String, pattern: String) -> bool {
                         rest[ids][idp] = true;
                     };
                 },
-                c   => { 
+                c   => {
                     rest[ids][idp] = if c == '?' || c == string[ids] {
                         if ids > 0 && idp > 0 {
                             rest[ids-1][idp-1]
@@ -1513,7 +1512,7 @@ pub fn p047_permute_unique(nums: Vec<i32>) -> Vec<Vec<i32>> {
                     let mut insert_count = 0;
                     for (i, count) in pairs.into_iter() {
                         let insert_pos = i + insert_count;
-                        for _ in 0..count { 
+                        for _ in 0..count {
                             nres.insert( insert_pos, num );
                         }
                         insert_count += count;
@@ -1749,7 +1748,7 @@ pub fn p051_solve_n_queens(n: i32) -> Vec<Vec<String>> {
         let old_permutations = std::mem::replace(&mut permutations, vec![]);
         for perm in old_permutations.into_iter() {
             for j in 0..perm.len()+1 {
-                let mut nperm = perm.clone(); 
+                let mut nperm = perm.clone();
                 nperm.insert(j, i);
                 permutations.push(nperm);
             }
@@ -1865,7 +1864,7 @@ pub fn p059_generate_matrix(n: i32) -> Vec<Vec<i32>> {
                     direction = P059Dirction::Right;
                     col += 1;
                 }
-            }, 
+            },
         }
     }
 
@@ -1928,4 +1927,448 @@ pub fn p060_get_permutation(n: i32, k: i32) -> String {
         out.push_str( &n.to_string() );
     }
     out
+}
+
+pub fn p062_unique_path(m: i32, n: i32) -> i32 {
+    // C(n, k)
+    let k = (n-1) as i64;
+    let n = (m+n-2) as i64;
+    let k = k.min(n-k);
+
+    let mut num = 1i64;
+    let all = 1..=n;
+    for (i, j) in (all.clone().rev()).zip(all) {
+        if i >= n-k+1 {
+            num *= i;
+        }
+
+        if j <= k {
+            num /= j;
+        }
+    }
+
+    num as i32
+}
+
+pub fn p063_unique_paths_with_obstacles(obstacle_grid: Vec<Vec<i32>>) -> i32 {
+/*
+ *    let n = obstacle_grid.len();
+ *    if n == 0 { return 0; }
+ *    let m = obstacle_grid[0].len();
+ *    if m == 0 { return 0; }
+ *    if obstacle_grid[0][0] == 1 { return 0; }
+ *
+ *    fn move_curr((sx, sy): (usize, usize), (ex, ey): (usize, usize), grid: &Vec<Vec<i32>>, cum: i32) -> i32 {
+ *        if sx == ex && sy == ey { return cum+1; }
+ *        let (mut right, mut down) = (0, 0);
+ *        if sx < ex && grid[sx+1][sy] == 0 {
+ *            right = move_curr((sx+1, sy), (ex, ey), grid, cum);
+ *        }
+ *        if sy < ey && grid[sx][sy+1] == 0 {
+ *            down = move_curr((sx, sy+1), (ex, ey), grid, cum);
+ *        }
+ *        right + down
+ *    }
+ *
+ *    move_curr((0, 0), (n-1, m-1), &obstacle_grid, 0)
+ */
+    let n = obstacle_grid.len();
+    if n == 0 { return 0; }
+    let m = obstacle_grid[0].len();
+    if m == 0 { return 0; }
+    if obstacle_grid[0][0] == 1 { return 0; }
+
+    let mut walked = std::collections::HashMap::new();
+    walked.insert((0, 0), 1);
+
+    for _ in 0..(m+n-2) {
+        let mut next = std::collections::HashMap::new();
+        for ((sx, sy), possible) in walked.into_iter() {
+            if sx < n-1 && obstacle_grid[sx+1][sy] == 0 {
+                let val = next.entry((sx+1, sy)).or_insert(0);
+                *val += possible;
+            }
+
+            if sy < m-1 && obstacle_grid[sx][sy+1] == 0 {
+                let val = next.entry((sx, sy+1)).or_insert(0);
+                *val += possible;
+            }
+        }
+        walked = next;
+    }
+
+    walked.remove(&(n-1, m-1)).unwrap_or(0)
+}
+
+pub fn p064_min_path_sum(grid: Vec<Vec<i32>>) -> i32 {
+    let n = grid.len(); if n == 0 { return 0; }
+    let m = grid[0].len(); if m == 0 { return 0; }
+
+    let mut walked = std::collections::HashMap::new();
+    walked.insert((0, 0), grid[0][0]);
+
+    for _ in 0..(m+n-2) {
+        let mut next = std::collections::HashMap::new();
+        for ((sx, sy), val) in walked.into_iter() {
+            if sx < n-1 {
+                let old = next.entry((sx+1, sy)).or_insert(i32::max_value());
+                *old = std::cmp::min(*old, val+grid[sx+1][sy]);
+            }
+
+            if sy < m-1 {
+                let old = next.entry((sx, sy+1)).or_insert(i32::max_value());
+                *old = std::cmp::min(*old, val+grid[sx][sy+1]);
+            }
+        }
+        //println!("{:?}", next);
+        walked = next;
+    }
+
+    walked.remove(&(n-1, m-1)).unwrap()
+}
+
+pub fn p065_is_number(s: String) -> bool {
+    let all_digits = vec!['0','1','2','3','4','5','6','7','8','9','.','e','+','-'];
+    let mut digits: &str = s.trim();
+
+    if digits.contains(' ') { return false; }
+    if digits.len() == 0 { return false; }
+    if !digits.chars().all(|v| all_digits.contains(&v)) { return false; }
+
+    let contain_sign = (&digits[..=0] == "+") || (&digits[..=0] == "-");
+    if contain_sign {
+        digits = &digits[1..digits.len()];
+        if digits.len() == 0 { return false; }
+    }
+
+    fn integral(s: &str) -> bool {
+        //if s == "0" { return true; }
+        //&s[..=0] != "0" && s[1..].chars().all(|v| '0' <= v && v <= '9')
+        s.chars().all(|v| '0' <= v && v <= '9')
+    }
+
+    let mut before_e = ""; let mut after_e = "";
+    if let Some(pos) = digits.find('e') {
+        let (before_e_, after_e_) = digits.split_at(pos);
+        before_e = before_e_; after_e = &after_e_[1..];
+        if after_e == "+" { return false; }
+        if after_e.len() == 0 { return false; }
+        if before_e.len() == 0 { return false; }
+        if &after_e[..=0] == "-" || &after_e[..=0] == "+" {
+            after_e = &after_e[1..];
+            if after_e.len() == 0 { return false; }
+            if !integral(after_e) { return false; }
+        } else {
+            if !integral(after_e) { return false; }
+        }
+    } else {
+        before_e = digits;
+    }
+
+    let mut int_part = ""; let mut decimal_part = "";
+    if let Some(pos) = before_e.find('.') {
+        let (int_part_, decimal_part_) = before_e.split_at(pos);
+        int_part = int_part_; decimal_part = &decimal_part_[1..];
+        if int_part.len() == 0 && decimal_part.len() == 0 { return false; }
+        if int_part.len() == 0 { int_part = "0"; }
+        decimal_part = decimal_part.trim_start_matches('0');
+        if !integral(int_part) { return false; }
+        if decimal_part.len() > 0 && !integral(decimal_part) { return false; }
+    } else {
+        int_part = before_e;
+        if contain_sign && int_part.len() == 0 { return false; }
+        if !integral(int_part) { return false; }
+    }
+
+    true
+}
+
+pub fn p066_plus_one(digits: Vec<i32>) -> Vec<i32> {
+    let mut out = Vec::new();
+    let mut cum = 1;
+    for digit in digits.into_iter().rev() {
+        out.push((cum + digit) % 10);
+        cum = (cum+digit) / 10;
+    }
+    if cum != 0 {
+        out.push(cum);
+    }
+    out.into_iter().rev().collect()
+}
+
+pub fn p067_add_binary(a: String, b: String) -> String {
+    let mut out = Vec::new();
+    let mut cum = 0;
+    let a: Vec<_> = a.chars().rev().collect();
+    let b: Vec<_> = b.chars().rev().collect();
+
+    for idx in 0..a.len().max(b.len()) {
+        let digit1 = a.get(idx).unwrap_or(&'0');
+        let digit2 = b.get(idx).unwrap_or(&'0');
+        let mut curr = match (digit1, digit2) {
+            ('0', '1') => 1,
+            ('1', '0') => 1,
+            ('1', '1') => 2,
+            ('0', '0') => 0,
+            _ => panic!("not binary"),
+        };
+        curr += cum;
+        println!("{} {}", digit1, digit2);
+
+        if curr % 2 == 0 {
+            out.push('0');
+        } else {
+            out.push('1');
+        }
+        cum = curr / 2;
+    }
+
+    println!("{:?} {}", out, cum);
+    if cum != 0 {
+        out.push('1');
+    }
+
+    out.into_iter().rev().collect()
+}
+
+pub fn p068_my_sqrt(x: i32) -> i32 {
+    (x as f64).sqrt() as i32
+}
+
+pub fn p069_climb_stairs(n: i32) -> i32 {
+    let mut walked = std::collections::HashMap::new(); walked.insert(0, 1);
+    let mut curr = 0;
+    for _ in 0..n {
+        let mut next = std::collections::HashMap::new();
+        for (pos, count) in std::mem::replace(&mut walked, std::collections::HashMap::new()).into_iter() {
+            if pos <= n-1 {
+                *next.entry(pos+1).or_insert(0) += count;
+            }
+            if pos <= n-2 {
+                *next.entry(pos+2).or_insert(0) += count;
+            }
+
+            if pos == n {
+                curr += count;
+            }
+        }
+        walked = next;
+    }
+    curr + walked.remove(&n).unwrap_or(0)
+}
+
+pub fn p071_simplify_path(path: String) -> String {
+    let mut path_stack = vec![];
+    for p in path.split("/") {
+        match p {
+            "." | "" => {  },
+            ".." => {
+                if path_stack.len() > 0 {
+                    path_stack.pop().unwrap();
+                }
+            },
+            p => { path_stack.push(p); }
+        }
+    }
+
+    let out = format!("/{}", path_stack.join("/"));
+    out
+}
+
+pub fn p073_set_zeroes(matrix: &mut Vec<Vec<i32>>) {
+    use std::collections::HashSet;
+
+    let m = matrix.len(); if m == 0 { return; }
+    let n = matrix[0].len(); if n == 0 { return; }
+    let mut rows = HashSet::new(); let mut columns = HashSet::new();
+
+    for i in 0..m {
+        for j in 0..n {
+            if matrix[i][j] == 0 {
+                rows.insert(i);
+                columns.insert(j);
+            }
+        }
+    }
+
+    for row in rows.into_iter() {
+        for i in 0..n {
+            *matrix.get_mut(row).unwrap().get_mut(i).unwrap() = 0;
+        }
+    }
+
+    for col in columns.into_iter() {
+        for j in 0..m {
+            *matrix.get_mut(j).unwrap().get_mut(col).unwrap() = 0;
+        }
+    }
+}
+
+pub fn p074_search_matrix(matrix: Vec<Vec<i32>>, target: i32) -> bool {
+    if matrix.len() == 0 || matrix[0].len() == 0 { return false; }
+    let first: Vec<i32> = matrix.iter().map(|v| v[0]).collect();
+    if let Err(idx) = first.binary_search(&target) {
+        if idx == 0 { return false; }
+        matrix[idx-1].binary_search(&target).is_ok()
+    } else {
+        true
+    }
+}
+
+pub fn p1223_die_simulator(n: i32, roll_max: Vec<i32>) -> i32 {
+    fn mod_add(a: i32, b: i32) -> i32 {
+        let modnum: i32 = i32::pow(10, 9)+7;
+        (a + b) % modnum
+    }
+    if n <= 0 { return 0; }
+
+    let n = n as usize;
+    let mut ways: Vec<Vec<i32>> = vec![vec![0; 6]; n+1];
+    for a in 0..6 {
+        for len in 1..=std::cmp::min(n, roll_max[a] as usize) {
+            ways[len][a] += 1;
+        }
+    }
+
+    for len in 1..n {
+        for prv in 0..6 {
+            for nxt in 0..6 {
+                if prv == nxt { continue; }
+                for cnt in 1..=std::cmp::min(n, roll_max[nxt] as usize) {
+                    if cnt + len > n { break; }
+                    ways[len+cnt][nxt] = mod_add(ways[len+cnt][nxt], ways[len][prv]);
+                }
+            }
+        }
+    }
+
+    let mut answer = 0;
+    for a in 0..6 {
+        answer = mod_add(answer, ways[n][a])
+    }
+
+    answer
+}
+
+pub fn p075_sort_colors(nums: &mut Vec<i32>) {
+    /*
+     *    let (mut count1, mut count2, _) = (0, 0, 0);
+     *    for num in nums.iter() {
+     *        match num {
+     *            0 => count1 += 1,
+     *            1 => count2 += 1,
+     *            2 => {  },
+     *            _ => panic!("Argument not right"),
+     *        }
+     *    }
+     *
+     *    for (idx, num) in nums.iter_mut().enumerate() {
+     *        if idx < count1 {
+     *            *num = 0;
+     *        } else if idx < count1+count2 {
+     *            *num = 1;
+     *        } else {
+     *            *num = 2;
+     *        }
+     *    }
+     */
+
+    let len = nums.len();
+    let (mut count1, mut id2) = (0, 0);
+    for idx in 0..len {
+        match nums[idx] {
+            0 => {
+                nums.rotate_left(idx);
+                nums[1..].rotate_right(idx); // nums[idx..] contais at least one
+                count1 += 1; id2 += 1;
+            },
+            1 => {
+                nums[count1..].rotate_left(idx-count1);
+                nums[count1+1..].rotate_right(idx-count1);
+                id2 += 1;
+            },
+            _ => { },
+        }
+    }
+}
+
+pub fn p077_combine(n: i32, k: i32) -> Vec<Vec<i32>> {
+    let mut walked: Vec<Vec<i32>> = vec![]; walked.push(vec![]);
+    let mut out = Vec::new(); let k = k as usize;
+    if k == 0 { return out; }
+
+    for i in 1..=n {
+        let mut nwalked = vec![];
+        for mut curr in walked.into_iter() {
+            match curr.len() {
+                len if len == k - 1 => {
+                    nwalked.push(curr.clone());
+                    curr.push(i); out.push(curr);
+                },
+                _ => {
+                    nwalked.push(curr.clone());
+                    curr.push(i);
+                    nwalked.push(curr.clone());
+                }
+            }
+        }
+        walked = nwalked;
+    }
+    out
+}
+
+pub fn p078_subsets(nums: Vec<i32>) -> Vec<Vec<i32>> {
+    let mut out = vec![vec![]];
+    for num in nums.into_iter() {
+        for mut curr in out.clone().into_iter() {
+            curr.push(num);
+            out.push(curr);
+        }
+    }
+    out
+}
+
+pub fn p079_exist(board: Vec<Vec<char>>, word: String) -> bool {
+    use std::collections::HashSet;
+
+    let wlen = word.len(); let m = board.len();
+    if m == 0 { if wlen == 0 { return true; } else { return true; } }
+
+    let n = board[0].len();
+    if n == 0 { if wlen == 0 { return true; } else { return true; } }
+
+    let words: Vec<_> = word.chars().collect();
+    if wlen == 0 { return true; }
+
+    fn dfs(board: &Vec<Vec<char>>, x: i32, y: i32, target: &[char], walked: &mut HashSet<(i32, i32)>, m: i32, n: i32) -> bool {
+        if target.len() == 0 { return false; }
+        if x >= m || x < 0 || y < 0 || y >= n { return false }
+        if target[0] != board[x as usize][y as usize] { return false; }
+        if walked.contains(&(x, y)) { return false; }
+
+        if target.len() == 1 { return true; }
+
+        walked.insert((x, y));
+
+        if dfs(board, x+1, y, &target[1..], walked, m, n) || dfs(board, x, y+1, &target[1..], walked, m, n) ||
+           dfs(board, x-1, y, &target[1..], walked, m, n) || dfs(board, x, y-1, &target[1..], walked, m, n) {
+            return true;
+        }
+        walked.remove(&(x, y));
+
+        false
+    }
+
+    for i in 0..m {
+        for j in 0..n {
+            if board[i][j] == words[0] {
+                let mut walked = HashSet::new();
+                if dfs(&board, i as i32, j as i32, &words, &mut walked, m as i32, n as i32) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
 }

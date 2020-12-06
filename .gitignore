@@ -19,6 +19,7 @@ tags
 *.o
 *.a
 *.out
+*.bak
 
 # Stack
 .stack-work/

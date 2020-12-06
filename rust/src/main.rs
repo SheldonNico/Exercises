@@ -1,3 +1,5 @@
-fn main() { 
-    println!("Hello world!");
+use leetcode::advcode2020::*;
+
+fn main() {
+    p06()
 }

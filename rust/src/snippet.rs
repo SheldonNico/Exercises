@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use crate::util::{ListNode};
 
-
 pub fn p055_can_jump(nums: Vec<i32>) -> bool {
     let mut hist = HashMap::new();
     let nums: Vec<usize> = nums.into_iter().filter(|n| *n >= 0).map(|n| n as usize).collect();
@@ -27,74 +26,62 @@ fn p055_can_jump_rec(start: usize, stop: usize, nums: &Vec<usize>, mut hist: &mu
     hist[&(start, stop)]
 }
 
-
 pub fn p061_rotate_right(head: Option<Box<ListNode>>, mut k: i32) -> Option<Box<ListNode>> {
-    head
-
-
-/*
- *    if k <= 0 {
- *        head
- *    } else {
- *        match head {
- *            Some( ListNode { val } )
- *        }
- *
- *        let mut len = 0;
- *        while rest.is_ok() {
- *            rest = rest.get();
- *            len += 1;
- *        }
- *
- *        k = k % len;
- *        let right = head;
- *        let mut count = 0;
- *        while count < len - k {
- *            let rest = rest.get();
- *            count += 1;
- *        }
- *
- *        rest.next = None;
- *
- *
- *
- *
- *
- *    }
- */
-}
-
-pub fn p1223_die_simulator(n: i32, roll_max: Vec<i32>) -> i32 {
-    fn mod_add(a: i32, b: i32) -> i32 {
-        let modnum: i32 = i32::pow(10, 9)+7;
-        (a + b) % modnum
+    fn get_length(head: &Option<Box<ListNode>>) -> usize {
+        if head.is_none() { return 0; }
+        return 1 + get_length(&head.as_ref().unwrap().next);
     }
-    if n <= 0 { return 0; }
-
-    let n = n as usize;
-    let mut ways: Vec<Vec<i32>> = vec![vec![0; 6]; n+1];
-    for a in 0..6 {
-        for len in 1..=std::cmp::min(n, roll_max[a] as usize) {
-            ways[len][a] += 1;
-        }
-    }
-
-    for len in 1..n {
-        for prv in 0..6 {
-            for nxt in 0..6 {
-                if prv == nxt { continue; }
-                for cnt in 1..=std::cmp::min(n, roll_max[nxt] as usize) {
-                    if cnt + len > n { break; }
-                    ways[len+cnt][nxt] = mod_add(ways[len+cnt][nxt], ways[len][prv]);
-                }
+    fn append(slf: &mut Option<Box<ListNode>>, val: i32) {
+        match slf {
+            None => {
+                *slf = Some(Box::new(ListNode { val, next: None }));
+            }
+            Some(p) => {
+                let ListNode { ref mut next,.. } = **p;
+                append(next, val);
             }
         }
     }
 
-    let mut answer = 0;
-    for a in 0..6 {
-        answer = mod_add(answer, ways[n][a])
+    fn extend(left: &mut Option<Box<ListNode>>, right: Option<Box<ListNode>>) {
+        if let Some(p) = right {
+            let ListNode { next, val } = *p;
+            append(left, val);
+            extend(left, next);
+        }
+
+    }
+    fn rotate_left(mut head: Option<Box<ListNode>>, k: i32, mut left: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+        if k < 0 { panic!("not enough node to rotate."); }
+        if k == 0 {
+            extend(&mut head, left);
+            return head;
+        }
+
+        let ListNode { val, next } = *head.unwrap();
+        append(&mut left, val);
+
+        rotate_left(next, k-1, left)
     }
 
-    answer
+    if get_length(&head) == 0 { return None; }
+
+    k = k % get_length(&head) as i32;
+    k = get_length(&head) as i32 - k;
+    rotate_left(head, k, None)
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::*;
+
+    #[test]
+    fn test_p061() {
+        assert_eq!(p061_rotate_right(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 2), Some(Box::new(listnode!(4, 5, 1, 2, 3))));
+        assert_eq!(p061_rotate_right(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 7), Some(Box::new(listnode!(4, 5, 1, 2, 3))));
+        assert_eq!(p061_rotate_right(None, 0), None);
+        assert_eq!(p061_rotate_right(None, 9), None);
+    }
 }
