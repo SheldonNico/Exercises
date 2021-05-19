@@ -312,9 +312,264 @@ pub fn max_sub_array(nums: &Vec<i32>) -> i32 {
     cont_sum.into_iter().max().unwrap()
 }
 
+fn longest_common_subsequence_from(text1: &[u8], text2: &[u8], mem: &mut HashMap<(usize, usize), usize>) -> usize {
+    if text1.len() == 0 || text2.len() == 0 { return 0; }
+    let k1 = text1.len(); let k2 = text2.len();
+    if let Some(v) = mem.get(&(k1, k2)) { return *v; }
+
+    let w1 = text1[0];
+    let w2 = text2[0];
+
+    let v = if w1 == w2 {
+        1 + longest_common_subsequence_from(&text1[1..], &text2[1..], mem)
+    } else {
+        let v1 = longest_common_subsequence_from(&text1[1..], text2, mem);
+        let v2 = longest_common_subsequence_from(text1, &text2[1..], mem);
+        v1.max(v2)
+    };
+    mem.insert((k1, k2), v);
+    v
+}
+
+pub fn longest_common_subsequence(text1: &str, text2: &str) -> usize {
+    let mut mem = HashMap::new();
+    longest_common_subsequence_from(text1.as_bytes(), text2.as_bytes(), &mut mem)
+}
+
+pub fn longest_common_subsequence_norec(text1: &str, text2: &str) -> usize {
+    let text1 = text1.as_bytes(); let text2 = text2.as_bytes();
+
+    let mut sol = vec![vec![0; text2.len()+1]; text1.len()+1];
+    for i in 1..text1.len() + 1 {
+        for j in 1..text2.len() + 1 {
+            if text1[i-1] == text2[j-1] {
+                sol[i][j] = 1 + sol[i-1][j-1];
+            } else {
+                sol[i][j] = sol[i-1][j].max(sol[i][j-1])
+            }
+        }
+    }
+    sol[text1.len()][text2.len()]
+}
+
+pub fn longest_increasing_subsequence(nums: &[i32]) -> i32 {
+    assert!(nums.len() > 0);
+
+    let mut sol = vec![1; nums.len()];
+    for idx in 1..nums.len() {
+        for s in 0..idx {
+            if nums[s] < nums[idx] && sol[idx] < sol[s] + 1{
+                sol[idx] = sol[s] + 1;
+            }
+        }
+    }
+
+    sol.into_iter().max().unwrap()
+}
+
+pub fn matrix_chain_multiplication_from(values: &[usize], sol: &mut Vec<Vec<usize>>, i: usize, j: usize) -> usize {
+    if j <= i + 1 { return 0; }
+    if sol[i][j] == 0 {
+        let mut min = std::usize::MAX;
+        for s in i+1..j {
+            let mut cost = matrix_chain_multiplication_from(values, sol, i, s);
+            cost += matrix_chain_multiplication_from(values, sol, s, j);
+            cost += values[i] * values[s] * values[j];
+            if min > cost { min = cost; }
+        }
+        sol[i][j] = min;
+    }
+
+    sol[i][j]
+}
+
+pub fn matrix_chain_multiplication(values: &[usize]) -> usize {
+    assert!(values.len() >= 3);
+    let mut sol = vec![vec![0; values.len()]; values.len()];
+    matrix_chain_multiplication_from(values, &mut sol, 0, values.len()-1)
+}
+
+pub fn palindrome_partitioning_solve(s: &str) -> usize {
+    let s = s.as_bytes();
+    let mut is_palindrome = vec![vec![false; s.len()]; s.len()];
+    let mut cuts = vec![vec![0; s.len()]; s.len()];
+
+    // NOTE: the [i][j] means [i, j], closed on both side
+    for i in 0..s.len() {
+        is_palindrome[i][i] = true;
+        cuts[i][i] = 0;
+    }
+
+    for len in 2..s.len()+1 {
+        for start_index in 0..s.len() - len + 1 {
+            let end_index = start_index + len - 1;
+
+            if len == 2 {
+                is_palindrome[start_index][end_index] = s[start_index] == s[end_index];
+            } else {
+                is_palindrome[start_index][end_index] = s[start_index] == s[end_index] && is_palindrome[start_index+1][end_index-1];
+            }
+
+            if is_palindrome[start_index][end_index] {
+                cuts[start_index][end_index] = 0;
+            } else {
+                cuts[start_index][end_index] = std::usize::MAX;
+                for s in start_index..end_index {
+                    let n = cuts[start_index][s] + cuts[s+1][end_index] + 1;
+                    if n < cuts[start_index][end_index] {
+                        cuts[start_index][end_index] = n;
+                    }
+                }
+            }
+        }
+    }
+
+    cuts[0][s.len()-1]
+}
+
+pub fn shortest_common_supersequence_tricky(str1: &str, str2: &str) -> String {
+    let str1: Vec<_> = str1.chars().collect(); let str2: Vec<_> = str2.chars().collect();
+
+    let mut lookup = vec![vec![0; str2.len()+1]; str1.len()+1];
+    for i in 1..str1.len()+1 {
+        for j in 1..str2.len()+1 {
+            if str1[i-1] == str2[j-1] {
+                lookup[i][j] = 1 + lookup[i-1][j-1]
+            } else {
+                lookup[i][j] = lookup[i-1][j].max(lookup[i][j-1]);
+            }
+        }
+    }
+
+    let mut i = str1.len(); let mut j = str2.len(); let mut s = "".to_string();
+    while i > 0 && j > 0 {
+        if str1[i-1] == str2[j-1] {
+            s.push(str1[i-1]);
+            i -= 1;
+            j -= 1;
+        } else {
+            if lookup[i-1][j] > lookup[i][j-1] {
+                s.push(str1[i-1]);
+                i -= 1;
+            } else {
+                s.push(str2[j-1]);
+                j -= 1;
+            }
+        }
+    }
+
+    while i > 0 {
+        s.push(str1[i-1]);
+        i -= 1;
+    }
+    while j > 0 {
+        s.push(str2[j-1]);
+        j -= 1;
+    }
+
+    s.chars().rev().collect()
+}
+
+pub fn shortest_common_supersequence_solve(str1: &str, str2: &str) -> String {
+    let str1: Vec<_> = str1.chars().collect(); let str2: Vec<_> = str2.chars().collect();
+
+    // let mut shortest = vec![vec![vec![]; str2.len()+1]; str1.len()+1];
+
+    // for i in 0..str1.len()+1 {
+    //     shortest[i][0] = str1[..i].into();
+    // }
+    // for j in 0..str2.len()+1 {
+    //     shortest[0][j] = str2[..j].into();
+    // }
+
+    let mut last_row: Vec<Vec<char>> = vec![]; let mut curr_row = vec![];
+    for j in 0..str2.len() + 1 {
+        last_row.push(str2[..j].into());
+        curr_row.push(vec![]);
+    }
+
+    for i in 1..str1.len()+1 {
+        curr_row[0] = str1[..i].into();
+        for j in 1..str2.len()+1 {
+            if str1[i-1] == str2[j-1] {
+                // std::mem::swap(&mut curr_row[j], &mut last_row[j-1]);
+                curr_row[j] = last_row[j-1].clone();
+                curr_row[j].push(str1[i-1]);
+                // println!(">>>>> {:?} {} {} {} {}", curr_row[j], i, j, str1[i-1], str2[j-1]);
+
+                // shortest[i][j] = shortest[i-1][j-1].clone();
+                // shortest[i][j].push(str1[i-1]);
+            } else {
+                if last_row[j].len() >= curr_row[j-1].len() {
+                    curr_row[j] = curr_row[j-1].clone(); // previous value in curr_row can not be changed
+                    curr_row[j].push(str2[j-1]);
+                } else {
+                    curr_row[j] = last_row[j].clone();
+                    curr_row[j].push(str1[i-1]);
+                }
+
+                // if shortest[i-1][j].len() >= shortest[i][j-1].len() {
+                //     shortest[i][j] = shortest[i][j-1].clone();
+                //     shortest[i][j].push(str2[j-1]);
+                // } else {
+                //     shortest[i][j] = shortest[i-1][j].clone();
+                //     shortest[i][j].push(str1[j-1]);
+                // }
+            }
+        }
+        std::mem::swap(&mut last_row, &mut curr_row);
+    }
+
+    last_row[str2.len()].iter().collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn shortest_common_supersequence_sample() {
+        assert_eq!(shortest_common_supersequence_solve("abac", "cab"), "cabac");
+        assert_eq!(shortest_common_supersequence_solve("ABCXYZ", "ABZ"), "ABCXYZ");
+        assert_eq!(shortest_common_supersequence_solve("ABZ", "ABCXYZ"), "ABCXYZ");
+        assert_eq!(shortest_common_supersequence_solve("AGGTAB", "GXTXAYB"), "AGGXTXAYB");
+        assert_eq!(shortest_common_supersequence_solve("X", "Y"), "XY");
+
+        assert_eq!(shortest_common_supersequence_tricky("abac", "cab"), "cabac");
+        assert_eq!(shortest_common_supersequence_tricky("ABCXYZ", "ABZ"), "ABCXYZ");
+        assert_eq!(shortest_common_supersequence_tricky("ABZ", "ABCXYZ"), "ABCXYZ");
+        assert_eq!(shortest_common_supersequence_tricky("AGGTAB", "GXTXAYB"), "AGGXTXAYB");
+        assert_eq!(shortest_common_supersequence_tricky("X", "Y"), "XY");
+    }
+
+
+    #[test]
+    fn palindrome_partitioning_sample() {
+        assert_eq!(palindrome_partitioning_solve("nitik"), 2);
+        assert_eq!(palindrome_partitioning_solve("ababbbabbababa"), 3);
+        assert_eq!(palindrome_partitioning_solve("abdc"), 3);
+    }
+    // "a babbbab babab a"
+
+    #[test]
+    fn matrix_chain_multiplication_sample() {
+        assert_eq!(matrix_chain_multiplication(&[10, 30, 5, 60]), 4500);
+        assert_eq!(matrix_chain_multiplication(&[40, 20, 30, 10, 30]), 26000);
+        assert_eq!(matrix_chain_multiplication(&[10, 20, 30, 40, 30]), 30000);
+        assert_eq!(matrix_chain_multiplication(&[10, 20, 30]), 6000);
+    }
+
+    #[test]
+    fn longest_increasing_subsequence_sample() {
+        assert_eq!(longest_increasing_subsequence(&vec![0, 1, 0, 3, 2, 3]), 4);
+        assert_eq!(longest_increasing_subsequence(&vec![7,7,7,7,7,7,7]), 1);
+    }
+
+    #[test]
+    fn longest_common_subsequence_sample() {
+        assert_eq!(longest_common_subsequence("abcd", "acd"), 3);
+        assert_eq!(longest_common_subsequence_norec("abcd", "efg"), 0);
+    }
 
     #[test]
     fn max_sub_array_sample() {
