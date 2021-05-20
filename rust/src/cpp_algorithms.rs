@@ -1,9 +1,9 @@
 #![allow(stable_features, dead_code)]
-#![feature(min_const_generics)]
 pub mod backtracking;
 pub mod bit_manipulation;
 pub mod ciphers;
 pub mod dynamic_programming;
+pub mod geometry;
 
 pub struct Timer<'s> {
     s: std::time::Instant,

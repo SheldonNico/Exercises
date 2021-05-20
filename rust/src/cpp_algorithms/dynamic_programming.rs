@@ -1,5 +1,5 @@
 use super::Timer;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 fn knapsack_from<const N: usize>(idx: usize, curr_weight: usize, capacity: usize, weight: &[usize; N], value: &[usize; N]) -> usize {
     if idx >= N {
@@ -523,9 +523,40 @@ pub fn shortest_common_supersequence_solve(str1: &str, str2: &str) -> String {
     last_row[str2.len()].iter().collect()
 }
 
+pub fn word_break_from(s: &str, words: &HashSet<&str>, mem: &mut HashMap<usize, bool>) -> bool {
+    if s.len() == 0 { return true; }
+    let k = s.len();
+    if let Some(v) = mem.get(&k) { return *v; }
+
+    for word in words.iter() {
+        if s.starts_with(word) {
+            if word_break_from(s.strip_prefix(word).unwrap(), words, mem) {
+                mem.insert(k, true);
+                return true;
+            }
+        }
+    }
+    mem.insert(k, false);
+    false
+}
+
+pub fn word_break_solve(s: &str, words: &[&str]) -> bool {
+    let words: HashSet<&str> = words.iter().map(|s| *s).collect();
+    let mut mem = HashMap::new();
+    word_break_from(s, &words, &mut mem)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn word_break_sample() {
+        assert!(word_break_solve("leetcode", &vec!["leet", "code"]));
+        assert!(word_break_solve("applepenapple", &vec!["apple", "pen"]));
+        assert!(!word_break_solve("leetcode", &vec!["leet", "ode"]));
+        assert!(!word_break_solve("catsandog", &vec!["cats", "dog", "sand", "and", "cat"]));
+    }
 
     #[test]
     fn shortest_common_supersequence_sample() {
