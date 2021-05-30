@@ -1,4 +1,5 @@
 #![allow(dead_code, unused_variables)]
+#![feature(map_first_last)]
 // pub mod leetcode;
 // pub mod util;
 // mod snippet;

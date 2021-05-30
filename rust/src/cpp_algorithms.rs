@@ -4,6 +4,9 @@ pub mod bit_manipulation;
 pub mod ciphers;
 pub mod dynamic_programming;
 pub mod geometry;
+pub mod graph;
+pub mod greedy_algorithms;
+pub mod math;
 
 pub struct Timer<'s> {
     s: std::time::Instant,
