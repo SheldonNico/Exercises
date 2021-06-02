@@ -1,5 +1,6 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet, HashMap, LinkedList};
 use std::convert::TryInto;
+use std::hash::{Hash, Hasher};
 
 pub fn p01() {
     let nums: Vec<i32> = std::fs::read_to_string("./assets/adv01.txt").unwrap()
@@ -2307,8 +2308,6 @@ Tile 3079:
     eprintln!("{:?}", graph);
 
 
-
-
     // let mut possi: HashMap<_, _> = HashMap::new();
     // for tile in tiles.iter() {
     //     let left = tile.left_border(); let mut l = vec![];
@@ -2330,3 +2329,539 @@ Tile 3079:
 
 
 }
+
+fn p22_simple_hash(nums: &[usize]) -> u64 {
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    for num in nums.iter() {
+        num.hash(&mut h)
+    }
+    h.finish()
+
+    // let mut hash: usize = 5381;
+    // for num in nums.iter() {
+    //     hash = (hash << 5) + hash + num;
+    // }
+    // return hash
+}
+
+fn p22_parser(input: &str) -> nom::IResult<&str, (Vec<usize>, Vec<usize>)> {
+    let sequence = nom::multi::separated_list1(
+        nom::character::complete::newline,
+        nom::combinator::map_res(nom::character::complete::digit1, |s: &str| s.parse::<usize>()),
+    );
+
+    let header = nom::sequence::tuple((
+        nom::bytes::complete::tag("Player"),
+        nom::character::complete::space1,
+        nom::character::complete::digit1,
+        nom::bytes::complete::tag(":")
+    ));
+
+    let mut player = nom::combinator::map(
+        nom::sequence::tuple((
+                header,
+                nom::character::complete::newline,
+                sequence
+        )),
+        |(_, _, r)| r
+    );
+
+    let (input, r1) = player(input)?;
+    let (input, _) = nom::multi::many1(nom::character::complete::newline)(input)?;
+    let (input, r2) = player(input)?;
+
+    Ok((input, (r1, r2)))
+}
+
+fn p22_run(deck1_origin: &[usize], deck2_origin: &[usize]) -> (Vec<usize>, Vec<usize>) {
+    let mut deck1 = Vec::from(deck1_origin); let mut deck2 = Vec::from(deck2_origin);
+    let mut count = 1;
+    let mut hash1 = std::collections::HashSet::new(); hash1.insert(p22_simple_hash(deck1_origin));
+    let mut hash2 = std::collections::HashSet::new(); hash1.insert(p22_simple_hash(deck2_origin));
+
+    while deck1.len() > 0 && deck2.len() > 0 {
+        println!(">>>> {:?}", deck2);
+        let h1 = p22_simple_hash(&deck1); let h2 = p22_simple_hash(&deck2);
+        if count > 1 && (hash1.contains(&h1) || hash2.contains(&h2)) {
+            break;
+        }
+        hash1.insert(h1); hash2.insert(h2);
+
+        // println!("round: {}", count);
+        count += 1;
+
+        let d1 = deck1.remove(0);
+        let d2 = deck2.remove(0);
+        if d1 > d2 {
+            deck1.push(d1);
+            deck1.push(d2);
+        } else {
+            deck2.push(d2);
+            deck2.push(d1);
+        }
+    }
+
+    (deck1, deck2)
+}
+
+fn p22_run_recursive(deck1_origin: &[usize], deck2_origin: &[usize]) -> (Vec<usize>, Vec<usize>) {
+    let mut deck1 = Vec::from(deck1_origin); let mut deck2 = Vec::from(deck2_origin);
+    let mut count = 1;
+
+    let mut hash1 = std::collections::HashSet::new(); hash1.insert(p22_simple_hash(deck1_origin));
+    let mut hash2 = std::collections::HashSet::new(); hash1.insert(p22_simple_hash(deck2_origin));
+
+    while deck1.len() > 0 && deck2.len() > 0 {
+        let h1 = p22_simple_hash(&deck1); let h2 = p22_simple_hash(&deck2);
+        if count > 1 && (hash1.contains(&h1) || hash2.contains(&h2)) {
+            break;
+        }
+
+        hash1.insert(h1); hash2.insert(h2);
+        println!("round: {}", count);
+        count += 1;
+
+        let c1 = deck1.remove(0);
+        let c2 = deck2.remove(0);
+
+        if c1 <= deck1.len() && c2 <= deck2.len() {
+            println!("playing sub game...");
+            let (r1, _) = p22_run(&deck1[..c1], &deck2[..c2]);
+            if r1.len() > 0 {
+                deck1.push(c1);
+                deck1.push(c2);
+            } else {
+                deck2.push(c2);
+                deck2.push(c1);
+            }
+        } else if c1 > c2 {
+            deck1.push(c1);
+            deck1.push(c2);
+        } else {
+            deck2.push(c2);
+            deck2.push(c1);
+        }
+
+        println!("{:?} {:?}", deck1, deck2);
+    }
+
+    (deck1, deck2)
+}
+
+
+pub fn p22() {
+    let contents = r#"Player 1:
+9
+2
+6
+3
+1
+
+Player 2:
+5
+8
+4
+7
+10"#.to_string();
+
+    let contents = std::fs::read_to_string("./assets/adv22.txt").unwrap();
+
+    let (_, (r1, r2)) = p22_parser(&contents).unwrap();
+
+    // println!("Before {:?} {:?}", r1, r2);
+    // let (r1, r2) = p22_run(&r1, &r2);
+    // println!("After {:?} {:?}", r1, r2);
+    // let r = if r1.len() > 0 { r1 } else { r2 };
+    // println!("{}", r.iter().rev().enumerate().map(|(i, s)| (i+1)*s).sum::<usize>());
+
+    println!("Before {:?} {:?}", r1, r2);
+    let (r1, r2) = p22_run_recursive(&r1, &r2);
+    println!("After {:?} {:?}", r1, r2);
+    let r = if r1.len() > 0 { r1 } else { r2 };
+    println!("{}", r.iter().rev().enumerate().map(|(i, s)| (i+1)*s).sum::<usize>());
+}
+
+fn p23_move(cups: &mut Vec<usize>, n: usize) {
+    let mut curr_idx = 0;
+    for _ in 0..n {
+        let curr = cups[curr_idx];
+
+        let len = 3;
+        let to_right = (curr_idx+len+1).min(cups.len());
+        let to_left = if curr_idx+len+1 >= cups.len() { (curr_idx+len+1) % cups.len() } else { 0 };
+        let mut picks: Vec<_> = cups.drain(curr_idx+1..to_right).collect();
+        picks.append(&mut cups.drain(0..to_left).collect::<Vec<_>>());
+        curr_idx -= to_left;
+
+        let mut next = curr; let next_idx;
+        loop {
+            if next > 1 {
+                next -= 1;
+            } else {
+                next = 9;
+            }
+            if let Some(idx) = cups.iter().position(|&x| x == next) {
+                next_idx = idx;
+                break
+            }
+        }
+        assert_ne!(next_idx, curr_idx);
+
+        // println!(">>> {:?} {} {:?}", picks, next_idx, cups);
+        // cups.insert(next_idx, curr);
+        if next_idx < curr_idx {
+            curr_idx += picks.len();
+        }
+
+        for (i, p) in picks.into_iter().enumerate() {
+            cups.insert(next_idx+1+i, p);
+        }
+
+        // println!("{:?} {}", cups, curr_idx);
+        curr_idx = (curr_idx + 1) % cups.len();
+    }
+}
+
+fn p23_move_unsafe(cups: &mut Ring<usize>, n: usize) {
+    let cups_len = cups.len();
+
+    let mut wtf: HashMap<usize, *mut Node<usize>> = Default::default();
+    for item in cups.iter() {
+        wtf.insert(item.val, item as *const _ as *mut _);
+    }
+    // for _ in 0..cups_len {
+    //     cups.move_next();
+    //     unsafe { wtf.insert(*cups.curr(), cups.leak()); }
+    // }
+    // println!("--- {:?}", cups);
+
+    for j in 0..n {
+        if j > 0 && j % 10000 == 0 { eprint!("."); }
+
+        let mut picks = vec![];
+        let mut next_val = *cups.curr();
+        cups.move_next();
+        for _ in 0..3 {
+            picks.push(cups.pop().unwrap());
+        }
+
+        let curr_node = cups.node;
+        let mut next_node = cups.node;
+        loop {
+            if next_val > 1 {
+                next_val -= 1;
+            } else {
+                next_val = cups_len;
+            }
+            if let None = picks.iter().position(|&x| x == next_val) {
+                next_node = *wtf.get(&next_val).unwrap();
+                // for item in cups.iter() {
+                //     if item.val == next_val {
+                //         next_node = item as *const Node<usize> as *mut _; // leak here
+                //         break
+                //     }
+                // }
+                break;
+            }
+        }
+
+        // println!("{:?} {} {:?} {}", picks, next_val, cups, unsafe { (&*next_node).val });
+        unsafe { cups.move_to(next_node); }
+        // println!("--- {:?} {} {:?}", picks, next_val, cups);
+        for item in picks.into_iter() {
+            cups.insert(item);
+            unsafe { wtf.insert(item, cups.leak()); } // removed item has new address ...
+        }
+        unsafe { cups.move_to(curr_node); }
+        // println!(">>>> {:?}", cups);
+    }
+    println!("");
+}
+
+fn p23_move_v2(cups: &mut LinkedList<usize>, n: usize) {
+    let cups_len = cups.len();
+    let mut curr_idx = 0;
+    for j in 0..n {
+        if j % 10000 == 0 { eprint!("."); }
+
+        let mut rest = cups.split_off(curr_idx+1);
+
+        let mut picks = LinkedList::new();
+        let mut next_val = *cups.back().unwrap();
+
+        let took = 3;
+        while picks.len() < 3 {
+            if let Some(v) = rest.pop_front() {
+                picks.push_back(v);
+            } else {
+                picks.push_back(cups.pop_front().unwrap());
+                curr_idx -= 1;
+            }
+        }
+        cups.append(&mut rest);
+
+        let next_idx;
+        loop {
+            if next_val > 1 {
+                next_val -= 1;
+            } else {
+                next_val = cups_len;
+            }
+            if let None = picks.iter().position(|&x| x == next_val) {
+                next_idx = cups.iter().position(|&x| x == next_val).unwrap();
+                break;
+            }
+        }
+        assert_ne!(next_idx, curr_idx);
+        // println!(">>> {:?} {} {:?} {}", picks, next_idx, cups, curr_idx);
+
+        // cups.insert(next_idx, curr);
+        if next_idx < curr_idx {
+            curr_idx += picks.len();
+        }
+
+        let mut rest = cups.split_off(next_idx+1);
+        cups.append(&mut picks);
+        cups.append(&mut rest);
+
+        // println!("{:?} {}", cups, curr_idx);
+        curr_idx = (curr_idx + 1) % cups.len();
+        // println!("{:?} {}", cups, curr_idx);
+    }
+}
+
+pub struct Ring<T> {
+    node: *mut Node<T>,
+    size: usize,
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for Ring<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(".")?;
+        let mut f = f.debug_list();
+
+        let mut curr = self.node;
+        for _ in 0..self.size {
+            f.entry(unsafe { &(&*curr).val });
+            curr = unsafe { (& *curr).next };
+        }
+
+        f.finish()
+    }
+}
+
+pub struct RingIter<'a, T> {
+    curr: *mut Node<T>,
+    left: usize,
+    _ref: &'a Ring<T>
+}
+
+impl<'a, T> Iterator for RingIter<'a, T> {
+    type Item = &'a Node<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.left > 0 {
+            self.left -= 1;
+            let out = self.curr;
+            self.curr = unsafe { (&*self.curr).next };
+            Some(unsafe { &*out })
+        } else {
+            None
+        }
+    }
+}
+
+impl<T: Eq> Ring<T> {
+    pub fn iter_move(&mut self, val: T) -> Option<()> {
+        for item in self.iter() {
+            if item.val == val {
+                let next_node = item as *const Node<T> as *mut _; // leak here
+                unsafe { self.move_to(next_node); }
+                return Some(());
+            }
+        }
+
+        None
+    }
+}
+
+impl<T> Ring<T> {
+    pub fn new(val: T) -> Self {
+        unsafe {
+            let node = Node::new(val);
+            (&mut *node).prev = node;
+            (&mut *node).next = node;
+
+            Self { node, size: 1 }
+        }
+    }
+
+    pub fn iter(&self) -> RingIter<T> {
+        RingIter {
+            curr: self.node,
+            left: self.size,
+            _ref: &self,
+        }
+    }
+
+    pub fn curr(&self) -> &T {
+        &(unsafe { & *(self.node) }).val
+    }
+
+    pub fn move_next(&mut self) {
+        self.node = unsafe { (& *self.node).next };
+    }
+
+    pub fn move_prev(&mut self) {
+        self.node = unsafe { (& *self.node).prev };
+    }
+
+    pub fn insert(&mut self, val: T) {
+        unsafe {
+            let node = Node::new(val);
+
+            let next = (&mut *self.node).next;
+
+            (&mut *self.node).next = node;
+            (&mut *next).prev = node;
+
+            (&mut *node).prev = self.node;
+            (&mut *node).next = next;
+
+            self.node = node;
+        }
+        self.size += 1;
+    }
+
+    pub fn len(&self) -> usize {
+        self.size
+    }
+
+    pub unsafe fn leak(&mut self) -> *mut Node<T> {
+        self.node
+    }
+
+    // node must from self.leak(), and never pop out during leak
+    pub unsafe fn move_to(&mut self, node: *mut Node<T>) {
+        self.node = node;
+    }
+
+    pub fn pop(&mut self) -> Option<T> {
+        if self.size > 1 {
+            unsafe {
+                let prev = (&mut *self.node).prev;
+                let next = (&mut *self.node).next;
+
+                (&mut *prev).next = next;
+                (&mut *next).prev = prev;
+
+                let curr = self.node;
+                self.node = next;
+                self.size -= 1;
+
+                Some(Box::from_raw(curr).val)
+            }
+        } else {
+            None
+        }
+    }
+}
+
+impl<T> Drop for Ring<T> {
+    fn drop(&mut self) {
+        while self.size > 1 {
+            let r = self.pop().unwrap();
+        }
+        unsafe { Box::from_raw(self.node); }
+    }
+}
+
+pub struct Node<T> {
+    val: T,
+    prev: *mut Node<T>,
+    next: *mut Node<T>,
+}
+
+impl<T> Node<T> {
+    pub unsafe fn new(val: T) -> *mut Self {
+        Box::into_raw(Box::new(Self {
+            val,
+            prev: std::ptr::null_mut(),
+            next: std::ptr::null_mut(),
+        }))
+    }
+}
+
+pub fn p23() {
+    // let contents = "389125467";
+    let contents = "186524973";
+
+    // let mut cups: Vec<usize> = contents.chars().map(|c| (c as u8 - 48) as usize).collect();
+
+    // println!("Before {:?}", cups);
+    // p23_move(&mut cups, 100);
+    // println!("After {:?}", cups);
+
+    let mut cups: LinkedList<usize> = contents.chars().map(|c| (c as u8 - 48) as usize).collect();
+    // let w = 10;
+    let w = 1000000;
+    cups.extend((10..w+1).into_iter().collect::<Vec<usize>>());
+
+    // p23_move_v2(&mut cups, w * 10);
+    // println!("{:?}", cups);
+    // let idx = cups.iter().position(|&x| x == 1).unwrap();
+    // let mut r = cups.split_off(idx+1);
+    // let r1 = r.pop_front().unwrap();
+    // let r2 = r.pop_front().unwrap();
+    // println!("{} {} ={}", r1, r2, r1 * r2);
+
+    let mut nums: Vec<usize> = contents.chars().map(|c| (c as u8 - 48) as usize).collect();
+    // let w = 9; let turns = 100;
+    let w = 1000000; let turns = 10000000;
+    nums.extend((10..w+1).into_iter().collect::<Vec<usize>>());
+    let first = nums.remove(0);
+    let mut cups: Ring<usize> = Ring::new(first);
+    for i in nums.into_iter() {
+        cups.insert(i);
+    }
+    cups.iter_move(first).unwrap();
+    println!("Before move {:?}", cups.iter().take(100).map(|r| r.val).collect::<Vec<_>>());
+    let len = cups.len();
+    p23_move_unsafe(&mut cups, turns);
+    cups.iter_move(1).unwrap();
+    let r = cups.iter().take(100).map(|r| r.val).collect::<Vec<_>>();
+    println!("After move {:?} => {}", r, r[1]*r[2]);
+}
+
+pub fn p24() {
+
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ring_test() {
+        let mut r = Ring::new(42);
+        r.insert(0);
+        r.insert(1);
+        r.insert(2);
+        println!("--> {:?}", r);
+        r.move_next();
+        println!("after move next {:?}", r);
+        r.move_prev();
+        println!("after move prev {:?}", r);
+
+        r.iter_move(0);
+        println!("after iter_move to 0: {:?}", r);
+
+        println!("pop out {:?}", r.pop());
+        println!("--> {:?}", r);
+        println!("pop out {:?}", r.pop());
+        println!("--> {:?}", r);
+    }
+}
+

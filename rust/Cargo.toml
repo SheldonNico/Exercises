@@ -12,3 +12,4 @@ name = "leetcode"
 [dependencies]
 regex = "1"
 nom = "6.0.1"
+rand = "0.8.3"
