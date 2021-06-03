@@ -2833,8 +2833,144 @@ pub fn p23() {
     println!("After move {:?} => {}", r, r[1]*r[2]);
 }
 
-pub fn p24() {
+#[derive(Debug, Clone, Copy)]
+pub enum P24Dir {
+    E,
+    SE,
+    SW,
+    W,
+    NW,
+    NE
+}
 
+impl P24Dir {
+    pub fn parse(input: &str) -> nom::IResult<&str, Self> {
+        nom::branch::alt((
+                nom::combinator::value(Self::E, nom::bytes::complete::tag_no_case("e")),
+                nom::combinator::value(Self::SE, nom::bytes::complete::tag_no_case("se")),
+                nom::combinator::value(Self::SW, nom::bytes::complete::tag_no_case("sw")),
+                nom::combinator::value(Self::W, nom::bytes::complete::tag_no_case("w")),
+                nom::combinator::value(Self::NW, nom::bytes::complete::tag_no_case("nw")),
+                nom::combinator::value(Self::NE, nom::bytes::complete::tag_no_case("ne")),
+        ))(input)
+    }
+}
+
+fn p24_move((sx, sy): (isize, isize), dir: P24Dir) -> (isize, isize) {
+    match dir {
+        P24Dir::E => (sx+2, sy),
+        P24Dir::W => (sx-2, sy),
+        P24Dir::NE => (sx+1, sy+1),
+        P24Dir::SE => (sx+1, sy-1),
+        P24Dir::NW => (sx-1, sy+1),
+        P24Dir::SW => (sx-1, sy-1),
+    }
+}
+
+/// rules:
+/// - [easy, O(n)] Any black tile with zero or more than 2 black tiles immediately adjacent to it is flipped to white.
+/// - Any white tile with exactly 2 black tiles immediately adjacent to it is flipped to black.
+/// Day 1: 15
+/// Day 2: 12
+/// Day 3: 25
+/// Day 4: 14
+/// Day 5: 23
+/// Day 6: 28
+/// Day 7: 41
+/// Day 8: 37
+/// Day 9: 49
+/// Day 10: 37
+///
+/// Day 20: 132
+/// Day 30: 259
+/// Day 40: 406
+/// Day 50: 566
+/// Day 60: 788
+/// Day 70: 1106
+/// Day 80: 1373
+/// Day 90: 1844
+/// Day 100: 2208
+pub fn p24_sim(is_black: Vec<(isize, isize)>) -> Vec<(isize, isize)> {
+    let mut white: HashMap<(isize, isize), usize> = HashMap::default();
+    let mut black: HashMap<(isize, isize), usize> = is_black.iter().map(|s| (*s, 0)).collect();
+    let mut out = vec![];
+
+    for curr in is_black.into_iter() {
+        for &dir in [
+            P24Dir::E, P24Dir::W, P24Dir::NE, P24Dir::SE, P24Dir::NW, P24Dir::SW
+        ].iter() {
+            let next = p24_move(curr, dir);
+
+            if let Some(c) = black.get_mut(&next) {
+                *c += 1;
+            } else {
+                *white.entry(next).or_default() += 1;
+            }
+        }
+    }
+
+    for (point, count) in white.into_iter() {
+        if count == 2 {
+            out.push(point);
+        }
+    }
+    for (point, count) in black.into_iter() {
+        if count == 0 || count > 2 {
+        } else {
+            out.push(point);
+        }
+    }
+    out
+}
+
+pub fn p24() {
+    let contents = r#"sesenwnenenewseeswwswswwnenewsewsw
+neeenesenwnwwswnenewnwwsewnenwseswesw
+seswneswswsenwwnwse
+nwnwneseeswswnenewneswwnewseswneseene
+swweswneswnenwsewnwneneseenw
+eesenwseswswnenwswnwnwsewwnwsene
+sewnenenenesenwsewnenwwwse
+wenwwweseeeweswwwnwwe
+wsweesenenewnwwnwsenewsenwwsesesenwne
+neeswseenwwswnwswswnw
+nenwswwsewswnenenewsenwsenwnesesenew
+enewnwewneswsewnwswenweswnenwsenwsw
+sweneswneswneneenwnewenewwneswswnese
+swwesenesewenwneswnwwneseswwne
+enesenwswwswneneswsenwnewswseenwsese
+wnwnesenesenenwwnenwsewesewsesesew
+nenewswnwewswnenesenwnesewesw
+eneswnwswnwsenenwnwnwwseeswneewsenese
+neswnwewnwnwseenwseesewsenwsweewe
+wseweeenwnesenwwwswnew"#.to_string();
+
+    let contents = std::fs::read_to_string("./assets/adv24.txt").unwrap();
+
+    let res: Vec<Vec<P24Dir>> = contents.lines().map(|l| nom::multi::many1(P24Dir::parse)(l).unwrap().1).collect();
+
+    let mut to: HashMap<(isize, isize), usize> = HashMap::default();
+    for dirs in res.iter() {
+        let mut start = (0, 0);
+        for &dir in dirs.iter() {
+            start = p24_move(start, dir);
+        }
+        // println!("{:?}", start);
+        let to = to.entry(start).or_default();
+        *to += 1;
+    }
+    let mut count = 0;
+    for c in to.values() {
+        if c % 2 != 0 { count += 1; }
+    }
+    println!("{} => {:?}", count, to);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    let mut is_black: Vec<_> = to.into_iter().filter(|(s, c)| c % 2 != 0).map(|(s, c)| s).collect();
+    for _ in 0..100 {
+        is_black = p24_sim(is_black);
+        println!("{}", is_black.len());
+    }
 }
 
 
