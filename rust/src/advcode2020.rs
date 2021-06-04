@@ -1267,8 +1267,6 @@ pub fn p13() {
     let (idx, left) = freqs.iter().map(|f| f - arrived % f).enumerate().min_by_key(|(_, v)| *v).unwrap();
     eprintln!("{}", freqs[idx] * left);
 
-    let mut count = 0;
-
     let freqs: Vec<_> = params[1].split(",").enumerate().filter_map(|(i, x)| {
         match x {
             "x" => None,
@@ -2158,69 +2156,6 @@ impl Tile {
     }
 }
 
-/// old solution which not work.
-///
-/// ````
-/// let tiles: Vec<_> = contents.split("\n\n").map(|s| Tile::parse_with_id(s).unwrap().1).collect();
-///
-/// // let mut lefts: HashMap<usize, Vec<usize>> = HashMap::new(); let mut lefts_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
-/// // let mut rights: HashMap<usize, Vec<usize>> = HashMap::new(); let mut rights_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
-/// // let mut tops: HashMap<usize, Vec<usize>> = HashMap::new(); let mut tops_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
-/// // let mut bottoms: HashMap<usize, Vec<usize>> = HashMap::new(); let mut bottoms_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
-/// // for tile in tiles.iter() {
-/// //     lefts.insert(tile.id, tile.left_border()); lefts_to.entry(tile.left_border()).or_default().push(tile.id);
-/// //     rights.insert(tile.id, tile.right_border()); rights_to.entry(tile.right_border()).or_default().push(tile.id);
-/// //     tops.insert(tile.id, tile.top_border()); tops_to.entry(tile.top_border()).or_default().push(tile.id);
-/// //     bottoms.insert(tile.id, tile.bottom_border()); bottoms_to.entry(tile.bottom_border()).or_default().push(tile.id);
-/// // }
-///
-/// // let all: Vec<_> = tiles.iter().map(|t| t.id).collect();
-/// // let mut lefts_match: HashMap<usize, Vec<usize>> = all.iter().map(|i| (*i, all.clone())).collect();
-/// // eprintln!("{:?}, {:?}", lefts, rights);
-/// // for _ in 0..1 {
-/// //     for (lid, target) in lefts_match.iter_mut() {
-/// //         let left = &lefts[lid];
-/// //         let r: Vec<_> = target.iter().filter(|r| left == &rights[r]).collect();
-/// //         eprintln!("{} -> {:?}", lid, r);
-/// //     }
-/// // }
-///
-/// let borders: HashMap<_, _> = tiles.iter().map(|t| {
-///     (t.id, (t.top_border(), t.right_border(), t.bottom_border(), t.left_border()))
-/// }).collect();
-///
-/// let mut graph: HashMap<usize, Vec<usize>> = Default::default();
-/// for tile in tiles.iter() {
-///     graph.insert(tile.id, vec![]);
-///     for tile_ in tiles.iter() {
-///         if tile.id == tile_.id { continue; }
-///
-///     }
-///
-/// }
-///
-/// eprintln!("{:?}", graph);
-///
-///
-/// // let mut possi: HashMap<_, _> = HashMap::new();
-/// // for tile in tiles.iter() {
-/// //     let left = tile.left_border(); let mut l = vec![];
-/// //     let right = tile.right_border(); let mut r = vec![];
-/// //     let top = tile.top_border(); let mut t = vec![];
-/// //     let bottom = tile.bottom_border(); let mut b = vec![];
-///
-/// //     for tile_t in tiles.iter() {
-/// //         if tile_t.id == tile.id { continue; }
-/// //         if left == tile_t.right_border() { l.push(tile_t.id); }
-/// //         if right == tile_t.left_border() { r.push(tile_t.id); }
-/// //         if top == tile_t.bottom_border() { t.push(tile_t.id); }
-/// //         if bottom == tile_t.top_border() { b.push(tile_t.id); }
-/// //     }
-/// //     possi.insert(tile.id, (t, r, b, l));
-/// // }
-///
-/// // println!("{:?}", possi);
-/// ```
 pub fn p20() {
     let contents = r#"Tile 2311:
 ..##.#..#.
@@ -2330,7 +2265,7 @@ Tile 3079:
 ..#.......
 ..#.###..."#.to_string();
 
-    // let contents = std::fs::read_to_string("./assets/adv20.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv20.txt").unwrap();
     let mut parser = nom::multi::separated_list0::<_, _, _, nom::error::Error<_>, _, _>(
         nom::multi::many1(nom::character::complete::newline),
         nom::combinator::map(
@@ -2358,33 +2293,36 @@ Tile 3079:
     let (_, tiles): (_, Vec<(usize, Vec<Vec<bool>>)>) = parser(&contents).unwrap();
     let mut borders: HashMap<(usize, usize), (usize, usize)> = Default::default();
     for (id, detail) in tiles.iter() {
-        borders.insert((*id, 0), (p20_border_to_usize(&detail[0]), p20_border_to_usize(&detail[0].iter().rev().map(|v| *v).collect())));
-        borders.insert((*id, 1), (p20_border_to_usize(&detail.iter().map(|d| d[0]).collect()), p20_border_to_usize(&detail.iter().map(|d| d[0]).rev().collect())));
-        borders.insert((*id, 2), (p20_border_to_usize(&detail.iter().map(|d| d[9]).collect()), p20_border_to_usize(&detail.iter().map(|d| d[9]).rev().collect())));
-        borders.insert((*id, 3), (p20_border_to_usize(&detail[9]), p20_border_to_usize(&detail[9].iter().rev().map(|v| *v).collect())));
+        borders.insert((*id, 0), p20_border_to_usize_dual(&detail[0].iter().rev().map(|v| *v).collect()));
+        borders.insert((*id, 1), p20_border_to_usize_dual(&detail.iter().map(|d| d[0]).collect()));
+        borders.insert((*id, 2), p20_border_to_usize_dual(&detail[9]));
+        borders.insert((*id, 3), p20_border_to_usize_dual(&detail.iter().map(|d| d[9]).rev().collect()));
     }
     println!("tiles found: {}, borders: {}", tiles.len(), borders.len());
-    let mut guess: HashMap<(usize, usize), HashSet<(usize, usize)>> = Default::default();
+    let mut guess: HashMap<(usize, usize), HashSet<(usize, usize, bool)>> = Default::default();
     for (&bid, &(b, _)) in borders.iter() {
         for (&mid, &(b1, b2)) in borders.iter() {
-            if mid != bid && (b == b1 || b == b2) {
-                guess.entry(bid).or_default().insert(mid);
+            if bid.0 == 1489 && mid.0 == 1427 {  eprintln!(">>> {} {:?} {} {}", b, mid, b1, b2); }
+            if mid != bid {
+                if b == b1 {
+                    guess.entry(bid).or_default().insert((mid.0, mid.1, false));
+                } else if b == b2 {
+                    guess.entry(bid).or_default().insert((mid.0, mid.1, true));
+                }
             }
         }
         // println!("{:?} {:?}", bid, guess.get(&bid).unwrap());
     }
 
-    let mut determined: HashMap<(usize, usize), (usize, usize)> = Default::default();
-
+    let mut determined: HashMap<(usize, usize), (usize, usize, bool)> = Default::default();
     println!("{:?}", guess);
     // while guess.len() > 0
     for _ in 0.. 10 {
         for (&gid, gs) in guess.iter_mut() {
             if gs.len() == 1 {
-                println!("found one...");
                 determined.insert(gid, *gs.iter().nth(0).unwrap());
             } else {
-                gs.retain(|g| !determined.contains_key(g));
+                gs.retain(|&(i, d, _)| determined.keys().position(|x| (i, d) == *x).is_none());
             }
         }
 
@@ -2417,6 +2355,7 @@ Tile 3079:
             break;
         }
     }
+
     // TODO
     assert_ne!(0, start);
     let mut faces = vec![];
@@ -2426,14 +2365,257 @@ Tile 3079:
         }
     }
 
-    println!("Starting from {} {:?}", start, faces);
-    let start = 3079;
-    let faces = vec![1, 3];
-    // let position: Vec<Vec<(usize, usize, usize, usize, usize)>> = vec![];
+    let n = (tiles.len() as f64).sqrt() as usize;
+    println!(">>> Starting from {} {:?} {}", start, faces, n);
 
+    // let start = 1951;
+    // let faces = vec![3, 0];
 
+    // let start = 1171;
+    // let faces = vec![0, 3];
+
+    println!("Starting from {} {:?} {}", start, faces, n);
+    let mut positions = vec![vec![(0, (0, 0)); n]; n];
+    let mut map = vec![vec![vec![]; n]; n];
+    positions[0][0] = (start, (faces[0], faces[1])); // tid, (dir_left, dir_left)
+
+    let (dr_fliped, _) = p20_is_flip(faces[0], faces[1], 3, 2);
+    let (r, _, _, nb, nr) = p20_rotate(tiles.get(&start).unwrap().clone(), faces[0], 3, dr_fliped);
+    map[0][0] = r;
+
+    for i in 0..n {
+        if i > 0 {
+            let (up_id, (up_dr, up_db)) = positions[i-1][0];
+            let (_, db_fliped) = p20_is_flip(up_dr, up_db, 3, 2);
+            let &(next_id, next_d, n_fliped) = determined.get(&(up_id, up_db)).unwrap();
+            print!("{} {} -> {}, {}, {}, {} ===>", up_id, up_db, next_id, next_d, n_fliped, db_fliped);
+
+            let (r, _, _, nb, nr) = p20_rotate(tiles.get(&next_id).unwrap().clone(), next_d, 0, !(n_fliped ^ db_fliped));
+            map[i][0] = r;
+            print!("{}", nb);
+            positions[i][0] = (next_id, (nr, nb));
+        }
+        for j in 1..n {
+            let (left_id, (left_dr, left_db)) = positions[i][j-1];
+            let (dr_fliped, _) = p20_is_flip(left_dr, left_db, 3, 2);
+            print!("({}@{} ", left_id, left_dr);
+            let &(next_id, next_d, n_fliped) = determined.get(&(left_id, left_dr)).unwrap();
+
+            print!(">{} {}<", n_fliped, dr_fliped);
+            print!("{} {} {})", next_id, next_d, !(n_fliped ^ dr_fliped));
+            let (r, _, _, nb, nr) = p20_rotate(tiles.get(&next_id).unwrap().clone(), next_d, 1, !(n_fliped ^ dr_fliped));
+            map[i][j] = r;
+            positions[i][j] = (next_id, (nr, nb));
+        }
+        println!("wtf");
+    }
+    println!("{:?}", positions);
+
+    const N: usize = 8;
+
+    let mut out = vec![];
+    for rows in map.into_iter() {
+        let mut this_row = vec![vec![]; N];
+        for mat in rows.into_iter() {
+            let s = (10-N) / 2;
+            for (i, r) in mat.into_iter().skip(s).take(N).enumerate() {
+                this_row[i].extend_from_slice(&r[s..s+N]);
+            }
+        }
+
+        out.append(&mut this_row);
+    }
+
+    p20_display(&out, N);
+
+    let monster = "                  # \n#    ##    ##    ###\n #  #  #  #  #  #   ".to_string();
+
+    let mut parser_monster = nom::multi::separated_list1::<_, _, _, nom::error::Error<_>, _, _>(
+        nom::character::complete::newline,
+        nom::multi::many0(
+            nom::branch::alt((
+                    nom::combinator::value(true, nom::character::complete::char('#')),
+                    nom::combinator::value(false, nom::character::complete::char(' ')),
+            )),
+        )
+    );
+    let (_, monster): (_, Vec<Vec<bool>>) = parser_monster(&*monster).unwrap();
+    println!("{:?}", monster);
+
+    let h = monster.len();
+    let w = monster.iter().map(|r| {println!("{}", r.len());  r.len()}).max().unwrap();
+    let n = out.len();
+    let out_len: usize = out.iter().map(|s| s.iter().map(|&r| if r { 1 } else { 0 }).sum::<usize>()).sum();
+    let monster_len: usize = monster.iter().map(|s| s.iter().map(|&r| if r { 1 } else { 0 }).sum::<usize>()).sum();
+    println!(">>>> Start working {} {} => {}x{} => {} {}", h, w, n, n, out_len, monster_len);
+
+    for _ in 0..4 {
+        for out in [
+            out.clone(),
+            p20_rotate_center_h(out.clone()),
+            // p20_rotate_center_v(out.clone()),
+            // p20_rotate_center_v(p20_rotate_center_h(out.clone())),
+        ].iter() {
+            let mut count = 0;
+            let mut last = (0, 0);
+            for c in 0..n-h {
+                for r in 0..n-w {
+                    // if last != (0, 0) && c < last.0+h && r < last.1+w { continue; }
+                    if p20_check_monster(c, r, h, w, &out, &monster) {
+                        count += 1;
+                        last = (c, r);
+                        println!("found one@{}x{}", c, r);
+                    }
+                }
+            }
+            if count > 0 {
+                p20_display(&out, 8);
+                println!("");
+                println!(">>> {}", out_len - count * monster_len);
+            }
+        }
+
+        out = p20_rotate_counter_clockwise(out);
+    }
 }
 
+fn p20_check_monster(sy: usize, sx: usize, h: usize, w: usize, out: &Vec<Vec<bool>>, monster: &Vec<Vec<bool>>) -> bool {
+    for i in 0..h {
+        for j in 0..w {
+            let image = out[sy+i][sx+j];
+            let exist = monster[i][j];
+
+            if exist && !image {
+                // println!(">>> {} {} => {} {}", sy, sx, i, j);
+                return false;
+            }
+        }
+    }
+    true
+}
+
+fn p20_display(out: &Vec<Vec<bool>>, l: usize) {
+    let n = out.len();
+    for i in 0..n {
+        if i % l == 0 { println!("") }
+        for j in 0..n {
+            if j % l == 0 { print!(" "); }
+            if out[i][j] {
+                print!("#");
+            } else {
+                print!(".");
+            }
+        }
+        println!("");
+    }
+}
+
+fn p20_counter_clockwise(s: usize, e: usize) -> bool {
+    match (s, e) {
+        (0, 1) | (1, 2) | (2, 3) | (3, 0) => true,
+        _ => false,
+    }
+}
+
+fn p20_is_flip(s0: usize, s1: usize, e0: usize, e1: usize) -> (bool, bool) {
+    if p20_counter_clockwise(s1, s0) && p20_counter_clockwise(e1, e0) {
+        (false, false)
+    } else {
+        (true, true)
+    }
+}
+
+fn p20_rotate(mut mat: Vec<Vec<bool>>, from: usize, to: usize, mut fliped: bool) -> (Vec<Vec<bool>>, usize, usize, usize, usize) {
+    let mut out = match (from, to) {
+        (0, 0) | (1, 1) | (2, 2) | (3, 3) => {
+            (0, 1, 2, 3)
+        }
+        (0, 1) | (1, 2) | (2, 3) | (3, 0) => {
+            mat = p20_rotate_counter_clockwise(mat);
+            (3, 0, 1, 2)
+            // (1, 2, 3, 0)
+        }
+        (0, 2) | (2, 0) | (1, 3) | (3, 1) => {
+            mat = p20_rotate_counter_clockwise(p20_rotate_counter_clockwise(mat));
+            // fliped = !fliped;
+            (2, 3, 0, 1)
+        }
+        (0, 3) | (3, 2) | (2, 1) | (1, 0) => {
+            mat = p20_rotate_counter_clockwise(p20_rotate_counter_clockwise(p20_rotate_counter_clockwise(mat)));
+            (1, 2, 3, 0)
+            // (3, 0, 1, 2)
+        }
+        _ => unreachable!(),
+    };
+
+    if fliped {
+        match to {
+            0 | 2 => {
+                mat = p20_rotate_center_h(mat);
+                out.1 = p20_dir_opp(out.1);
+                out.3 = p20_dir_opp(out.3);
+            },
+            1 | 3 => {
+                mat = p20_rotate_center_v(mat);
+                out.0 = p20_dir_opp(out.0);
+                out.2 = p20_dir_opp(out.2);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    (mat, out.0, out.1, out.2, out.3)
+}
+
+fn p20_rotate_counter_clockwise(mat: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
+    let n = mat.len();
+    let mut out = vec![vec![false; n]; n];
+    for i in 0..n {
+        for j in 0..n {
+            out[i][j] = mat[j][n-1-i]; // mat[n-1-j][i]
+        }
+    }
+
+    out
+}
+
+fn p20_rotate_center_h(mat: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
+    let n = mat.len();
+    let mut out = vec![vec![false; n]; n];
+    for i in 0..n {
+        for j in 0..n {
+            out[i][j] = mat[i][n-1-j]
+        }
+    }
+
+    out
+}
+
+fn p20_rotate_center_v(mat: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
+    let n = mat.len();
+    let mut out = vec![vec![false; n]; n];
+    for i in 0..n {
+        for j in 0..n {
+            out[i][j] = mat[n-1-i][j]
+        }
+    }
+
+    out
+}
+
+fn p20_dir_opp(o: usize) -> usize {
+    match o {
+        0 => 2,
+        1 => 3,
+        2 => 0,
+        3 => 1,
+        _ => unreachable!()
+    }
+}
+
+fn p20_border_to_usize_dual(border: &Vec<bool>) -> (usize, usize) {
+    (p20_border_to_usize(border), p20_border_to_usize(&border.iter().rev().map(|b| *b).collect()))
+}
 
 fn p20_border_to_usize(border: &Vec<bool>) -> usize {
     let mut out = 0; let mut base = 1;
