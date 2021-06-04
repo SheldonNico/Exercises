@@ -1210,20 +1210,48 @@ F11"#;
     eprintln!("{:?} => {}", start, start.0.abs() + start.1.abs());
 }
 
+fn p13_mod_inverse(num: isize, modular: isize) -> isize {
+    let mut count = 1; let mut curr = num;
+    loop {
+        if curr % modular == 1 {
+            return count;
+        }
+        curr += num;
+        count += 1;
+    }
+}
+
+fn p13_chinese_theorm(mods: &Vec<(isize, isize)>) -> isize {
+    let mut M = 1;
+    for (r, m) in mods.iter() {
+        M *= m;
+    }
+
+    let mut s = 0;
+    for &(ri, mi) in mods.iter() {
+        let Mi = M / mi;
+        let ti = p13_mod_inverse(Mi, mi);
+        s += ri * ti * Mi;
+    }
+
+    println!(">>> {} {}", M, s);
+    s - (s / M) * M
+}
+
 pub fn p13() {
     let contents = r#"939
 7,13,x,x,59,x,31,19"#;
 
-    // let contents = std::fs::read_to_string("./assets/adv13.txt").unwrap();
+//     let contents = r#"213
+// 13,x,x,41,x,x,x,37,x,x,x,x,x,659,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,19,x,x,x,23,x,x,x,x,x,29,x,409,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,17"#;
 
-    let contents = r#"213
-13,x,x,41,x,x,x,37,x,x,x,x,x,659,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,19,x,x,x,23,x,x,x,x,x,29,x,409,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,17"#;
+//     let contents = r#"213
+// 17,x,13,19"#;
 
-    let contents = r#"213
-17,x,13,19"#;
+//     let contents = r#"213
+// 67,7,x,59,61"#;
 
-    let contents = r#"213
-67,7,x,59,61"#;
+    let contents = std::fs::read_to_string("./assets/adv13.txt").unwrap();
 
     let params: Vec<_> = contents.lines().collect();
     let arrived: usize = params[0].parse().unwrap();
@@ -1244,46 +1272,21 @@ pub fn p13() {
     let freqs: Vec<_> = params[1].split(",").enumerate().filter_map(|(i, x)| {
         match x {
             "x" => None,
-            _   => Some((i, x.parse::<usize>().unwrap()))
+            _   => {
+                let x = x.parse::<isize>().unwrap();
+                let mut i = (-(i as isize)) % x;
+                if i < 0 { i += x; }
+                Some((i, x))
+            }
         }
     }).collect();
 
-    let (max_res, max_freq) = freqs.iter().max_by_key(|(_, m)| *m).unwrap();
-    let mut number = max_freq - max_res;
-    eprintln!("{:?} {}", freqs, max_freq);
-    loop {
-        let mut satisfied = true;
-        for (m, num) in freqs.iter() {
-            if (number + *m) % num != 0 {
-                satisfied = false;
-                break;
-            }
-        }
-        if satisfied {
-            eprintln!(">>> {:?}", number);
-            break;
-        }
-        number = number + max_freq;
-    }
+    println!("{:?}", freqs);
 
-    eprintln!("----------------------");
-    let mut number = 0;
-    loop {
-        let mut target = number;
-        for (m, num) in freqs.iter() {
-            if (target + *m) % num != 0 {
-                // eprintln!("{} {} {} {}", target, num, *m, (target / num + 1) * num + num - *m);
-                target = target.max((target / num + 1) * num + num - *m);
-            }
-        }
-
-        if number == target {
-            eprintln!(">>> {:?}", number);
-            break;
-        }
-        number = target;
-    }
-
+    println!("{}", p13_mod_inverse(3, 11));
+    println!("{}", (-27) % 13 + 13);
+    println!("{}", p13_chinese_theorm(&vec![(2, 3), (3, 5), (2, 7)]));
+    println!("{}", p13_chinese_theorm(&freqs));
 }
 
 
@@ -1891,38 +1894,32 @@ pub fn p18() {
     eprintln!("{:?}", exprs.into_iter().sum::<i64>());
 }
 
-#[derive(Debug, Clone)]
-pub enum Rule {
-    Any(Vec<Rule>),
-    Uniq(String),
-    Seq(Vec<usize>),
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum P19Rule {
+    Any(Vec<Vec<usize>>),
+    Unique(String),
 }
 
-impl Rule {
+impl P19Rule {
     fn parse_uniq(input: &str) -> nom::IResult<&str, Self> {
         let (input, res) = nom::sequence::delimited(
             nom::bytes::complete::tag("\""),
             nom::character::complete::alpha0,
             nom::bytes::complete::tag("\""),
         )(input)?;
-        Ok((input, Self::Uniq(res.to_string())))
+        Ok((input, Self::Unique(res.to_string())))
     }
 
     fn parse_any(input: &str) -> nom::IResult<&str, Self> {
-        let (input, res) = nom::multi::separated_list1(
+        let (input, res) = nom::multi::separated_list0(
             nom::bytes::complete::tag(" | "),
-            Self::parse_seq
+            nom::multi::separated_list1(
+                nom::character::complete::space1,
+                nom::combinator::map_res(nom::character::complete::digit1, |s: &str| s.parse::<usize>())
+            )
         )(input)?;
 
         Ok((input, Self::Any(res)))
-    }
-
-    fn parse_seq(input: &str) -> nom::IResult<&str, Self> {
-        let (input, res) = nom::multi::separated_list1(
-            nom::character::complete::space1,
-            nom::combinator::map_res(nom::character::complete::digit1, |s: &str| s.parse::<usize>())
-        )(input)?;
-        Ok((input, Self::Seq(res)))
     }
 
     fn parse(input: &str) -> nom::IResult<&str, (usize, Self)> {
@@ -1936,7 +1933,6 @@ impl Rule {
         let (input, res) = nom::branch::alt((
                 Self::parse_uniq,
                 Self::parse_any,
-                Self::parse_seq,
         ))(input)?;
 
         if input.len() != 0 {
@@ -1945,72 +1941,33 @@ impl Rule {
 
         Ok((input, (id, res)))
     }
-
-    // pub fn valid<'s>(&self, rules: &HashMap<usize, Rule>, input: &'s str) -> (&'s str, bool) {
-    // }
-
-    pub fn valid<'s>(&self, rules: &HashMap<usize, Rule>, input: &'s str) -> (&'s str, bool) {
-        eprintln!("{:?} - {}", self, input);
-        match self {
-            Self::Any(rs) => {
-                for r in rs.iter() {
-                    let (remain, is_valid) = r.valid(rules, input);
-                    if is_valid {
-                        return (remain, true);
-                    }
-                }
-                return (input, false);
-            },
-            Self::Uniq(res) => {
-                if input.starts_with(res) {
-                    return (&input[res.len()..], true)
-                } else {
-                    return (input, false)
-                }
-            },
-            Self::Seq(rs) => {
-                let mut remain = input;
-                for rid in rs.iter() {
-                    if let Some(r) = rules.get(rid) {
-                        let (res, is_valid) = r.valid(rules, remain);
-                        if !is_valid {
-                            return (input, false);
-                        }
-                        remain = res;
-                    } else {
-                        return (input, false);
-                    }
-                }
-                return (remain, true);
-            }
-        }
-    }
-
-    // pub fn valid_all<'s>(&self, rules: &HashMap<usize, Rule>, input: &'s str) -> bool {
-    //     match self {
-    //         Self::Uniq(res) => {
-    //             return res == input;
-    //         },
-    //         Self::Seq(rs) => {
-    //             let mut input = input;
-    //             for rid in rs.iter() {
-    //                 if let Some(r) = rules.get(rid) {
-    //                     for i in
-    //                     let is_valid = r.valid_all(rules, remain);
-    //                 }
-    //             }
-
-
-    //         }
-    //     }
-    // }
 }
 
-pub fn valid_rule(rules: &HashMap<usize, Rule>, input: &str) -> bool {
-    let r = rules.get(&0).unwrap();
-    eprintln!(">>>> {:?}", r);
-    let (input, res) = r.valid(rules, input);
-    input.len() == 0 && res
+fn p19_valid(mut rest: Vec<usize>, rules: &HashMap<usize, P19Rule>, input: &str) -> bool {
+    if rest.len() == 0 { return input.len() == 0; }
+    if rest.len() > input.len() { return false; }
+    let rule: usize = rest.remove(0);
+
+    let r = rules.get(&rule).unwrap();
+    match r {
+        P19Rule::Unique(prefix) => {
+            if input.starts_with(prefix) {
+                return p19_valid(rest, rules, &input[prefix.len()..])
+            } else {
+                return false;
+            }
+        },
+        P19Rule::Any(seqs) => {
+            for pattern in seqs.iter() {
+                let mut next = pattern.clone();
+                next.extend_from_slice(&rest);
+                if p19_valid(next, rules, input) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }
 
 pub fn p19() {
@@ -2027,31 +1984,75 @@ abbbab
 aaabbb
 aaaabbb"#;
 
-    // let contents = std::fs::read_to_string("./assets/adv19.txt").unwrap();
+    let contents = r#"42: 9 14 | 10 1
+9: 14 27 | 1 26
+10: 23 14 | 28 1
+1: "a"
+11: 42 31
+5: 1 14 | 15 1
+19: 14 1 | 14 14
+12: 24 14 | 19 1
+16: 15 1 | 14 14
+31: 14 17 | 1 13
+6: 14 14 | 1 14
+2: 1 24 | 14 4
+0: 8 11
+13: 14 3 | 1 12
+15: 1 | 14
+17: 14 2 | 1 7
+23: 25 1 | 22 14
+28: 16 1
+4: 1 1
+20: 14 14 | 1 15
+3: 5 14 | 16 1
+27: 1 6 | 14 18
+14: "b"
+21: 14 1 | 1 14
+25: 1 1 | 1 14
+22: 14 14
+8: 42
+26: 14 22 | 1 20
+18: 15 15
+7: 14 5 | 1 21
+24: 14 1
 
-    let contents = r#"0: 42 31 | 42 0 31
-42: "a"
-31: "b"
+abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
+bbabbbbaabaabba
+babbbbaabbbbbabbbbbbaabaaabaaa
+aaabbbbbbaaaabaababaabababbabaaabbababababaaa
+bbbbbbbaaaabbbbaaabbabaaa
+bbbababbbbaaaaaaaabbababaaababaabab
+ababaaaaaabaaab
+ababaaaaabbbaba
+baabbaaaabbaaaababbaababb
+abbbbabbbbaaaababbbbbbaaaababb
+aaaaabbaabaaaaababaa
+aaaabbaaaabbaaa
+aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
+babaaabbbaaabaababbaabababaaab
+aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"#;
 
-aabb"#;
+    let contents = std::fs::read_to_string("./assets/adv19.txt").unwrap();
 
     // let contents = contents.replace("8: 42", "8: 42 | 42 8");
     // let contents = contents.replace("11: 42 31", "11: 42 31 | 42 11 31");
 
     let contents_s: Vec<_> = contents.split("\n\n").collect();
     assert_eq!(contents_s.len(), 2);
-    let rules: HashMap<usize, Rule> = contents_s[0]
+
+    let rules: HashMap<usize, P19Rule> = contents_s[0]
         .split("\n")
-        .map(|s| Rule::parse(s).unwrap().1)
+        .map(|s| { let s = P19Rule::parse(s).unwrap().1; s })
         .collect();
 
-    // eprintln!("{:?}", rules);
+    let r = rules.get(&0).unwrap();
     let out: Vec<_> = contents_s[1]
         .split("\n")
-        .filter(|s| valid_rule(&rules, s))
+        .filter(|s| p19_valid(vec![0], &rules, s))
         .collect();
     eprintln!("{:?}", out);
     eprintln!("{:?}", out.len());
+
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -2157,7 +2158,69 @@ impl Tile {
     }
 }
 
-// TODO: too difficult for me now.
+/// old solution which not work.
+///
+/// ````
+/// let tiles: Vec<_> = contents.split("\n\n").map(|s| Tile::parse_with_id(s).unwrap().1).collect();
+///
+/// // let mut lefts: HashMap<usize, Vec<usize>> = HashMap::new(); let mut lefts_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
+/// // let mut rights: HashMap<usize, Vec<usize>> = HashMap::new(); let mut rights_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
+/// // let mut tops: HashMap<usize, Vec<usize>> = HashMap::new(); let mut tops_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
+/// // let mut bottoms: HashMap<usize, Vec<usize>> = HashMap::new(); let mut bottoms_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
+/// // for tile in tiles.iter() {
+/// //     lefts.insert(tile.id, tile.left_border()); lefts_to.entry(tile.left_border()).or_default().push(tile.id);
+/// //     rights.insert(tile.id, tile.right_border()); rights_to.entry(tile.right_border()).or_default().push(tile.id);
+/// //     tops.insert(tile.id, tile.top_border()); tops_to.entry(tile.top_border()).or_default().push(tile.id);
+/// //     bottoms.insert(tile.id, tile.bottom_border()); bottoms_to.entry(tile.bottom_border()).or_default().push(tile.id);
+/// // }
+///
+/// // let all: Vec<_> = tiles.iter().map(|t| t.id).collect();
+/// // let mut lefts_match: HashMap<usize, Vec<usize>> = all.iter().map(|i| (*i, all.clone())).collect();
+/// // eprintln!("{:?}, {:?}", lefts, rights);
+/// // for _ in 0..1 {
+/// //     for (lid, target) in lefts_match.iter_mut() {
+/// //         let left = &lefts[lid];
+/// //         let r: Vec<_> = target.iter().filter(|r| left == &rights[r]).collect();
+/// //         eprintln!("{} -> {:?}", lid, r);
+/// //     }
+/// // }
+///
+/// let borders: HashMap<_, _> = tiles.iter().map(|t| {
+///     (t.id, (t.top_border(), t.right_border(), t.bottom_border(), t.left_border()))
+/// }).collect();
+///
+/// let mut graph: HashMap<usize, Vec<usize>> = Default::default();
+/// for tile in tiles.iter() {
+///     graph.insert(tile.id, vec![]);
+///     for tile_ in tiles.iter() {
+///         if tile.id == tile_.id { continue; }
+///
+///     }
+///
+/// }
+///
+/// eprintln!("{:?}", graph);
+///
+///
+/// // let mut possi: HashMap<_, _> = HashMap::new();
+/// // for tile in tiles.iter() {
+/// //     let left = tile.left_border(); let mut l = vec![];
+/// //     let right = tile.right_border(); let mut r = vec![];
+/// //     let top = tile.top_border(); let mut t = vec![];
+/// //     let bottom = tile.bottom_border(); let mut b = vec![];
+///
+/// //     for tile_t in tiles.iter() {
+/// //         if tile_t.id == tile.id { continue; }
+/// //         if left == tile_t.right_border() { l.push(tile_t.id); }
+/// //         if right == tile_t.left_border() { r.push(tile_t.id); }
+/// //         if top == tile_t.bottom_border() { t.push(tile_t.id); }
+/// //         if bottom == tile_t.top_border() { b.push(tile_t.id); }
+/// //     }
+/// //     possi.insert(tile.id, (t, r, b, l));
+/// // }
+///
+/// // println!("{:?}", possi);
+/// ```
 pub fn p20() {
     let contents = r#"Tile 2311:
 ..##.#..#.
@@ -2265,69 +2328,200 @@ Tile 3079:
 #.#####.##
 ..#.###...
 ..#.......
-..#.###..."#;
+..#.###..."#.to_string();
 
-    let tiles: Vec<_> = contents.split("\n\n").map(|s| Tile::parse_with_id(s).unwrap().1).collect();
+    // let contents = std::fs::read_to_string("./assets/adv20.txt").unwrap();
+    let mut parser = nom::multi::separated_list0::<_, _, _, nom::error::Error<_>, _, _>(
+        nom::multi::many1(nom::character::complete::newline),
+        nom::combinator::map(
+            nom::sequence::tuple((
+                    nom::bytes::complete::tag("Tile "),
+                    nom::combinator::map_res(nom::character::complete::digit1, |s: &str| s.parse::<usize>()),
+                    nom::bytes::complete::tag(":"),
+                    nom::character::complete::newline,
 
-    // let mut lefts: HashMap<usize, Vec<usize>> = HashMap::new(); let mut lefts_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
-    // let mut rights: HashMap<usize, Vec<usize>> = HashMap::new(); let mut rights_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
-    // let mut tops: HashMap<usize, Vec<usize>> = HashMap::new(); let mut tops_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
-    // let mut bottoms: HashMap<usize, Vec<usize>> = HashMap::new(); let mut bottoms_to: HashMap<Vec<usize>, Vec<usize>> = Default::default();
-    // for tile in tiles.iter() {
-    //     lefts.insert(tile.id, tile.left_border()); lefts_to.entry(tile.left_border()).or_default().push(tile.id);
-    //     rights.insert(tile.id, tile.right_border()); rights_to.entry(tile.right_border()).or_default().push(tile.id);
-    //     tops.insert(tile.id, tile.top_border()); tops_to.entry(tile.top_border()).or_default().push(tile.id);
-    //     bottoms.insert(tile.id, tile.bottom_border()); bottoms_to.entry(tile.bottom_border()).or_default().push(tile.id);
-    // }
+                    nom::multi::separated_list1(
+                        nom::character::complete::newline,
+                        nom::multi::count(
+                            nom::branch::alt((
+                                    nom::combinator::value(true, nom::character::complete::char('#')),
+                                    nom::combinator::value(false, nom::character::complete::char('.')),
+                            )),
+                            10,
+                        )
 
-    // let all: Vec<_> = tiles.iter().map(|t| t.id).collect();
-    // let mut lefts_match: HashMap<usize, Vec<usize>> = all.iter().map(|i| (*i, all.clone())).collect();
-    // eprintln!("{:?}, {:?}", lefts, rights);
-    // for _ in 0..1 {
-    //     for (lid, target) in lefts_match.iter_mut() {
-    //         let left = &lefts[lid];
-    //         let r: Vec<_> = target.iter().filter(|r| left == &rights[r]).collect();
-    //         eprintln!("{} -> {:?}", lid, r);
-    //     }
-    // }
-
-    let borders: HashMap<_, _> = tiles.iter().map(|t| {
-        (t.id, (t.top_border(), t.right_border(), t.bottom_border(), t.left_border()))
-    }).collect();
-
-    let mut graph: HashMap<usize, Vec<usize>> = Default::default();
-    for tile in tiles.iter() {
-        graph.insert(tile.id, vec![]);
-        for tile_ in tiles.iter() {
-            if tile.id == tile_.id { continue; }
-
+                    ),
+            )),
+            |(_, n, _, _, r)| (n, r)
+        )
+    );
+    let (_, tiles): (_, Vec<(usize, Vec<Vec<bool>>)>) = parser(&contents).unwrap();
+    let mut borders: HashMap<(usize, usize), (usize, usize)> = Default::default();
+    for (id, detail) in tiles.iter() {
+        borders.insert((*id, 0), (p20_border_to_usize(&detail[0]), p20_border_to_usize(&detail[0].iter().rev().map(|v| *v).collect())));
+        borders.insert((*id, 1), (p20_border_to_usize(&detail.iter().map(|d| d[0]).collect()), p20_border_to_usize(&detail.iter().map(|d| d[0]).rev().collect())));
+        borders.insert((*id, 2), (p20_border_to_usize(&detail.iter().map(|d| d[9]).collect()), p20_border_to_usize(&detail.iter().map(|d| d[9]).rev().collect())));
+        borders.insert((*id, 3), (p20_border_to_usize(&detail[9]), p20_border_to_usize(&detail[9].iter().rev().map(|v| *v).collect())));
+    }
+    println!("tiles found: {}, borders: {}", tiles.len(), borders.len());
+    let mut guess: HashMap<(usize, usize), HashSet<(usize, usize)>> = Default::default();
+    for (&bid, &(b, _)) in borders.iter() {
+        for (&mid, &(b1, b2)) in borders.iter() {
+            if mid != bid && (b == b1 || b == b2) {
+                guess.entry(bid).or_default().insert(mid);
+            }
         }
-
+        // println!("{:?} {:?}", bid, guess.get(&bid).unwrap());
     }
 
-    eprintln!("{:?}", graph);
+    let mut determined: HashMap<(usize, usize), (usize, usize)> = Default::default();
+
+    println!("{:?}", guess);
+    // while guess.len() > 0
+    for _ in 0.. 10 {
+        for (&gid, gs) in guess.iter_mut() {
+            if gs.len() == 1 {
+                println!("found one...");
+                determined.insert(gid, *gs.iter().nth(0).unwrap());
+            } else {
+                gs.retain(|g| !determined.contains_key(g));
+            }
+        }
+
+        for gid in determined.keys() {
+            guess.remove(gid);
+        }
+
+        // println!("{:?}", determined);
+        println!("{:?}", guess);
+    }
+    println!("{} {:?}", determined.len(), determined);
+
+    let mut found_count: HashMap<usize, usize> = Default::default();
+    for (&(id, _), _) in determined.iter() {
+        *found_count.entry(id).or_default() += 1;
+    }
+    let mut c = 1;
+    for (&k, &v) in  found_count.iter() {
+        if v == 2 {
+            c *= k;
+        }
+    }
+    println!("{} => {:?}", c, found_count);
+    let tiles: HashMap<_, _> = tiles.iter().map(|(k, v)| (*k, v.clone())).collect();
+
+    let mut start = 0;
+    for (&k, &v) in  found_count.iter() {
+        if v == 2 {
+            start = k;
+            break;
+        }
+    }
+    // TODO
+    assert_ne!(0, start);
+    let mut faces = vec![];
+    for f in 0..4 {
+        if determined.contains_key(&(start, f)) {
+            faces.push(f);
+        }
+    }
+
+    println!("Starting from {} {:?}", start, faces);
+    let start = 3079;
+    let faces = vec![1, 3];
+    // let position: Vec<Vec<(usize, usize, usize, usize, usize)>> = vec![];
 
 
-    // let mut possi: HashMap<_, _> = HashMap::new();
-    // for tile in tiles.iter() {
-    //     let left = tile.left_border(); let mut l = vec![];
-    //     let right = tile.right_border(); let mut r = vec![];
-    //     let top = tile.top_border(); let mut t = vec![];
-    //     let bottom = tile.bottom_border(); let mut b = vec![];
-
-    //     for tile_t in tiles.iter() {
-    //         if tile_t.id == tile.id { continue; }
-    //         if left == tile_t.right_border() { l.push(tile_t.id); }
-    //         if right == tile_t.left_border() { r.push(tile_t.id); }
-    //         if top == tile_t.bottom_border() { t.push(tile_t.id); }
-    //         if bottom == tile_t.top_border() { b.push(tile_t.id); }
-    //     }
-    //     possi.insert(tile.id, (t, r, b, l));
-    // }
-
-    // println!("{:?}", possi);
+}
 
 
+fn p20_border_to_usize(border: &Vec<bool>) -> usize {
+    let mut out = 0; let mut base = 1;
+    for &b in border.iter() {
+        if b {
+            out += base * 1;
+        }
+        base *= 2;
+    }
+    out
+}
+
+
+pub fn p21() {
+    let contents = r#"mxmxvkd kfcds sqjhc nhms (contains dairy, fish)
+trh fvjkl sbzzf mxmxvkd (contains dairy)
+sqjhc fvjkl (contains soy)
+sqjhc mxmxvkd sbzzf (contains fish)"#;
+    let contents = std::fs::read_to_string("./assets/adv21.txt").unwrap();
+
+    let mut gradient_to_id: HashMap<String, usize> = Default::default();
+    let mut id_to_gradient: HashMap<usize, String> = Default::default();
+    let mut id = 0;
+
+    let mut allergens: HashMap<String, HashSet<usize>> = Default::default();
+    let mut occurs: HashMap<usize, usize> = Default::default();
+    for line in contents.lines() {
+        let (_, (grs, _, als, _)) = nom::sequence::tuple::<_, _, nom::error::Error<_>, _>((
+            nom::multi::separated_list1(nom::character::complete::space1, nom::character::complete::alphanumeric1),
+            nom::bytes::complete::tag(" (contains "),
+            nom::multi::separated_list1(nom::bytes::complete::tag(", "), nom::character::complete::alphanumeric1),
+            nom::bytes::complete::tag(")")
+        ))(line).unwrap();
+        let mut poss = HashSet::default();
+        for g in grs.iter() {
+            let gid = if gradient_to_id.contains_key(*g) {
+                *gradient_to_id.get(*g).unwrap()
+            } else {
+                gradient_to_id.insert(g.to_string(), id);
+                id_to_gradient.insert(id, g.to_string());
+                id += 1;
+                id - 1
+            };
+            poss.insert(gid);
+            *occurs.entry(gid).or_default() += 1;
+        }
+
+        for a in als.into_iter() {
+            if let Some(old_poss) = allergens.get_mut(&*a) {
+                let n = old_poss.intersection(&poss).map(|c| *c).collect();
+                *old_poss = n;
+            } else {
+                allergens.insert(a.to_string(), poss.clone());
+            }
+        }
+    }
+
+    let mut determined: HashMap<String, usize> = HashMap::default();
+    let mut undetermined: HashSet<String> = allergens.keys().map(|k| k.to_string()).collect();
+    while undetermined.len() > 0 {
+        for al in undetermined.iter() {
+            let poss = allergens.remove(al).unwrap();
+            for v in allergens.values_mut() {
+                if poss.is_subset(v) {
+                    *v = v.difference(&poss).map(|i| *i).collect();
+                }
+            }
+            if poss.len() > 1 {
+                allergens.insert(al.to_string(), poss);
+            } else {
+                determined.insert(al.to_string(), poss.into_iter().nth(0).unwrap());
+            }
+        }
+        undetermined.retain(|c| !determined.contains_key(c));
+    }
+
+    let determined_s: HashSet<usize> = determined.values().map(|c| *c).collect();
+    let mut count = 0;
+    for (id, c) in occurs.iter() {
+        if !determined_s.contains(id) {
+            count += c;
+        }
+    }
+    println!("{}", count);
+
+    let mut determined: Vec<_> = determined.into_iter().map(|(n, id)| (n, id_to_gradient.get(&id).unwrap().to_string())).collect();
+    determined.sort();
+    println!("{:?} => {}", determined, determined.iter().map(|(_, n)| n.to_string()).collect::<Vec<_>>().join(","));
 }
 
 fn p22_simple_hash(nums: &[usize]) -> u64 {
@@ -2973,7 +3167,40 @@ wseweeenwnesenwwwswnew"#.to_string();
     }
 }
 
+fn p25_encrypt(subject: usize, count: usize) -> usize {
+    let mut value = 1;
+    for _ in 0..count {
+        value = (value * subject) % 20201227;
+    }
 
+    value
+}
+
+fn p25_decrypt(subject: usize, salt: usize) -> usize {
+    let mut value = 1;
+    let mut count = 0;
+    loop {
+        count += 1;
+        value = (value * subject) % 20201227;
+        if value == salt {
+            return count
+        }
+    }
+}
+
+pub fn p25() {
+    assert_eq!(p25_encrypt(7, 8), 5764801);
+    assert_eq!(p25_encrypt(7, 11), 17807724);
+
+    let contents = std::fs::read_to_string("./assets/adv25.txt").unwrap();
+    // let contents = "5764801\n17807724".to_string();
+
+    let nums: Vec<_> = contents.lines().map(|s| s.parse::<usize>().unwrap()).collect();
+    let num1 = nums[0]; let num2 = nums[1];
+
+    let l1 = p25_decrypt(7, num1); let l2 = p25_decrypt(7, num2);
+    println!("{} {} = {} {}", l1, l2, p25_encrypt(p25_encrypt(7, l2), l1), p25_encrypt(p25_encrypt(7, l1), l2));
+}
 
 #[cfg(test)]
 mod tests {

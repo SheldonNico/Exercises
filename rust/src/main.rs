@@ -3,5 +3,5 @@ fn main() {
     // use leetcode::advcode2020::*;
     // p20()
 
-    leetcode::advcode2020::p24();
+    leetcode::advcode2020::p13();
 }
