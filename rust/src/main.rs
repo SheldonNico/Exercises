@@ -1,3 +1,3 @@
 fn main() {
-    println!("Hello");
+    leetcode::advcode2021::p02();
 }
