@@ -3,7 +3,7 @@ use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
 
 pub fn p01() {
-    let nums: Vec<i32> = std::fs::read_to_string("./assets/adv01.txt").unwrap()
+    let nums: Vec<i32> = std::fs::read_to_string("./assets/adv2020/adv01.txt").unwrap()
         .split_whitespace()
         .map(|s| s.parse::<i32>().unwrap())
         .collect();
@@ -71,14 +71,14 @@ impl Password {
 }
 
 pub fn p02() {
-    let database: Vec<Password> = std::fs::read_to_string("./assets/adv02.txt").unwrap()
+    let database: Vec<Password> = std::fs::read_to_string("./assets/adv2020/adv02.txt").unwrap()
         .lines()
         .map(Password::from_raw)
         .filter(Password::is_valid)
         .collect();
     println!("{:?}", database.len());
 
-    let database: Vec<Password> = std::fs::read_to_string("./assets/adv02.txt").unwrap()
+    let database: Vec<Password> = std::fs::read_to_string("./assets/adv2020/adv02.txt").unwrap()
         .lines()
         .map(Password::from_raw)
         .filter(Password::is_valid_newpolicy)
@@ -87,7 +87,7 @@ pub fn p02() {
 }
 
 pub fn p03() {
-    let map: Vec<Vec<i32>> = std::fs::read_to_string("./assets/adv03.txt").unwrap()
+    let map: Vec<Vec<i32>> = std::fs::read_to_string("./assets/adv2020/adv03.txt").unwrap()
         .lines()
         .map(
             |line| line.chars().map(|c| match c {
@@ -343,7 +343,7 @@ hcl:#cfa07d eyr:2025 pid:166559648
 iyr:2011 ecl:brn hgt:59in
 "#;
 
-    let passports: Vec<HashMap<String, String>> = std::fs::read_to_string("./assets/adv04.txt").unwrap()
+    let passports: Vec<HashMap<String, String>> = std::fs::read_to_string("./assets/adv2020/adv04.txt").unwrap()
         .split("\n\n")
         .filter_map(|s| kvs_from_raw(s).ok())
         .map(|r| r.1)
@@ -387,7 +387,7 @@ eyr:2038 hcl:74454a iyr:2023
 pid:3556412378 byr:2007
 "#;
 
-    let passports: Vec<Passport> = std::fs::read_to_string("./assets/adv04.txt").unwrap()
+    let passports: Vec<Passport> = std::fs::read_to_string("./assets/adv2020/adv04.txt").unwrap()
         .split("\n\n")
         .filter_map(|s| Passport::from_raw(s).ok())
         .collect();
@@ -416,14 +416,14 @@ pub fn p05() {
     let contents = r#"BFFFBBFRRR
 BBFFBBFRLL
 FFFBBBFRRR"#;
-    let ids: Vec<(u32, u32)> = std::fs::read_to_string("./assets/adv05.txt").unwrap()
+    let ids: Vec<(u32, u32)> = std::fs::read_to_string("./assets/adv2020/adv05.txt").unwrap()
         .lines()
         .map(get_set_id)
         .collect();
     // eprintln!("{:?}", ids.iter().map(|(r, c)| (r, c, r*8+c)).collect::<Vec<_>>());
     eprintln!("{:?}", ids.iter().map(|(r, c)| r*8+c).max());
 
-    let mut ids: Vec<(u32, u32, u32, String)> = std::fs::read_to_string("./assets/adv05.txt").unwrap()
+    let mut ids: Vec<(u32, u32, u32, String)> = std::fs::read_to_string("./assets/adv2020/adv05.txt").unwrap()
         .lines()
         .map(|n| {
             let (r, c) = get_set_id(n);
@@ -455,7 +455,7 @@ a
 
 b"#;
 
-    let res: Vec<_> = std::fs::read_to_string("./assets/adv06.txt").unwrap()
+    let res: Vec<_> = std::fs::read_to_string("./assets/adv2020/adv06.txt").unwrap()
         .split("\n\n")
         .map(|line| {
             let mut stack: HashMap<char, usize> = HashMap::new();
@@ -469,7 +469,7 @@ b"#;
         .collect();
     eprintln!("before: {:?}", res.into_iter().sum::<usize>());
 
-    let res: Vec<_> = std::fs::read_to_string("./assets/adv06.txt").unwrap()
+    let res: Vec<_> = std::fs::read_to_string("./assets/adv2020/adv06.txt").unwrap()
         .split("\n\n")
         .map(|answers| {
             let mut stack: HashMap<char, usize> = HashMap::new();
@@ -554,7 +554,7 @@ dark green bags contain 2 dark blue bags.
 dark blue bags contain 2 dark violet bags.
 dark violet bags contain no other bags."#;
 
-    let graph_c: HashMap<String, Vec<(usize, String)>> = std::fs::read_to_string("./assets/adv07.txt").unwrap()
+    let graph_c: HashMap<String, Vec<(usize, String)>> = std::fs::read_to_string("./assets/adv2020/adv07.txt").unwrap()
         .lines()
         .map(|line| {
             packet_p(line).unwrap().1
@@ -679,7 +679,7 @@ jmp -4
 acc +6"#;
 
     let ins: Vec<_> =
-        std::fs::read_to_string("./assets/adv08.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv08.txt").unwrap()
         // contents
         .lines()
         .map(|line| instruction_p(line).unwrap().1)
@@ -817,7 +817,7 @@ pub fn p09() {
 576"#;
 
     let (numbers, preamble_len): (Vec<i64>, usize) = (
-        std::fs::read_to_string("./assets/adv09.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv09.txt").unwrap()
         // contents
         .lines()
         .map(|s| s.parse().unwrap())
@@ -921,7 +921,7 @@ pub fn p10() {
 4"#;
 
     let mut numbers: Vec<i32> =
-        std::fs::read_to_string("./assets/adv10.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv10.txt").unwrap()
         // contents
         .lines()
         .map(|s| s.parse().unwrap())
@@ -995,7 +995,7 @@ L.LLLLL.LL"#;
 
     let seats: Vec<Vec<Seat>> =
         // contents
-        std::fs::read_to_string("./assets/adv11.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv11.txt").unwrap()
         .lines()
         .map(|line| line.chars().map(|c| match c {
             '#' => Seat::Occupy,
@@ -1190,7 +1190,7 @@ F11"#;
 
     let instructions: Vec<_> =
         // contents
-        std::fs::read_to_string("./assets/adv12.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv12.txt").unwrap()
         .lines()
         .map(|l| movedir_p(l).unwrap().1)
         .collect();
@@ -1251,7 +1251,7 @@ pub fn p13() {
 //     let contents = r#"213
 // 67,7,x,59,61"#;
 
-    let contents = std::fs::read_to_string("./assets/adv13.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2020/adv13.txt").unwrap();
 
     let params: Vec<_> = contents.lines().collect();
     let arrived: usize = params[0].parse().unwrap();
@@ -1401,7 +1401,7 @@ mask = 00000000000000000000000000000000X0XX
 mem[26] = 1"#;
 
     let masks: Vec<MaskManip> =
-        std::fs::read_to_string("./assets/adv14.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv14.txt").unwrap()
         // contents
         // contents2
         .lines()
@@ -1631,7 +1631,7 @@ nearby tickets:
 15,1,5
 5,14,9"#;
 
-    let contents = std::fs::read_to_string("./assets/adv16.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2020/adv16.txt").unwrap();
 
     let mut messy: TicketPuzzle = TicketPuzzle::parse(&contents).unwrap().1;
     eprintln!("{:?}", messy.error_rate());
@@ -1654,7 +1654,7 @@ pub fn p17_p1() {
 
     let mut active_points: HashSet<(isize, isize, isize)> =
         // contents
-        std::fs::read_to_string("./assets/adv17.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv17.txt").unwrap()
         .lines()
         .enumerate()
         .flat_map(|(y, line)| line.chars().enumerate().filter_map(move |(x, v)| match v {
@@ -1709,7 +1709,7 @@ pub fn p17_p2() {
 
     let mut active_points: HashSet<(isize, isize, isize, isize)> =
         // contents
-        std::fs::read_to_string("./assets/adv17.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv17.txt").unwrap()
         .lines()
         .enumerate()
         .flat_map(|(y, line)| line.chars().enumerate().filter_map(move |(x, v)| match v {
@@ -1884,7 +1884,7 @@ pub fn p18() {
 2 * 3 + (4 * 5)"#;
     let exprs: Vec<_> =
         // contents
-        std::fs::read_to_string("./assets/adv18.txt").unwrap()
+        std::fs::read_to_string("./assets/adv2020/adv18.txt").unwrap()
         .lines()
         .map(|line| Expr::parse_expr_l0(line).unwrap().1.eval())
         .collect();
@@ -2030,7 +2030,7 @@ aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
 babaaabbbaaabaababbaabababaaab
 aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"#;
 
-    let contents = std::fs::read_to_string("./assets/adv19.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2020/adv19.txt").unwrap();
 
     // let contents = contents.replace("8: 42", "8: 42 | 42 8");
     // let contents = contents.replace("11: 42 31", "11: 42 31 | 42 11 31");
@@ -2265,7 +2265,7 @@ Tile 3079:
 ..#.......
 ..#.###..."#.to_string();
 
-    let contents = std::fs::read_to_string("./assets/adv20.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2020/adv20.txt").unwrap();
     let mut parser = nom::multi::separated_list0::<_, _, _, nom::error::Error<_>, _, _>(
         nom::multi::many1(nom::character::complete::newline),
         nom::combinator::map(
@@ -2634,7 +2634,7 @@ pub fn p21() {
 trh fvjkl sbzzf mxmxvkd (contains dairy)
 sqjhc fvjkl (contains soy)
 sqjhc mxmxvkd sbzzf (contains fish)"#;
-    let contents = std::fs::read_to_string("./assets/adv21.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2020/adv21.txt").unwrap();
 
     let mut gradient_to_id: HashMap<String, usize> = Default::default();
     let mut id_to_gradient: HashMap<usize, String> = Default::default();
@@ -2840,7 +2840,7 @@ Player 2:
 7
 10"#.to_string();
 
-    let contents = std::fs::read_to_string("./assets/adv22.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2020/adv22.txt").unwrap();
 
     let (_, (r1, r2)) = p22_parser(&contents).unwrap();
 
@@ -3321,7 +3321,7 @@ eneswnwswnwsenenwnwnwwseeswneewsenese
 neswnwewnwnwseenwseesewsenwsweewe
 wseweeenwnesenwwwswnew"#.to_string();
 
-    let contents = std::fs::read_to_string("./assets/adv24.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2020/adv24.txt").unwrap();
 
     let res: Vec<Vec<P24Dir>> = contents.lines().map(|l| nom::multi::many1(P24Dir::parse)(l).unwrap().1).collect();
 
@@ -3374,7 +3374,7 @@ pub fn p25() {
     assert_eq!(p25_encrypt(7, 8), 5764801);
     assert_eq!(p25_encrypt(7, 11), 17807724);
 
-    let contents = std::fs::read_to_string("./assets/adv25.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2020/adv25.txt").unwrap();
     // let contents = "5764801\n17807724".to_string();
 
     let nums: Vec<_> = contents.lines().map(|s| s.parse::<usize>().unwrap()).collect();
