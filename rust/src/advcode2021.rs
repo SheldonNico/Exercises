@@ -1,6 +1,8 @@
 use std::collections::{HashSet, HashMap};
 use nom::IResult;
 
+type P08Signal = HashSet<char>;
+
 pub fn p01() {
     let meters: Vec<usize> = std::fs::read_to_string("./assets/adv2021/adv01.txt").unwrap()
         .split_whitespace()
@@ -456,3 +458,199 @@ pub fn p05_part2(vents: &Vec<Vent>) {
 
     println!("{:?} => {}", acc, sum);
 }
+
+pub fn p06() {
+    let contents = r"3,4,3,1,2";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv06.txt").unwrap(); let contents = &_contents;
+
+    const MAX_LIFE: usize = 9;
+    let mut state_ori: Vec<usize> = vec![0; MAX_LIFE];
+
+    for life in contents.trim().split(",") {
+        let life = life.parse::<usize>().unwrap();
+        state_ori[life] += 1;
+    }
+    println!("inited state: {:?}", state_ori);
+
+    let mut state = state_ori.clone();
+
+    for _ in 0..80 {
+        p06_next(&mut state);
+    }
+    println!("Sum: {}", state.iter().sum::<usize>());
+
+    let mut state = state_ori.clone();
+    for _ in 0..256 {
+        p06_next(&mut state);
+    }
+    println!("Sum: {}", state.iter().sum::<usize>());
+}
+
+fn p06_next(state: &mut Vec<usize>) {
+    let died = state[0];
+    state[0] = 0;
+    state.rotate_left(1);
+    state[6] += died;
+    state[8] += died;
+}
+
+pub fn p07() {
+    let contents = r"16,1,2,0,4,2,7,1,2,14";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv07.txt").unwrap(); let contents = &_contents;
+
+    let mut positions = vec![];
+    for pos in contents.trim().split(",") {
+        let pos = pos.parse::<usize>().unwrap();
+        if positions.len() < pos+1 {
+            positions.resize(pos+1, 0);
+        }
+        positions[pos] += 1;
+    }
+
+    println!("Crub positions: {:?}", positions);
+
+    let aligned: Vec<usize> = (0..positions.len()).into_iter().map(|to| p07_align(&positions, to)).collect();
+    println!("Aligned {:?}: {:?}", aligned, aligned.iter().min());
+
+    let aligned: Vec<usize> = (0..positions.len()).into_iter().map(|to| p07_align_inc(&positions, to)).collect();
+    println!("Aligned {:?}: {:?}", aligned, aligned.iter().min());
+}
+
+fn p07_align(positions: &Vec<usize>, to: usize) -> usize {
+    let mut sum = 0;
+    for (idx, count) in positions.iter().enumerate() {
+        let shift = if idx > to { idx - to } else { to - idx };
+        sum += count * shift;
+    }
+    sum
+}
+
+fn p07_align_inc(positions: &Vec<usize>, to: usize) -> usize {
+    let mut sum = 0;
+    for (idx, count) in positions.iter().enumerate() {
+        let shift = if idx > to { idx - to } else { to - idx };
+        sum += count * ((shift+1)*shift / 2);
+    }
+    sum
+}
+
+pub fn p08() {
+    let contents = r"be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
+edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc
+fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg
+fbegcd cbd adcefb dageb afcb bc aefdc ecdab fgdeca fcdbega | efabcd cedba gadfec cb
+aecbfdg fbg gf bafeg dbefa fcge gcbea fcaegb dgceab fcbdga | gecf egdcabf bgf bfgea
+fgeab ca afcebg bdacfeg cfaedg gcfdb baec bfadeg bafgc acf | gebdcfa ecba ca fadegcb
+dbcfg fgd bdegcaf fgec aegbdf ecdfab fbedc dacgb gdcebf gf | cefg dcbef fcge gbcadfe
+bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbgef
+egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb
+gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce";
+    // let _contents = std::fs::read_to_string("./assets/adv2021/adv08.txt").unwrap(); let contents = &_contents;
+
+    let mut signals: Vec<Vec<P08Signal>> = vec![];
+    let mut predicts: Vec<Vec<P08Signal>> = vec![];
+    let mut sum = 0;
+    for line in contents.trim().lines() {
+        let line: Vec<_> = line.splitn(2, "|").collect();
+        assert_eq!(line.len(), 2);
+
+        let mut patterns = vec![];
+        for word in line[0].trim().split(" ") {
+            patterns.push(p08_encode(word.trim()));
+        }
+        signals.push(patterns.clone());
+
+        patterns.clear();
+        for word in line[1].trim().split(" ") {
+            patterns.push(p08_encode(word.trim()));
+        }
+        sum += patterns.iter().filter(|s| match s.len() {
+            2 | 3 | 4 | 7 => true,
+            _ => false,
+        }).count();
+        predicts.push(patterns);
+
+    }
+    println!("Sum of easy digits: {}", sum);
+
+    let targets: Vec<P08Signal> = vec![
+        "abcefg",
+        "cf",
+        "acdeg",
+        "acdfg",
+        "bcdf",
+        "abdfg",
+        "abdefg",
+        "acf",
+        "abcdefg",
+        "abcdfg"
+    ].into_iter().map(p08_encode).collect();
+
+    let mut sum = 0;
+    for (patterns, predicts) in signals.iter().zip(predicts.iter()) {
+        let map = p08_solve(patterns, &targets);
+
+        let mut digits = 0;
+        for predict in predicts.iter() {
+            let mut ori: Vec<&char> = predict.iter().collect();
+            ori.sort();
+            let ori: String = ori.into_iter().collect();
+
+            digits = digits * 10 + map[&ori];
+        }
+        sum += digits;
+    }
+    println!("Sum of large digits: {}", sum);
+}
+
+fn p08_solve(patterns: &Vec<P08Signal>, targets: &Vec<P08Signal>) -> HashMap<String, usize> {
+    let mut relations: Vec<((P08Signal, String), Vec<(P08Signal, usize)>)> = vec![];
+
+    for pattern in patterns.iter() {
+        let len_pat = pattern.len();
+        let mut possible = vec![];
+        for (idx, target) in targets.iter().enumerate() {
+            if len_pat == target.len() {
+                possible.push((target.clone(), idx));
+            }
+        }
+
+        let mut ori: Vec<&char> = pattern.iter().collect();
+        ori.sort();
+        let ori = ori.into_iter().collect();
+
+        relations.push(((pattern.clone(), ori), possible));
+    }
+
+    relations.sort_by_key(|(k, v)| -(v.len() as isize));
+
+    let mut map: HashMap<String, usize> = Default::default();
+    while let Some(((from, ori), mut matched)) = relations.pop() {
+        assert_eq!(matched.len(), 1);
+        let (to, target) = matched.remove(0);
+        map.insert(ori, target);
+
+        for ((from_next, ori_next), matched_next) in relations.iter_mut() {
+            let valid_to_replace = std::mem::replace(matched_next, Default::default());
+            let from_next_check: HashSet<&char> = from_next.difference(&from).collect();
+            let valid_to_replace = valid_to_replace.into_iter().filter(|(to_next, target_next)| {
+                let to_next_check: HashSet<&char> = to_next.difference(&to).collect();
+                from_next_check.len() == to_next_check.len()
+            }).collect();
+            *matched_next = valid_to_replace;
+        }
+        relations.sort_by_key(|(k, v)| -(v.len() as isize));
+    }
+
+    map
+}
+
+fn p08_encode(s: &str) -> P08Signal {
+    let mut out = HashSet::new();
+    for c in s.chars() {
+        out.insert(c);
+    }
+
+    out
+}
+
