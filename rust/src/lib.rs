@@ -1,8 +1,10 @@
 #![allow(dead_code, unused_variables)]
 #![feature(map_first_last)]
-pub mod leetcode;
 pub mod util;
 mod snippet;
+
+pub mod leetcode2020;
+pub mod leetcode2021;
 
 pub mod codewar;
 pub mod advcode2020;

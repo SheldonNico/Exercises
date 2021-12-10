@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet, HashMap, VecDeque};
 use nom::IResult;
 
 type P08Signal = HashSet<char>;
@@ -654,3 +654,209 @@ fn p08_encode(s: &str) -> P08Signal {
     out
 }
 
+pub fn p09() {
+    let contents = r"2199943210
+3987894921
+9856789892
+8767896789
+9899965678";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv09.txt").unwrap(); let contents = &_contents;
+
+    let heatmap: Vec<Vec<usize>> = contents.trim().lines()
+        .map(|line| line.chars().map(|c| { (c as u8 - '0' as u8) as usize }).collect())
+        .collect();
+
+    let mut sum = 0;
+    let mut basin_all: Vec<usize> = vec![];
+
+    let n_rows = heatmap.len();
+    let n_cols = heatmap[0].len();
+
+    for idr in 0..n_rows {
+        for idc in 0..n_cols {
+            let mut is_ok = true;
+            for (idr_next, idc_next) in p09_adjacents(idr, idc, n_rows, n_cols) {
+                if heatmap[idr][idc] >= heatmap[idr_next][idc_next] {
+                    is_ok = false;
+                    break;
+                }
+            }
+            if !is_ok { continue; }
+
+            // part 1
+            sum += heatmap[idr][idc] + 1;
+
+            // part 2
+            let mut basin_map: HashSet<(usize, usize)> = vec![
+                (idr, idc)
+            ].into_iter().collect();
+
+            let mut adjacents = p09_adjacents(idr, idc, n_rows, n_cols);
+
+            while adjacents.len() > 0 {
+                p09_find_basin(&heatmap, adjacents.clone(), &mut basin_map, n_rows, n_cols);
+                let adjacents_next: Vec<(usize, usize)> = std::mem::replace(&mut adjacents, Default::default());
+                for (idr_next, idc_next) in adjacents_next.into_iter() {
+                    if basin_map.contains(&(idr_next, idc_next)) {
+                        let mut next = p09_adjacents(idr_next, idc_next, n_rows, n_cols).into_iter().filter(
+                            |id| !basin_map.contains(id)).collect();
+                        adjacents.append(&mut next);
+                    }
+                }
+            }
+            println!("{} {} => {:?}", idr, idc, basin_map.iter().map(|(kr, kc)| heatmap[*kr][*kc]).collect::<Vec<_>>());
+            basin_all.push(basin_map.iter().count());
+        }
+    }
+    println!("Sum of risk levels: {}", sum);
+
+    basin_all.sort_by_key(|v| -(*v as isize));
+    println!("{:?} => {:?}", basin_all, &basin_all[..3].iter().product::<usize>());
+}
+
+fn p09_adjacents(idr: usize, idc: usize, n_rows: usize, n_cols: usize) -> Vec<(usize, usize)> {
+    let mut out = vec![];
+    if idc > 0 { out.push((idr, idc-1)) }
+    if idc+1 < n_cols { out.push((idr, idc+1)); }
+    if idr > 0 { out.push((idr-1, idc)); }
+    if idr+1 < n_rows { out.push((idr+1, idc)); }
+    out
+}
+
+fn p09_find_basin(
+    heatmap: &Vec<Vec<usize>>, levels: Vec<(usize, usize)>, basin_map: &mut HashSet<(usize, usize)>,
+    n_rows: usize, n_cols: usize
+) {
+    for (idr, idc) in levels.into_iter() {
+        if heatmap[idr][idc] == 9 { continue; }
+
+        let mut is_ok = true;
+        for (idr_next, idc_next) in p09_adjacents(idr, idc, n_rows, n_cols) {
+            if heatmap[idr][idc] > heatmap[idr_next][idc_next] {
+                if !basin_map.contains(&(idr_next, idc_next)) {
+                    is_ok = false;
+                    break;
+                }
+            }
+        }
+
+        if is_ok {
+            basin_map.insert((idr, idc));
+        }
+    }
+}
+
+enum NavigationError {
+    Illegal(char),
+    Incomplete,
+}
+
+pub fn p10() {
+    let contents = r"[({(<(())[]>[[{[]{<()<>>
+[(()[<>])]({[<{<<[]>>(
+{([(<{}[<>[]}>{[]{[(<()>
+(((({<>}<{<{<>}{[]{[]{}
+[[<[([]))<([[{}[[()]]]
+[{[{({}]{}}([{[{{{}}([]
+{<[[]]>}<{[{[{[]{()[[[]
+[<(<(<(<{}))><([]([]()
+<{([([[(<>()){}]>(<<{{
+<{([{{}}[<[[[<>{}]]]>[]]";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv10.txt").unwrap(); let contents = &_contents;
+
+    let navigations: Vec<Vec<char>> = contents.trim().lines().map(|s| s.chars().collect()).collect();
+
+    let mut sum = 0;
+    let mut incompletes: Vec<usize> = vec![];
+    for navigation in navigations.iter() {
+        let mut left = None;
+        let mut stacked: Vec<char> = Vec::new();
+        let mut broken = None;
+        for dir in navigation.iter() {
+            match dir {
+                '(' | '{' | '[' | '<' => {
+                    if let Some(left_inner) = left {
+                        stacked.push(left_inner); left = Some(*dir);
+                    } else {
+                        left = Some(*dir);
+                    }
+                },
+                ')' | '}' | ']' | '>' => {
+                    if let Some(left_inner) = left {
+                        if dir != &p10_right(left_inner) {
+                            broken = Some(*dir);
+                            break;
+                        } else {
+                            if stacked.len() == 0 {
+                                left = None;
+                            } else {
+                                left = stacked.pop();
+                            }
+                        }
+                    } else {
+                        broken = Some(*dir);
+                        break;
+                    }
+                }
+                _ => unreachable!()
+            }
+        }
+
+        if let Some(b) = broken {
+            // println!("Broken: {:?} {:?}", navigation, b);
+            sum += p10_score(b);
+        } else {
+            if let Some(l) = left {
+                let mut incomplete: Vec<char> = vec![l];
+                while let Some(s) = stacked.pop() {
+                    incomplete.push(s);
+                }
+                // println!("{:?}", incomplete);
+                incompletes.push(p10_score_incomplete(&incomplete));
+            }
+        }
+    }
+
+    println!("Sum of errors: {}", sum);
+    incompletes.sort();
+    assert!(incompletes.len() > 0);
+    println!("Middle of incompletes: {:?} => {}", incompletes, incompletes[incompletes.len() / 2]);
+}
+
+fn p10_score_right(right: char) -> usize {
+    match right {
+        ')' => 1,
+        ']' => 2,
+        '}' => 3,
+        '>' => 4,
+        _ => unreachable!()
+    }
+}
+
+fn p10_score_incomplete(left: &Vec<char>) -> usize {
+    let mut sum = 0;
+    for c in left.iter() {
+        sum = sum * 5 + p10_score_right(p10_right(*c));
+    }
+    sum
+}
+
+fn p10_score(right: char) -> usize {
+    match right {
+        ')' => 3,
+        ']' => 57,
+        '}' => 1197,
+        '>' => 25137,
+        _ => unreachable!()
+    }
+}
+
+fn p10_right(left: char) -> char {
+    match left {
+        '(' => ')',
+        '<' => '>',
+        '{' => '}',
+        '[' => ']',
+        _ => unreachable!()
+    }
+}
