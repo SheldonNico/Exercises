@@ -1,3 +1,5 @@
+use std::collections::{HashSet, HashMap};
+
 pub fn p0080_remove_duplicates(nums: &mut Vec<i32>) -> i32 {
     let mut left = 2; let mut right = nums.len();
 
@@ -122,9 +124,85 @@ pub fn p0085_maximal_rectangle(matrix: &Vec<Vec<char>>) -> usize {
     area
 }
 
+fn p0087_is_scramble_rec(
+    sd0: usize, sd1: usize, len: usize, mem: &mut HashMap<(usize, usize, usize), bool>,
+    s1: &[char], s2: &[char]
+) -> bool {
+    // println!("{:?} {:?}", &s1[sd0..sd0+len], &s2[sd1..sd1+len]);
+    if let Some(v) = mem.get(&(sd0, sd1, len)) {
+        return *v;
+    }
+
+    let mut rtn = false;
+    if s1[sd0..sd0+len] == s2[sd1..sd1+len] {
+        rtn = true;
+    } else {
+        let mut left1: HashSet<_> = Default::default();
+        let mut left2: HashSet<_> = Default::default();
+        let mut right: HashSet<_> = Default::default();
+
+        for idx in 0..len-1 {
+            left1.insert(s1[sd0+idx]);
+            left2.insert(s1[sd0+len-1-idx]);
+            right.insert(s2[sd1+idx]);
+
+            if left1 == right {
+                if p0087_is_scramble_rec(sd0, sd1, idx+1, mem, s1, s2) &&
+                    p0087_is_scramble_rec(sd0+idx+1, sd1+idx+1, len-idx-1, mem, s1, s2)
+                {
+                    rtn = true;
+                    break;
+                }
+            }
+            if left2 == right {
+                if p0087_is_scramble_rec(sd0, sd1+idx+1, len-idx-1, mem, s1, s2) &&
+                    p0087_is_scramble_rec(sd0+len-1-idx, sd1, idx+1, mem, s1, s2)
+                {
+                    rtn = true;
+                    break;
+                }
+            }
+        }
+
+    }
+    mem.insert((sd0, sd1, len), rtn);
+    rtn
+
+}
+
+pub fn p0087_is_scramble(s1: &[char], s2: &[char]) -> bool {
+    if s1.len() != s2.len() { return false; }
+
+    let mut mem: HashMap<(usize, usize, usize), bool> = HashMap::new();
+
+    p0087_is_scramble_rec(0, 0, s1.len(), &mut mem, s1, s2)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn t0087() {
+        for (idx, (s1, s2, expected)) in vec![
+            ("abc", "bca", true),
+            ("abb", "bba", true),
+            ("abcde", "caebd", false),
+            ("great", "rgeat", true),
+            ("a", "a", true),
+            ("abcdg", "caebd", false),
+            ("ccabcbabcbabbbbcbb","bbbbabccccbbbabcba", false),
+            ("eebaacbcbcadaaedceaaacadccd", "eadcaacabaddaceacbceaabeccd", false),
+            // ("bcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcde", "cebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebd", false),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0087_is_scramble(&s1.chars().collect::<Vec<_>>(), &s2.chars().collect::<Vec<_>>()),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
 
     #[test]
     fn t0080() {

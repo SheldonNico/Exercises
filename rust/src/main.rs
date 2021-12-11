@@ -1,3 +1,3 @@
 fn main() {
-    leetcode::advcode2021::p10();
+    leetcode::advcode2021::p11();
 }

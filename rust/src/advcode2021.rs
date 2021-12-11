@@ -860,3 +860,89 @@ fn p10_right(left: char) -> char {
         _ => unreachable!()
     }
 }
+
+pub fn p11() {
+    let contents = r"5483143223
+2745854711
+5264556173
+6141336146
+6357385478
+4167524645
+2176841721
+6882881134
+4846848554
+5283751526";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv11.txt").unwrap(); let contents = &_contents;
+
+    let mut energy: Vec<Vec<u8>> = contents.trim().lines().map( |line| {
+        line.trim().chars().map(|c| c as u8 - '0' as u8).collect()
+    }).collect();
+
+    let nrow = energy.len();
+    assert!(nrow > 0);
+    let ncol = energy[0].len();
+    assert!(ncol > 0);
+    println!("{}", p11_display(&energy));
+
+    let mut count = 0;
+    for idx in 0..3000 {
+        count += p11_step(&mut energy, nrow, ncol);
+        if idx + 1 == 100 {
+            println!("Sum of flashes after 100: {}", count);
+        }
+        if energy.iter().all(|line| line.iter().all(|c| *c == 0)) {
+            println!("Sync at {}:\n{}", idx+1, p11_display(&energy));
+            break;
+        }
+    }
+}
+
+fn p11_display(energy: &Vec<Vec<u8>>) -> String {
+    let mut out: String = "".into();
+    for line in energy.iter() {
+        let mut out_: String = "".into();
+        for c in line.iter() {
+            out_.push((*c + '0' as u8) as char);
+        }
+        out.push_str(&out_);
+        out.push('\n');
+    }
+    out
+}
+
+
+fn p11_step_iter(energy: &mut Vec<Vec<u8>>, row: usize, col: usize, nrow: usize, ncol: usize) {
+    if energy[row][col] <= 9 {
+        energy[row][col] += 1;
+        if energy[row][col] > 9 {
+            let row  = row as isize; let col = col as isize;
+            for (x, y) in [
+                (0, 1), (0, -1), (1, 0), (-1, 0),
+                (1, 1), (1, -1), (-1, 1), (-1, -1),
+            ].iter() {
+                if row + x >= 0 && col + y >= 0 && row+x < nrow as isize && col+y < ncol as isize {
+                    p11_step_iter(energy, (row+x) as usize, (col+y) as usize, nrow, ncol);
+                }
+            }
+        }
+    }
+}
+
+fn p11_step(energy: &mut Vec<Vec<u8>>, nrow: usize, ncol: usize) -> usize {
+    for idr in 0..nrow {
+        for idc in 0..ncol {
+            p11_step_iter(energy, idr, idc, nrow, ncol);
+        }
+    }
+
+    let mut count = 0;
+    for idr in 0..nrow {
+        for idc in 0..ncol {
+            if energy[idr][idc] > 9 {
+                count += 1;
+                energy[idr][idc] = 0;
+            }
+        }
+    }
+    count
+}
