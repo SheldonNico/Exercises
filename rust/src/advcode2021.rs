@@ -946,3 +946,191 @@ fn p11_step(energy: &mut Vec<Vec<u8>>, nrow: usize, ncol: usize) -> usize {
     }
     count
 }
+
+pub fn p12() {
+    let contents = r"start-A
+start-b
+A-c
+A-b
+b-d
+A-end
+b-end";
+//     let contents = r"dc-end
+// HN-start
+// start-kj
+// dc-start
+// dc-HN
+// LN-dc
+// HN-end
+// kj-sa
+// kj-HN
+// kj-dc";
+//     let contents = r"fs-end
+// he-DX
+// fs-he
+// start-DX
+// pj-DX
+// end-zg
+// zg-sl
+// zg-pj
+// pj-he
+// RW-he
+// fs-DX
+// pj-RW
+// zg-RW
+// start-pj
+// he-WI
+// zg-he
+// pj-fs
+// start-RW";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv12.txt").unwrap(); let contents = &_contents;
+
+    let mut map: HashMap<usize, HashSet<usize>> = Default::default();
+    let mut encode: Vec<String> = vec![];
+    for line in contents.trim().lines() {
+        let mut points = line.split("-");
+        let ax = p12_encode(&mut encode, points.next().unwrap());
+        let bx = p12_encode(&mut encode, points.next().unwrap());
+        assert_eq!(points.next(), None);
+        map.entry(ax).or_default().insert(bx);
+        map.entry(bx).or_default().insert(ax);
+    }
+    let start: usize = p12_decode(&encode, "start").unwrap();
+    let end: usize = p12_decode(&encode, "end").unwrap();
+    println!("{} -> {}: {:?} {:?}", start, end, encode, map);
+
+    let size: Vec<_> = encode.iter().map(|s| s == &s.to_uppercase()).collect();
+    let sols = p12_solve(&map, &size, start, end);
+
+    println!("Solutions:");
+    let mut sol_str: Vec<String> = vec![];
+    for sol in sols.iter() {
+        let mut out = "".to_owned();
+        for idx in sol.iter() {
+            out.push_str(&encode[*idx]);
+            out.push_str(",");
+        }
+        sol_str.push(out);
+    }
+    sol_str.sort();
+    println!("{}", sol_str.join("\n"));
+    println!("Total: {}", sols.len());
+
+    println!("====================================");
+    let sols = p12_solve_more(&map, &size, start, end);
+
+    println!("Solutions:");
+    let mut sol_str: Vec<String> = vec![];
+    for sol in sols.iter() {
+        let mut out = "".to_owned();
+        for idx in sol.iter() {
+            out.push_str(&encode[*idx]);
+            out.push_str(",");
+        }
+        sol_str.push(out);
+    }
+    sol_str.sort();
+    println!("{}", sol_str.join("\n"));
+    println!("Total: {}", sols.into_iter().collect::<HashSet<_>>().len());
+}
+
+fn p12_solve_more(map: &HashMap<usize, HashSet<usize>>, size: &Vec<bool>, start: usize, end: usize) -> Vec<Vec<usize>> {
+    let mut pathes: Vec<(Vec<usize>, Vec<usize>)> = vec![(vec![start], vec![2; map.len()])];
+    pathes[0].1[start] = 0;
+    pathes[0].1[end] = 1;
+    let mut finished = vec![];
+
+    while pathes.len() > 0 {
+        for (edge, walked) in std::mem::replace(&mut pathes, Default::default()).into_iter() {
+            let last: usize = *edge.last().unwrap();
+            let next: Vec<_> = map[&last].clone().into_iter().filter(|n| walked[*n] > 0).collect();
+
+            for point in next.clone().into_iter() {
+                if size[last] {
+                    assert!(!size[point], "infinite solutions: {}-{}.", last, point);
+                }
+                let mut edge = edge.clone();
+                let mut walked = walked.clone();
+
+                edge.push(point);
+                if point == end {
+                    finished.push(edge);
+                } else {
+                    if !size[point] {
+                        // println!("{:?} {} {:?}", walked, point, size);
+                        walked[point] -= 1;
+
+                        if walked[point] == 1 {
+                            // just ignore
+                            let mut reset = walked.clone();
+                            reset[point] = 0;
+                            pathes.push((edge.clone(), reset));
+
+                            // change all other node
+                            for (counter, is_bigger) in walked.iter_mut().zip(size.iter()) {
+                                if !is_bigger && *counter == 2 {
+                                    *counter = 1;
+                                }
+                            }
+                        }
+                    }
+
+                    pathes.push((edge, walked));
+                }
+            }
+        }
+    }
+
+    finished
+}
+
+fn p12_solve(map: &HashMap<usize, HashSet<usize>>, size: &Vec<bool>, start: usize, end: usize) -> Vec<Vec<usize>> {
+    let mut pathes: Vec<(Vec<usize>, Vec<bool>)> = vec![(vec![start], vec![false; map.len()])];
+    pathes[0].1[start] = true;
+    let mut finished = vec![];
+
+    while pathes.len() > 0 {
+        for (edge, walked) in std::mem::replace(&mut pathes, Default::default()).into_iter() {
+            let last: usize = *edge.last().unwrap();
+            let next: Vec<_> = map[&last].clone().into_iter().filter(|n| size[*n] || !walked[*n]).collect();
+
+            for point in next.into_iter() {
+                let mut edge = edge.clone();
+                let mut walked = walked.clone();
+                if size[last] {
+                    assert!(!size[point], "infinite solutions: {}-{}.", last, point);
+                }
+
+                edge.push(point);
+                walked[point] = true;
+
+                if point == end {
+                    finished.push(edge);
+                } else {
+                    pathes.push((edge, walked));
+                }
+            }
+        }
+    }
+
+    finished
+}
+
+
+fn p12_decode(encode: &Vec<String>, node: &str) -> Option<usize> {
+    for (idx, to) in encode.iter().enumerate() {
+        if &node == to {
+            return Some(idx);
+        }
+    }
+    None
+}
+
+fn p12_encode(encode: &mut Vec<String>, node: &str) -> usize {
+    if let Some(idx) = p12_decode(encode, node) {
+        return idx;
+    }
+
+    encode.push(node.to_owned());
+    encode.len() - 1
+}

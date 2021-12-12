@@ -178,9 +178,193 @@ pub fn p0087_is_scramble(s1: &[char], s2: &[char]) -> bool {
     p0087_is_scramble_rec(0, 0, s1.len(), &mut mem, s1, s2)
 }
 
+pub fn p0088_merge(nums1: &mut Vec<i32>, m: usize, nums2: &mut Vec<i32>, n: usize) {
+    let len = nums1.len();
+    assert!(n <= nums2.len());
+    assert!(m+n == nums1.len());
+
+    let mut left = 0; let mut right = 0;
+    while left+right < m+n {
+        // println!("{:?} {} {:?}", nums1, left, right);
+        if right < n && left < m {
+            if nums1[left+right] > nums2[right] {
+                nums1[len-1] = nums2[right];
+                nums1[left+right..].rotate_right(1);
+                right += 1;
+            } else {
+                left += 1;
+            }
+        } else if right < n {
+            nums1[left+right] = nums2[right];
+            right += 1;
+        } else {
+            break;
+        }
+    }
+}
+
+pub fn p0089_gray_code_fast(n: i32) -> Vec<i32> {
+    if n == 0 { return vec![] }
+    let mut out = vec![0, 1];
+
+    for idx in 0..n-1 {
+        for inner in out.clone().into_iter().rev() {
+            out.push(inner | (1 << ((idx+1) as usize)));
+        }
+    }
+    out
+}
+
+pub fn p0089_gray_code_iter(n: usize) -> Vec<Vec<usize>> {
+    if n == 0 { return vec![] }
+    let mut out = vec![vec![0], vec![1]];
+    for _ in 0..n-1 {
+        let new = std::mem::replace(&mut out, vec![]);
+
+        for mut inner in new.clone().into_iter() {
+            inner.insert(0, 0);
+            out.push(inner);
+        }
+
+        for mut inner in new.into_iter().rev() {
+            inner.insert(0, 1);
+            out.push(inner);
+        }
+    }
+    out
+}
+
+pub fn p0089_gray_code_rec<'r>(n: usize, mem: &'r mut HashMap<usize, Vec<Vec<usize>>>) -> &'r Vec<Vec<usize>> {
+    if !mem.contains_key(&n) {
+        let rtn = match n {
+            0 => vec![],
+            1 => vec![vec![0], vec![1]],
+            _ => {
+                let mut out = vec![];
+                let last = p0089_gray_code_rec(n-1, mem);
+
+                for mut inner in last.clone().into_iter() {
+                    inner.insert(0, 0);
+                    out.push(inner);
+                }
+
+                for mut inner in last.clone().into_iter().rev() {
+                    inner.insert(0, 1);
+                    out.push(inner);
+                }
+                out
+            }
+        };
+
+        mem.insert(n, rtn);
+    }
+
+    mem.get(&n).unwrap()
+}
+
+pub fn p0089_gray_code(n: i32) -> Vec<i32> {
+    let mut mem: HashMap<_, _> = HashMap::new();
+    p0089_gray_code_rec(n as usize, &mut mem).into_iter().map(|line| {
+        let mut num = 0;
+        for n in line.into_iter() {
+            num = num*2 + n;
+        }
+        num as i32
+    }).collect()
+}
+
+pub fn p0090_subsets_with_dup(mut nums: Vec<i32>) -> Vec<Vec<i32>> {
+    nums.sort();
+    let mut out: HashSet<Vec<i32>> = vec![vec![]].into_iter().collect();
+    for num in nums.into_iter() {
+        for mut old in out.clone().into_iter() {
+            old.push(num);
+            // println!(">>> {:?}", old);
+            out.insert(old);
+        }
+    }
+    // println!("{:?}", out);
+    out.into_iter().collect()
+}
+
+pub fn p0091_num_decodings_rec(s: &[char], st: usize, mem: &mut HashMap<usize, usize>) -> usize {
+    if let Some(v) = mem.get(&st) { return *v; }
+    if st < s.len() && s[st] == '0' { return 0; }
+
+    let rtn = if st + 1 < s.len() {
+        if s[st] == '1' || (s[st] == '2' && s[st+1] <= '6') {
+            p0091_num_decodings_rec(s, st+1, mem) + p0091_num_decodings_rec(s, st+2, mem)
+        } else {
+            p0091_num_decodings_rec(s, st+1, mem)
+        }
+    } else if st < s.len() {
+        p0091_num_decodings_rec(s, st+1, mem)
+    } else {
+        1
+    };
+    mem.insert(st, rtn);
+    rtn
+}
+
+pub fn p0091_num_decodings(s: &[char]) -> i32 {
+    let mut mem = Default::default();
+    if s.len() == 0 { return 1; }
+    p0091_num_decodings_rec(s, 0, &mut mem) as _
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn t0091() {
+        for (idx, (mut st, expected)) in vec![
+            ("12", 2),
+            ("226", 3),
+            ("0", 0),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0091_num_decodings(&st.chars().collect::<Vec<_>>()),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+
+    }
+
+    #[test]
+    fn t0090() {
+        for (idx, (mut nums, expected)) in vec![
+            (vec![1,2,2], 6),
+            (vec![1], 2),
+            (vec![4, 4, 4, 1, 4], 10),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0090_subsets_with_dup(nums).len(),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t0088() {
+        for (idx, (mut nums1, m, mut nums2, n, expected)) in vec![
+            (vec![1,2,3,0,0,0], 3, vec![2,5,6], 3, vec![1,2,2,3,5,6]),
+            (vec![1], 1, vec![], 0, vec![1]),
+            (vec![0], 0, vec![1], 1, vec![1])
+        ].into_iter().enumerate() {
+            p0088_merge(&mut nums1, m, &mut nums2, n);
+            assert_eq!(
+                nums1,
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
 
     #[test]
     fn t0087() {
