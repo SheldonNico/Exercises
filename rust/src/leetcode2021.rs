@@ -376,9 +376,332 @@ pub fn p0097_is_interleave(s1: &[char], s2: &[char], s3: &[char]) -> bool {
     p0097_is_interleave_rec(s1, s2, s3, 0, 0, &mut mem)
 }
 
+pub fn p0118_generate(num_rows: i32) -> Vec<Vec<i32>> {
+    let mut out = vec![vec![1]];
+    for _ in 1..num_rows {
+        let last = out.last().unwrap();
+        let mut new = vec![1; last.len()+1];
+        for idx in 1..new.len()-1 {
+            new[idx] = last[idx-1] + last[idx];
+        }
+        out.push(new);
+    }
+    out
+}
+
+pub fn p0119_get_row(row_index: i32) -> Vec<i32> {
+    let mut out = vec![1];
+    for _ in 1..row_index+1 {
+        let mut new = vec![1; out.len()+1];
+        for idx in 1..new.len()-1 {
+            new[idx] = out[idx-1]+out[idx];
+        }
+        out = new;
+    }
+    out
+}
+
+
+pub fn p0120_minimum_total_rec(triangle: &Vec<Vec<i32>>, row: usize, col: usize, mem: &mut HashMap<(usize, usize), i32>) -> i32 {
+    if let Some(v) = mem.get(&(row, col)) { return *v; }
+    if row == triangle.len()-1 { return triangle[row][col]; }
+
+    let left = p0120_minimum_total_rec(triangle, row+1, col, mem);
+    let right = p0120_minimum_total_rec(triangle, row+1, col+1, mem);
+    let rtn = triangle[row][col] + left.min(right);
+    mem.insert((row, col), rtn);
+
+    rtn
+}
+
+pub fn p0120_minimum_total(triangle: &Vec<Vec<i32>>) -> i32 {
+    let mut mem = Default::default();
+    p0120_minimum_total_rec(triangle, 0, 0, &mut mem)
+}
+
+pub fn p0122_max_profit_faster(prices: &[i32]) -> i32 {
+    let mut out = 0;
+    for idx in 1..prices.len() {
+        out += (prices[idx] - prices[idx-1]).max(0)
+    }
+    out
+}
+
+pub fn p0122_max_profit(prices: &[i32]) -> i32 {
+    let len = prices.len();
+    if len == 0 { return 0; }
+    let mut profit = vec![0; prices.len()];
+    for idx in (0..len-1).rev() {
+        let mut max = profit[idx+1]; // do not use init point
+        for idy in (idx+1)..len {
+            let mut curr = (prices[idy]-prices[idx]).max(0);
+            if idy+1 < len {
+                curr += profit[idy+1];
+            }
+            if max < curr {
+                max = curr;
+            }
+        }
+
+        profit[idx] = max;
+    }
+    // println!("{:?}", profit);
+
+    profit[0]
+}
+
+pub fn p0123_max_profit(prices: &[i32]) -> i32 {
+    let mut profits = vec![];
+    let mut diff = 0;
+
+    for idx in 1..prices.len() {
+        let curr = prices[idx] - prices[idx-1];
+        if (curr >= 0 && diff >= 0) || (curr <= 0 && diff <= 0) {
+            diff += curr;
+        } else {
+            profits.push(diff);
+            diff = curr;
+        }
+    }
+    if diff != 0 { profits.push(diff); }
+
+    let len = profits.len();
+    if len == 0 { return 0; }
+
+    let mut profit_one = vec![0; len];
+    let mut profit_two = vec![0; len];
+
+    profit_one[len-1] = profits[len-1].max(0);
+    profit_two[len-1] = profits[len-1].max(0);
+    // 从 idx 必须要买入的累计最大值
+    let mut cumsum_one = 0;
+    let mut cumsum_two = 0;
+    for idx in (0..len-1).rev() {
+        cumsum_one = profits[idx] + cumsum_one.max(0);
+        profit_one[idx] = profit_one[idx+1].max(cumsum_one).max(0);
+        cumsum_two = profits[idx] + cumsum_two.max(profit_one[idx+1]);
+        profit_two[idx] = 0.max(profit_two[idx+1]).max(cumsum_two).max(cumsum_one);
+    }
+    // println!("{:?}=> {:?} {:?}", profits, profit_one, profit_two);
+
+    profit_two[0]
+}
+pub fn p0125_is_palindrome_fast(s: &str) -> bool {
+    let iter = s.chars().filter(char::is_ascii_alphanumeric).map(|c| char::to_ascii_lowercase(&c));
+    iter.clone().eq(iter.rev())
+}
+
+pub fn p0125_is_palindrome(s: &[char]) -> bool {
+    if s.len() == 0 { return true; }
+    let mut left = 0; let mut right = s.len()-1;
+    while left < right {
+        while left < right && !s[left].is_ascii_alphanumeric() {
+            left += 1;
+        }
+        while right > left && !s[right].is_ascii_alphanumeric() {
+            right -= 1;
+        }
+        if right <= left { break; }
+        if s[left].to_ascii_lowercase() != s[right].to_ascii_lowercase() { return false; }
+
+        left += 1; right -= 1;
+    }
+
+    true
+}
+
+fn p0127_compare(s1: &[char], s2: &[char]) -> usize {
+    let mut count = 0;
+    for (c1, c2) in s1.iter().zip(s2.iter()) {
+        if c1 != c2 {
+            count += 1;
+        }
+    }
+    count
+}
+
+pub fn p0127_ladder_length(begin_word: String, end_word: String, word_list: Vec<String>) -> i32 {
+    let begin_word: Vec<_> = begin_word.chars().collect();
+    let end_word: Vec<_> = end_word.chars().collect();
+    let mut word_vec = vec![begin_word.clone()];
+    let start = 0; let mut end = 0;
+    for (idx, word) in word_list.into_iter().enumerate() {
+        let word: Vec<char> = word.chars().collect();
+        if word == end_word {
+            end = idx+1;
+        }
+        word_vec.push(word);
+    }
+
+    if word_vec[end] != end_word { return 0; }
+
+    let mut grid: Vec<Vec<usize>> = vec![];
+    for wid in 0..word_vec.len() {
+        let mut to = vec![];
+        for nid in 0..word_vec.len() {
+            if p0127_compare(&word_vec[wid], &word_vec[nid]) == 1 {
+                to.push(nid);
+            }
+        }
+        grid.push(to);
+    }
+
+    let mut start: HashSet<usize> = vec![start].into_iter().collect();
+    let mut count = 1;
+    while start.len() < word_vec.len() {
+        count += 1;
+        // println!("{:?} {}", start, end);
+        let mut new = vec![];
+        for wid in start.iter() {
+            for nid in grid[*wid].iter() {
+                if *nid == end { return count; }
+                if !start.contains(nid) {
+                    new.push(*nid);
+                }
+            }
+        }
+        if new.len() == 0 { return 0; }
+        for nid in new.into_iter() {
+            start.insert(nid);
+        }
+    }
+
+    0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn t0127() {
+        for (idx, (begin_word, end_word, word_list, expected)) in vec![
+            ("hit", "cog", vec!["hot","dot","dog","lot","log","cog"], 5),
+            ("hit", "cog", vec!["hot","dot","dog","lot","log"], 0),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0127_ladder_length(
+                    begin_word.to_owned(),
+                    end_word.to_owned(),
+                    word_list.into_iter().map(|s| s.to_owned()).collect()
+                ),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+
+    }
+
+    #[test]
+    fn t0125() {
+        for (idx, (st, expected)) in vec![
+            ("A man, a plan, a canal: Panama", true),
+            (" ", true),
+            ("race a car", false),
+            ("0P", false),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0125_is_palindrome_fast(st),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+            assert_eq!(
+                p0125_is_palindrome(&st.chars().collect::<Vec<_>>()),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t0123() {
+        for (idx, (prices, expected)) in vec![
+            (vec![3,3,5,0,0,3,1,4], 6),
+            (vec![2,1,2,0,1], 2),
+            (vec![1,2,3,4,5], 4),
+            (vec![7,6,4,3,1], 0),
+            (vec![1], 0),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0123_max_profit(&prices),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t0122() {
+        for (idx, (prices, expected)) in vec![
+            (vec![7,1,5,3,6,4], 7),
+            (vec![1,2,3,4,5], 4),
+            (vec![7,6,4,3,1], 0),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0122_max_profit_faster(&prices),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+            assert_eq!(
+                p0122_max_profit(&prices),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t0120() {
+        for (idx, (tri, expected)) in vec![
+            (vec![vec![2], vec![3,4], vec![6,5,7], vec![4,1,8,3]], 11),
+            (vec![vec![-10]], -10),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0120_minimum_total(&tri),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+
+    }
+
+    #[test]
+    fn t0119() {
+        for (idx, (n, expected)) in vec![
+            (0, vec![1]),
+            (1, vec![1, 1]),
+            (3, vec![1, 3, 3, 1]),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0119_get_row(n),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t0118() {
+        for (idx, (n, expected)) in vec![
+            (1, vec![vec![1]]),
+            (5, vec![vec![1], vec![1,1], vec![1,2,1], vec![1,3,3,1], vec![1,4,6,4,1]]),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0118_generate(n),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
 
     #[test]
     fn t0097() {

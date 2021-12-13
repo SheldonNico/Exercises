@@ -1157,7 +1157,7 @@ pub fn p13() {
 
 fold along y=7
 fold along x=5";
-    // let _contents = std::fs::read_to_string("./assets/adv2021/adv13.txt").unwrap(); let contents = &_contents;
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv13.txt").unwrap(); let contents = &_contents;
 
     let (_, (points, dirs)) = p13_parse(contents).unwrap();
 
@@ -1237,33 +1237,23 @@ fn p13_display(grid: &Vec<Vec<usize>>, nrow: usize, ncol: usize) -> String {
 }
 
 fn p13_parse(input: &str) -> IResult<&str, (Vec<(usize, usize)>, Vec<(P13Dir, usize)>)> {
-    use nom::multi::separated_list1;
+    use nom::multi::{many1, separated_list1};
     use nom::character::complete::{newline, digit1};
     use nom::sequence::separated_pair;
     use nom::bytes::complete::tag;
     use nom::combinator::{map_res, value};
     use nom::branch::alt;
 
-    let (input, points) = separated_list1(newline, separated_pair(
-            map_res(digit1, |s: &str| s.parse::<usize>()),
-            tag(","),
-            map_res(digit1, |s: &str| s.parse::<usize>()),
-    ))(input)?;
-
-    let (input, _) = newline(input)?;
-    let (input, _) = newline(input)?;
-
+    let number = || map_res(digit1, |s: &str| s.parse::<usize>());
+    let (input, points) = separated_list1(newline, separated_pair(number(), tag(","), number()))(input)?;
+    let (input, _) = many1(newline)(input)?;
     let (input, dirs) = separated_list1(newline, |input| {
         let (input, _) = tag("fold along ")(input)?;
-        let (input, dir) = alt(
-            (
+        let dir = alt((
                 value(P13Dir::X, tag("x")),
                 value(P13Dir::Y, tag("y")),
-            )
-        )(input)?;
-        let (input, _) = tag("=")(input)?;
-        let (input, digit) = map_res(digit1, |s: &str| s.parse::<usize>())(input)?;
-        Ok((input, (dir, digit)))
+        ));
+        separated_pair(dir, tag("="), number())(input)
     })(input)?;
 
     Ok((input, (points, dirs)))
