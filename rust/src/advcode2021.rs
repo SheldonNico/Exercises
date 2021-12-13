@@ -1134,3 +1134,137 @@ fn p12_encode(encode: &mut Vec<String>, node: &str) -> usize {
     encode.push(node.to_owned());
     encode.len() - 1
 }
+
+pub fn p13() {
+    let contents = r"6,10
+0,14
+9,10
+0,3
+10,4
+4,11
+6,0
+6,12
+4,1
+0,13
+10,12
+3,4
+3,0
+8,4
+1,10
+2,14
+8,10
+9,0
+
+fold along y=7
+fold along x=5";
+    // let _contents = std::fs::read_to_string("./assets/adv2021/adv13.txt").unwrap(); let contents = &_contents;
+
+    let (_, (points, dirs)) = p13_parse(contents).unwrap();
+
+    let mut ncol = points.iter().map(|(x, y)| x).max().unwrap() + 1;
+    let mut nrow = points.iter().map(|(x, y)| y).max().unwrap() + 1;
+
+    for (dir, position) in dirs.iter() {
+        match dir {
+            P13Dir::Y => { nrow = nrow.max(2*position+1); }
+            P13Dir::X => { ncol = ncol.max(2*position+1); }
+        }
+    }
+
+    println!("Grid size: {}x{}", ncol, nrow);
+    let mut grid = vec![vec![0; ncol]; nrow];
+    for (x, y) in points.iter() {
+        grid[*y][*x] += 1;
+    }
+
+    for (idx, (dir, position)) in dirs.into_iter().enumerate() {
+        let mut count = 0;
+        for idr in 0..nrow {
+            for idc in 0..ncol {
+                match dir {
+                    P13Dir::Y => {
+                        if idr < position {
+                            grid[idr][idc] += grid[position-idr+position][idc];
+                        } else {
+                            grid[idr][idc] = 0;
+                        }
+                    },
+                    P13Dir::X => {
+                        if idc < position {
+                            grid[idr][idc] += grid[idr][position-idc+position]
+                        } else {
+                            grid[idr][idc] = 0;
+                        }
+                    }
+                }
+
+                if grid[idr][idc] > 0 { count += 1; }
+            }
+        }
+        match dir {
+            P13Dir::Y => {
+                nrow /= 2;
+            },
+            P13Dir::X => {
+                ncol /= 2;
+            }
+        }
+        if nrow < 80 && ncol < 80 {
+            println!("#{} {:?}:\n{}", idx, count, p13_display(&grid, nrow, ncol));
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum P13Dir {
+    X,
+    Y,
+}
+
+fn p13_display(grid: &Vec<Vec<usize>>, nrow: usize, ncol: usize) -> String {
+    let mut out = "".to_owned();
+    for row in grid.iter().take(nrow) {
+        for c in row.iter().take(ncol) {
+            if *c > 0 {
+                out.push('#');
+            } else {
+                out.push('.');
+            }
+        }
+        out.push('\n');
+    }
+    out
+}
+
+fn p13_parse(input: &str) -> IResult<&str, (Vec<(usize, usize)>, Vec<(P13Dir, usize)>)> {
+    use nom::multi::separated_list1;
+    use nom::character::complete::{newline, digit1};
+    use nom::sequence::separated_pair;
+    use nom::bytes::complete::tag;
+    use nom::combinator::{map_res, value};
+    use nom::branch::alt;
+
+    let (input, points) = separated_list1(newline, separated_pair(
+            map_res(digit1, |s: &str| s.parse::<usize>()),
+            tag(","),
+            map_res(digit1, |s: &str| s.parse::<usize>()),
+    ))(input)?;
+
+    let (input, _) = newline(input)?;
+    let (input, _) = newline(input)?;
+
+    let (input, dirs) = separated_list1(newline, |input| {
+        let (input, _) = tag("fold along ")(input)?;
+        let (input, dir) = alt(
+            (
+                value(P13Dir::X, tag("x")),
+                value(P13Dir::Y, tag("y")),
+            )
+        )(input)?;
+        let (input, _) = tag("=")(input)?;
+        let (input, digit) = map_res(digit1, |s: &str| s.parse::<usize>())(input)?;
+        Ok((input, (dir, digit)))
+    })(input)?;
+
+    Ok((input, (points, dirs)))
+}
