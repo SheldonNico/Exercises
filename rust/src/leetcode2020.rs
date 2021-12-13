@@ -10,7 +10,7 @@ use {
 pub use crate::util::{ListNode};
 pub use crate::snippet::*;
 
-pub fn p001_two_sum(nums: &Vec<isize>, target: isize) -> (usize, usize) {
+pub fn p0001_two_sum(nums: &Vec<isize>, target: isize) -> (usize, usize) {
     let mut founded: HashMap<isize, usize> = HashMap::new();
     for (i, num) in nums.iter().enumerate() {
         if founded.contains_key(num){
@@ -22,7 +22,7 @@ pub fn p001_two_sum(nums: &Vec<isize>, target: isize) -> (usize, usize) {
     panic!("not possible to find a solution")
 }
 
-pub fn p002_add_two_numbers(num1: &LinkedList<usize>, num2: &LinkedList<usize>) -> LinkedList<usize> {
+pub fn p0002_add_two_numbers(num1: &LinkedList<usize>, num2: &LinkedList<usize>) -> LinkedList<usize> {
     let mut num1 = num1.iter();
     let mut num2 = num2.iter();
     let mut n1; let mut n2 = 0; let mut shift = 0;
@@ -58,7 +58,7 @@ pub fn p002_add_two_numbers(num1: &LinkedList<usize>, num2: &LinkedList<usize>) 
     res
 }
 
-pub fn p003_longest_substring(chars: &str) -> String {
+pub fn p0003_longest_substring(chars: &str) -> String {
     let mut maxlen = 0;
     let mut maxstr = String::new();
     for (i, _c) in chars.chars().enumerate() {
@@ -80,7 +80,7 @@ pub fn p003_longest_substring(chars: &str) -> String {
     maxstr
 }
 
-pub fn p004_median_of_two_sorted_arrays(arr1: &Vec<i32>, arr2: &Vec<i32>) -> f64 {
+pub fn p0004_median_of_two_sorted_arrays(arr1: &Vec<i32>, arr2: &Vec<i32>) -> f64 {
     assert!(arr1.len() > 0 || arr2.len() > 0, "argument must be non empty");
 
     let middle = (arr1.len()+ arr2.len()) / 2;
@@ -132,7 +132,7 @@ pub fn p004_median_of_two_sorted_arrays(arr1: &Vec<i32>, arr2: &Vec<i32>) -> f64
     }
 }
 
-pub fn p010_regular_expression_matching(s: String, p: String) -> bool {
+pub fn p0010_regular_expression_matching(s: String, p: String) -> bool {
     fn match_regex(s: &[char], p: &[char], curr: char, number: usize) -> bool {
         //println!("{:?} {:?} <-> {} {}", s, p, curr, number);
 
@@ -175,17 +175,17 @@ pub fn p010_regular_expression_matching(s: String, p: String) -> bool {
     match_regex( &s.chars().collect::<Vec<char>>(), &p.chars().collect::<Vec<char>>(), '.', 0 )
 }
 
-pub fn p012_int_to_roman(num: i32) -> String {
+pub fn p0012_int_to_roman(num: i32) -> String {
     let mut out = String::new();
 
     fn split(num: i32, max: i32, min: i32, five: char, one: char, res: &mut String) {
         if num >= max {
             let count = num / max;
             for _ in 0..count { res.push(five); }
-            res.push_str( &p012_int_to_roman( num - max*count ) );
+            res.push_str( &p0012_int_to_roman( num - max*count ) );
         } else {
             res.push(one); res.push(five);
-            res.push_str( &p012_int_to_roman( num-max+min) );
+            res.push_str( &p0012_int_to_roman( num-max+min) );
         }
     }
 
@@ -218,7 +218,7 @@ pub fn p012_int_to_roman(num: i32) -> String {
     out
 }
 
-pub fn p013_roman_to_int(s: String) -> i32 {
+pub fn p0013_roman_to_int(s: String) -> i32 {
     let mut out = 0; let mut curr = 0; let mut curr_char = 0;
 
     let mut split = |c: i32| {
@@ -248,7 +248,7 @@ pub fn p013_roman_to_int(s: String) -> i32 {
     out + curr
 }
 
-pub fn p014_longest_common_prefix(strs: Vec<String>) -> String {
+pub fn p0014_longest_common_prefix(strs: Vec<String>) -> String {
     let mut out = String::new(); if strs.len() == 0 { return out; }
     let mut strs: Vec<_> = strs.iter().map(|s| s.chars()).collect();
 
@@ -272,7 +272,7 @@ pub fn p014_longest_common_prefix(strs: Vec<String>) -> String {
     out
 }
 
-pub fn p015_three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
+pub fn p0015_three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
     let mut out: Vec<_> = vec![];
     let mut record = BTreeSet::new();
     let mut nums = nums; nums.sort();
@@ -301,7 +301,7 @@ pub fn p015_three_sum(nums: Vec<i32>) -> Vec<Vec<i32>> {
     out
 }
 
-pub fn p016_three_sum_closest(nums: Vec<i32>, target: i32) -> i32 {
+pub fn p0016_three_sum_closest(nums: Vec<i32>, target: i32) -> i32 {
     let mut nums = nums; nums.sort();
     let len = nums.len(); assert!(len >= 3, "input must be at least 3 numbers");
     let mut start; let mut end;
@@ -355,7 +355,7 @@ pub fn match_one(c: char, digits: &mut Chars, result: Vec<String>) -> Vec<String
     }
 }
 
-pub fn p017_letter_combinations(digits: String) -> Vec<String> {
+pub fn p0017_letter_combinations(digits: String) -> Vec<String> {
     let mut digits = digits.chars();
     if let Some(c) = &digits.next() {
         match_one(*c, &mut digits, vec!["".to_string()])
@@ -365,7 +365,7 @@ pub fn p017_letter_combinations(digits: String) -> Vec<String> {
 
 }
 
-pub fn p018_four_sum(nums: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
+pub fn p0018_four_sum(nums: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
     let mut nums = nums; nums.sort();
     let mut out = vec![];
     let len = nums.len(); if len < 4 { return out; }
@@ -407,7 +407,7 @@ fn length(li: &Box<ListNode>) -> usize {
         None      => 1,
     }
 }
-pub fn p019_remove_nth_from_end(head: Option<Box<ListNode>>, n: i32) -> Option<Box<ListNode>> {
+pub fn p0019_remove_nth_from_end(head: Option<Box<ListNode>>, n: i32) -> Option<Box<ListNode>> {
     if let Some(h) = &head {
         let len = length(h);
         if len < n as usize { return None; }
@@ -428,7 +428,7 @@ fn remove_nth_from_begin(head: Option<Box<ListNode>>, n: usize) -> Option<Box<Li
     }
 }
 
-pub fn p020_is_valid(s: String) -> bool {
+pub fn p0020_is_valid(s: String) -> bool {
     let parens: HashMap<char, char> = [('(', ')'), ('[', ']'), ('{', '}')].iter().cloned().collect();
 
     let mut stack = VecDeque::new();
@@ -453,7 +453,7 @@ pub fn p020_is_valid(s: String) -> bool {
     stack.len() == 0
 }
 
-pub fn p021_merge_two_lists(l1: Option<Box<ListNode>>, l2: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+pub fn p0021_merge_two_lists(l1: Option<Box<ListNode>>, l2: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
 /*
  * life time sucks here! ...
  *    l1.and_then(
@@ -462,10 +462,10 @@ pub fn p021_merge_two_lists(l1: Option<Box<ListNode>>, l2: Option<Box<ListNode>>
  *                let mut newnode;
  *                if node1.val < node2.val {
  *                    newnode = ListNode::new(node1.val);
- *                    newnode.next = p021_merge_two_lists(node1.next, l2);
+ *                    newnode.next = p0021_merge_two_lists(node1.next, l2);
  *                } else {
  *                    newnode = ListNode::new(node2.val);
- *                    newnode.next = p021_merge_two_lists(node2.next, l1);
+ *                    newnode.next = p0021_merge_two_lists(node2.next, l1);
  *                }
  *
  *                Some(Box::new( newnode ))
@@ -479,10 +479,10 @@ pub fn p021_merge_two_lists(l1: Option<Box<ListNode>>, l2: Option<Box<ListNode>>
             let mut newnode: ListNode;
             if n1.val < n2.val {
                 newnode = ListNode::new(n1.val);
-                newnode.next = p021_merge_two_lists(n1.next, Some(n2));
+                newnode.next = p0021_merge_two_lists(n1.next, Some(n2));
             } else {
                 newnode = ListNode::new(n2.val);
-                newnode.next = p021_merge_two_lists(n2.next, Some(n1));
+                newnode.next = p0021_merge_two_lists(n2.next, Some(n1));
             }
             Some( Box::new( newnode ))
         },
@@ -492,7 +492,7 @@ pub fn p021_merge_two_lists(l1: Option<Box<ListNode>>, l2: Option<Box<ListNode>>
     }
 }
 
-pub fn p022_generate_parenthesis(n: i32) -> Vec<String> {
+pub fn p0022_generate_parenthesis(n: i32) -> Vec<String> {
     fn dfs(n: i32, res: Vec<String>) -> Vec<String> {
         if n > 0 {
             dfs(n-1, res.into_iter().flat_map(|mut hist| {
@@ -530,7 +530,7 @@ pub fn p022_generate_parenthesis(n: i32) -> Vec<String> {
 }
 
 /// TODO here: lifetime with pointer sucks
-pub fn p023_merge_k_lists(lists: Vec<Option<Box<ListNode>>>) -> Option<Box<ListNode>> {
+pub fn p0023_merge_k_lists(lists: Vec<Option<Box<ListNode>>>) -> Option<Box<ListNode>> {
     use std::mem;
     println!(">>>>>>>>>>>>>>>");
 
@@ -567,7 +567,7 @@ pub fn p023_merge_k_lists(lists: Vec<Option<Box<ListNode>>>) -> Option<Box<ListN
 
     println!("{:?}", curr);
 
-    let mut out = p023_merge_k_lists( hist );
+    let mut out = p0023_merge_k_lists( hist );
     for v in curr.into_iter().rev() {
         let mut tmp = ListNode::new(v); tmp.next = out;
         out = Some( Box::new(tmp) );
@@ -576,7 +576,7 @@ pub fn p023_merge_k_lists(lists: Vec<Option<Box<ListNode>>>) -> Option<Box<ListN
     out
 }
 
-pub fn p024_swap_pairs(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
+pub fn p0024_swap_pairs(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
     match head {
         Some(boxl) => {
             match *boxl {
@@ -584,7 +584,7 @@ pub fn p024_swap_pairs(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
                     let ListNode { val: vv, next: rest } = *boxll;
                     let mut out1 = ListNode::new(vv);
                     let mut out2 = ListNode::new(v);
-                    out2.next = p024_swap_pairs(rest);
+                    out2.next = p0024_swap_pairs(rest);
                     out1.next = Some(Box::new( out2 ));
                     Some(Box::new(out1))
                 },
@@ -598,17 +598,17 @@ pub fn p024_swap_pairs(head: Option<Box<ListNode>>) -> Option<Box<ListNode>> {
     }
 }
 
-pub fn p026_remove_duplicates(nums: &mut Vec<i32>) -> i32 {
+pub fn p0026_remove_duplicates(nums: &mut Vec<i32>) -> i32 {
     nums.dedup();
     nums.len() as i32
 }
 
-pub fn p027_remove_element<T: Eq>(nums: &mut Vec<T>, val: T) -> i32 {
+pub fn p0027_remove_element<T: Eq>(nums: &mut Vec<T>, val: T) -> i32 {
     nums.retain(|v| *v != val);
     nums.len() as i32
 }
 
-pub fn p028_str_str(haystack: String, needle: String) -> i32 {
+pub fn p0028_str_str(haystack: String, needle: String) -> i32 {
     //if haystack.len() == 0 && needle.len() == 0 { return 0; }
     if haystack.len() < needle.len() { return -1; }
 
@@ -623,7 +623,7 @@ pub fn p028_str_str(haystack: String, needle: String) -> i32 {
     find
 }
 
-pub fn p029_divide(dividend: i32, divisor: i32) -> i32 {
+pub fn p0029_divide(dividend: i32, divisor: i32) -> i32 {
     static UP: i32 = 2147483647;
     static LOW: i32 = -2147483648;
     static MID: i32 = UP / 2;
@@ -632,9 +632,9 @@ pub fn p029_divide(dividend: i32, divisor: i32) -> i32 {
         if divisor == -1 {
             UP
         } else if divisor < 0 {
-            1 + p029_divide(dividend - divisor, divisor)
+            1 + p0029_divide(dividend - divisor, divisor)
         } else {
-            -1 + p029_divide(dividend + divisor, divisor)
+            -1 + p0029_divide(dividend + divisor, divisor)
         }
     } else if divisor == LOW {
         0
@@ -670,7 +670,7 @@ pub fn p029_divide(dividend: i32, divisor: i32) -> i32 {
     }
 }
 
-pub fn p030_find_substring(s: String, words: Vec<String>) -> Vec<i32> {
+pub fn p0030_find_substring(s: String, words: Vec<String>) -> Vec<i32> {
     let mut word_map: HashMap<String, i32> = HashMap::new();
     let mut word_len = 0;
     let size = words.len();
@@ -734,7 +734,7 @@ pub fn p030_find_substring(s: String, words: Vec<String>) -> Vec<i32> {
     return result;
 }
 
-pub fn _p030_find_substring(s: String, words: Vec<String>) -> Vec<i32> {
+pub fn _p0030_find_substring(s: String, words: Vec<String>) -> Vec<i32> {
 
     let mut out: Vec<i32> = vec![];
     let mut words = words;
@@ -748,7 +748,7 @@ pub fn _p030_find_substring(s: String, words: Vec<String>) -> Vec<i32> {
 
     if s.len() >= size && words.len() > 0 {
         for i in 0..=s.len()-size {
-            if p030_find_substring_helper(&s[i..], &mut words) {
+            if p0030_find_substring_helper(&s[i..], &mut words) {
                 out.push( i as i32 );
             }
         }
@@ -759,14 +759,14 @@ pub fn _p030_find_substring(s: String, words: Vec<String>) -> Vec<i32> {
 
 // must use tail recursion or loop here??
 // is there any tail recurrsion one.
-pub fn p030_find_substring_helper(s: &str, words: &mut Vec<String>) -> bool {
+pub fn p0030_find_substring_helper(s: &str, words: &mut Vec<String>) -> bool {
     if words.len() == 0 {
         return true;
     } else {
         for i in 0..words.len() {
             let w = words.drain(i..i+1).next().unwrap();
             if w.len() <= s.len() && w == s[..w.len()] {
-                if p030_find_substring_helper(&s[w.len()..], words) {
+                if p0030_find_substring_helper(&s[w.len()..], words) {
                     // recovery origin string
                     words.insert(i, w);
                     return true;
@@ -779,7 +779,7 @@ pub fn p030_find_substring_helper(s: &str, words: &mut Vec<String>) -> bool {
 
 }
 
-pub fn p031_next_permutation(nums: &mut Vec<i32>) {
+pub fn p0031_next_permutation(nums: &mut Vec<i32>) {
     let nums_len = nums.len();
     if nums_len < 1 { return; }
 
@@ -811,7 +811,7 @@ pub fn p031_next_permutation(nums: &mut Vec<i32>) {
     nums[ind_split..].reverse();
 }
 
-pub fn p032_longest_valid_parentheses(s: String) -> i32 {
+pub fn p0032_longest_valid_parentheses(s: String) -> i32 {
     let mut left = vec![];
     let mut stack = 0;
     let mut maxlen = 0;
@@ -854,7 +854,7 @@ pub fn p032_longest_valid_parentheses(s: String) -> i32 {
     maxlen as i32
 }
 
-pub fn p033_search(nums: Vec<i32>, target: i32) -> i32 {
+pub fn p0033_search(nums: Vec<i32>, target: i32) -> i32 {
     let nums_len = nums.len();
     if nums_len == 0 { return -1; }
 
@@ -896,7 +896,7 @@ pub fn p033_search(nums: Vec<i32>, target: i32) -> i32 {
 }
 
 
-pub fn p034_search_range(nums: Vec<i32>, target: i32) -> Vec<i32> {
+pub fn p0034_search_range(nums: Vec<i32>, target: i32) -> Vec<i32> {
     let st; let ed;
     match (&nums).binary_search(&target) {
         Ok(start) => {
@@ -913,7 +913,7 @@ pub fn p034_search_range(nums: Vec<i32>, target: i32) -> Vec<i32> {
     vec![st, ed]
 }
 
-pub fn p035_search_insert(nums: Vec<i32>, target: i32) -> i32 {
+pub fn p0035_search_insert(nums: Vec<i32>, target: i32) -> i32 {
     // emmm.... std library has this function
     match nums.binary_search(&target) {
         Ok(k) => k as i32,
@@ -1105,12 +1105,12 @@ impl Sudoku {
     }
 }
 
-pub fn p036_is_valid_sudoku(board: Vec<Vec<char>>) -> bool {
+pub fn p0036_is_valid_sudoku(board: Vec<Vec<char>>) -> bool {
     let puzzle = Sudoku::from_vector(board);
     puzzle.is_valid()
 }
 
-pub fn p037_solve_sudoku(board: &mut Vec<Vec<char>>) {
+pub fn p0037_solve_sudoku(board: &mut Vec<Vec<char>>) {
     let mut puzzle = Sudoku::from_vector(board.clone());
     puzzle.solve();
 
@@ -1122,7 +1122,7 @@ pub fn p037_solve_sudoku(board: &mut Vec<Vec<char>>) {
     }
 }
 
-pub fn p038_count_and_say(n: i32) -> String {
+pub fn p0038_count_and_say(n: i32) -> String {
     let mut last = vec![1];
     for _ in 0..n-1 {
         let mut num = last[0];
@@ -1165,7 +1165,7 @@ pub fn combination_sum_(nums: &[i32], target: i32, curr: Vec<i32>, result: &mut 
     }
 }
 
-pub fn p039_combination_sum(candidates: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
+pub fn p0039_combination_sum(candidates: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
     let mut candidates = candidates; // shit template
     candidates.sort();
     candidates.dedup();
@@ -1198,7 +1198,7 @@ pub fn combination_sum_nodup_(nums: &[i32], target: i32, curr: Vec<i32>, result:
         }
     }
 }
-pub fn p040_combination_sum(candidates: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
+pub fn p0040_combination_sum(candidates: Vec<i32>, target: i32) -> Vec<Vec<i32>> {
     let mut candidates = candidates; // shit template
     candidates.sort();
     let candidates = candidates;
@@ -1211,7 +1211,7 @@ pub fn p040_combination_sum(candidates: Vec<i32>, target: i32) -> Vec<Vec<i32>> 
 }
 
 // works but not satisify O(n) time usage.
-pub fn p041_first_missing_positive(nums: Vec<i32>) -> i32 {
+pub fn p0041_first_missing_positive(nums: Vec<i32>) -> i32 {
     let mut minimum = 1;
     let mut nums = nums;
     nums.sort();
@@ -1228,7 +1228,7 @@ pub fn p041_first_missing_positive(nums: Vec<i32>) -> i32 {
     return minimum;
 }
 
-pub fn p042_trap(height: Vec<i32>) -> i32 {
+pub fn p0042_trap(height: Vec<i32>) -> i32 {
     let mut area: i32 = 0;
     let bar_len = height.len();
     let mut start = 0;
@@ -1263,7 +1263,7 @@ pub fn p042_trap(height: Vec<i32>) -> i32 {
     area
 }
 
-pub fn p043_multiply(num1: String, num2: String) -> String {
+pub fn p0043_multiply(num1: String, num2: String) -> String {
     let mut res: Vec<u32> = vec![];
     for (dl, nl) in num1.chars().rev().enumerate() {
         for (dr, nr) in num2.chars().rev().enumerate() {
@@ -1331,19 +1331,19 @@ pub fn p043_multiply(num1: String, num2: String) -> String {
 
 // too slow to use recurrsion
 #[warn(dead_code)]
-pub fn p044_is_match_rec(string: String, pattern: String) -> bool {
+pub fn p0044_is_match_rec(string: String, pattern: String) -> bool {
     let string: Vec<char> = string.chars().collect();
     let pattern: Vec<char> = pattern.chars().collect();
-    p044_is_match_(&string, &pattern)
+    p0044_is_match_(&string, &pattern)
 }
 
-pub fn p044_is_match_(string: &[char], pattern: &[char]) -> bool {
+pub fn p0044_is_match_(string: &[char], pattern: &[char]) -> bool {
     //println!("{:?}, {:?}", string.iter().collect::<String>(), pattern.iter().collect::<String>());
     if pattern.len() > 0 {
         match pattern[0] {
             '?' => {
                 if string.len() > 0 {
-                    return p044_is_match_(&string[1..], &pattern[1..]);
+                    return p0044_is_match_(&string[1..], &pattern[1..]);
                 } else {
                     return false;
                 }
@@ -1352,18 +1352,18 @@ pub fn p044_is_match_(string: &[char], pattern: &[char]) -> bool {
                 if string.len() > 0 {
                     for i in (0..=string.len()).rev() {
                         //println!("{:?} {:?} {}", string, pattern, i);
-                        if p044_is_match_(&string[i..], &pattern[1..]) {
+                        if p0044_is_match_(&string[i..], &pattern[1..]) {
                             return true;
                         }
                     }
                     return false;
                 } else {
-                    return p044_is_match_(&string, &pattern[1..]);
+                    return p0044_is_match_(&string, &pattern[1..]);
                 }
             },
             c   => {
                 if string.len() > 0 {
-                    return string[0] == c && p044_is_match_(&string[1..], &pattern[1..]);
+                    return string[0] == c && p0044_is_match_(&string[1..], &pattern[1..]);
                 } else {
                     return false;
                 }
@@ -1378,7 +1378,7 @@ pub fn p044_is_match_(string: &[char], pattern: &[char]) -> bool {
 
 // dynamic programming wins
 // maybe dynamic programming (use hash map) + recurrsion will be the best?
-pub fn p044_is_match(string: String, pattern: String) -> bool {
+pub fn p0044_is_match(string: String, pattern: String) -> bool {
     let string: Vec<char> = string.chars().collect();
     let pattern: Vec<char> = pattern.chars().collect();
 
@@ -1433,7 +1433,7 @@ pub fn p044_is_match(string: String, pattern: String) -> bool {
     }
 }
 
-pub fn p046_permute(nums: Vec<i32>) -> Vec<Vec<i32>> {
+pub fn p0046_permute(nums: Vec<i32>) -> Vec<Vec<i32>> {
     let mut result: Vec<Vec<i32>> = vec![ vec![] ];
 
     for num in nums.into_iter() {
@@ -1455,7 +1455,7 @@ pub fn p046_permute(nums: Vec<i32>) -> Vec<Vec<i32>> {
     result
 }
 
-pub fn p047_permute_unique(nums: Vec<i32>) -> Vec<Vec<i32>> {
+pub fn p0047_permute_unique(nums: Vec<i32>) -> Vec<Vec<i32>> {
     let mut result: Vec<Vec<i32>> = vec![ vec![] ];
 
     let mut nums = nums;
@@ -1527,7 +1527,7 @@ pub fn p047_permute_unique(nums: Vec<i32>) -> Vec<Vec<i32>> {
     result
 }
 
-pub fn p048_rotate(matrix: &mut Vec<Vec<i32>>) {
+pub fn p0048_rotate(matrix: &mut Vec<Vec<i32>>) {
     if matrix.len() == 0 { return; }
     let rows = matrix.len(); let cols = matrix[0].len();
     assert_eq!(rows, cols, "works only on square matrix");
@@ -1546,7 +1546,7 @@ pub fn p048_rotate(matrix: &mut Vec<Vec<i32>>) {
     }
 }
 
-pub fn p049_group_anagrams(strs: Vec<String>) -> Vec<Vec<String>> {
+pub fn p0049_group_anagrams(strs: Vec<String>) -> Vec<Vec<String>> {
 
     let mut str_map: HashMap<BTreeMap<u8, u8>, Vec<String>> = HashMap::new();
     for item in strs.into_iter() {
@@ -1561,14 +1561,14 @@ pub fn p049_group_anagrams(strs: Vec<String>) -> Vec<Vec<String>> {
     str_map.values().map(|v| v.clone()).collect()
 }
 
-pub fn p050_my_pow(x: f64, n: i32) -> f64 {
+pub fn p0050_my_pow(x: f64, n: i32) -> f64 {
     static LIMIT: i32 = 2147483647;
 
     if n < 0 {
         if n == -2147483648 {
-            p050_my_pow(1.0/x, -(n+1)) / x
+            p0050_my_pow(1.0/x, -(n+1)) / x
         } else if x != 0.0 {
-            p050_my_pow(1.0/x, -n)
+            p0050_my_pow(1.0/x, -n)
         } else {
             x
         }
@@ -1598,17 +1598,17 @@ pub fn p050_my_pow(x: f64, n: i32) -> f64 {
     }
 }
 
-pub fn p045_jump(nums: Vec<i32>) -> i32 {
+pub fn p0045_jump(nums: Vec<i32>) -> i32 {
     let mut hist = HashMap::new();
     let nums: Vec<usize> = nums.into_iter().map(|v| v as usize).collect();
 
-    match p045_jump_rec(&nums, 0, nums.len()-1, &mut hist ) {
+    match p0045_jump_rec(&nums, 0, nums.len()-1, &mut hist ) {
         Some(n) => n as i32,
         None    => -1,
     }
 }
 
-fn p045_jump_rec(nums: &[usize], start: usize, stop: usize, hist: &mut HashMap<(usize, usize), Option<usize>>) -> Option<usize> {
+fn p0045_jump_rec(nums: &[usize], start: usize, stop: usize, hist: &mut HashMap<(usize, usize), Option<usize>>) -> Option<usize> {
     println!("{}, {}", start, stop);
     if !hist.contains_key(&(start, stop)) {
         let dist = stop - start;
@@ -1621,7 +1621,7 @@ fn p045_jump_rec(nums: &[usize], start: usize, stop: usize, hist: &mut HashMap<(
         } else {
             let mut cached = vec![];
             for movelen in (1..nums[start]+1).rev() {
-                match p045_jump_rec(nums, start+movelen, stop, hist) {
+                match p0045_jump_rec(nums, start+movelen, stop, hist) {
                     Some(n) => {
                         cached.push(n);
                         if n == 1 {
@@ -1643,7 +1643,7 @@ fn p045_jump_rec(nums: &[usize], start: usize, stop: usize, hist: &mut HashMap<(
     hist[&(start, stop)]
 }
 
-pub fn p053_max_sub_array(nums: Vec<i32>) -> i32 {
+pub fn p0053_max_sub_array(nums: Vec<i32>) -> i32 {
     assert!(nums.len() > 0, "not work on empty vector");
     let mut maxsum = 0;
     let mut last_sum_cum = 0;
@@ -1667,7 +1667,7 @@ enum P045Dirction {
     Up,
 }
 
-pub fn p054_spiral_order(matrix: Vec<Vec<i32>>) -> Vec<i32> {
+pub fn p0054_spiral_order(matrix: Vec<Vec<i32>>) -> Vec<i32> {
     let rows = matrix.len();
     let cols = if rows > 0 {matrix[0].len()} else {0};
     if rows == 0 || cols == 0 {
@@ -1738,7 +1738,7 @@ pub fn p054_spiral_order(matrix: Vec<Vec<i32>>) -> Vec<i32> {
 }
 
 
-pub fn p051_solve_n_queens(n: i32) -> Vec<Vec<String>> {
+pub fn p0051_solve_n_queens(n: i32) -> Vec<Vec<String>> {
     let n = n as usize;
     if n == 0 { return vec![]; }
 
@@ -1791,12 +1791,12 @@ pub fn p051_solve_n_queens(n: i32) -> Vec<Vec<String>> {
     res
 }
 
-pub fn p052_total_n_queens(n: i32) -> i32 {
-    p051_solve_n_queens(n).len() as i32
+pub fn p0052_total_n_queens(n: i32) -> i32 {
+    p0051_solve_n_queens(n).len() as i32
 }
 
 
-pub fn p058_length_of_last_word(s: String) -> i32 {
+pub fn p0058_length_of_last_word(s: String) -> i32 {
     match s.trim().split(" ").last() {
         None => 0,
         Some(v) => v.len() as i32,
@@ -1810,7 +1810,7 @@ enum P059Dirction {
     Up,
 }
 
-pub fn p059_generate_matrix(n: i32) -> Vec<Vec<i32>> {
+pub fn p0059_generate_matrix(n: i32) -> Vec<Vec<i32>> {
     let n = n as usize;
     let mut res = vec![ vec![0; n ] ; n ];
 
@@ -1870,7 +1870,7 @@ pub fn p059_generate_matrix(n: i32) -> Vec<Vec<i32>> {
     res
 }
 
-fn p056_merge_(intervals: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
+fn p0056_merge_(intervals: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
     let mut out = vec![];
     for (mut st, mut et) in intervals.into_iter() {
         let old = std::mem::replace(&mut out, vec![]);
@@ -1890,7 +1890,7 @@ fn p056_merge_(intervals: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
     out
 }
 
-pub fn p056_merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+pub fn p0056_merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     let mut intervals_checked = vec![];
     for interv in intervals.into_iter() {
         assert!(interv.len() == 2, "format not right");
@@ -1898,37 +1898,37 @@ pub fn p056_merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     }
 
     let mut out = vec![];
-    for (st, et) in p056_merge_(intervals_checked).into_iter() {
+    for (st, et) in p0056_merge_(intervals_checked).into_iter() {
         out.push(vec![st, et]);
     }
     out
 }
 
-pub fn p057_insert(mut intervals: Vec<Vec<i32>>, new_interval: Vec<i32>) -> Vec<Vec<i32>> {
+pub fn p0057_insert(mut intervals: Vec<Vec<i32>>, new_interval: Vec<i32>) -> Vec<Vec<i32>> {
     intervals.push(new_interval);
-    let mut out = p056_merge(intervals);
+    let mut out = p0056_merge(intervals);
     out.sort();
     out
 }
 
-pub fn p060_get_permutation_(n: i32, k: i32) -> Vec<i32> {
+pub fn p0060_get_permutation_(n: i32, k: i32) -> Vec<i32> {
     let mut permutations: Vec<i32> = (1..n+1).collect();
     for _ in 1..k {
-        p031_next_permutation(&mut permutations);
+        p0031_next_permutation(&mut permutations);
     }
 
     permutations
 }
 
-pub fn p060_get_permutation(n: i32, k: i32) -> String {
+pub fn p0060_get_permutation(n: i32, k: i32) -> String {
     let mut out = String::new();
-    for n in p060_get_permutation_(n, k) {
+    for n in p0060_get_permutation_(n, k) {
         out.push_str( &n.to_string() );
     }
     out
 }
 
-pub fn p062_unique_path(m: i32, n: i32) -> i32 {
+pub fn p0062_unique_path(m: i32, n: i32) -> i32 {
     // C(n, k)
     let k = (n-1) as i64;
     let n = (m+n-2) as i64;
@@ -1949,7 +1949,7 @@ pub fn p062_unique_path(m: i32, n: i32) -> i32 {
     num as i32
 }
 
-pub fn p063_unique_paths_with_obstacles(obstacle_grid: Vec<Vec<i32>>) -> i32 {
+pub fn p0063_unique_paths_with_obstacles(obstacle_grid: Vec<Vec<i32>>) -> i32 {
 /*
  *    let n = obstacle_grid.len();
  *    if n == 0 { return 0; }
@@ -1999,7 +1999,7 @@ pub fn p063_unique_paths_with_obstacles(obstacle_grid: Vec<Vec<i32>>) -> i32 {
     walked.remove(&(n-1, m-1)).unwrap_or(0)
 }
 
-pub fn p064_min_path_sum(grid: Vec<Vec<i32>>) -> i32 {
+pub fn p0064_min_path_sum(grid: Vec<Vec<i32>>) -> i32 {
     let n = grid.len(); if n == 0 { return 0; }
     let m = grid[0].len(); if m == 0 { return 0; }
 
@@ -2026,7 +2026,7 @@ pub fn p064_min_path_sum(grid: Vec<Vec<i32>>) -> i32 {
     walked.remove(&(n-1, m-1)).unwrap()
 }
 
-pub fn p065_is_number(s: String) -> bool {
+pub fn p0065_is_number(s: String) -> bool {
     let all_digits = vec!['0','1','2','3','4','5','6','7','8','9','.','e','+','-'];
     let mut digits: &str = s.trim();
 
@@ -2082,7 +2082,7 @@ pub fn p065_is_number(s: String) -> bool {
     true
 }
 
-pub fn p066_plus_one(digits: Vec<i32>) -> Vec<i32> {
+pub fn p0066_plus_one(digits: Vec<i32>) -> Vec<i32> {
     let mut out = Vec::new();
     let mut cum = 1;
     for digit in digits.into_iter().rev() {
@@ -2095,7 +2095,7 @@ pub fn p066_plus_one(digits: Vec<i32>) -> Vec<i32> {
     out.into_iter().rev().collect()
 }
 
-pub fn p067_add_binary(a: String, b: String) -> String {
+pub fn p0067_add_binary(a: String, b: String) -> String {
     let mut out = Vec::new();
     let mut cum = 0;
     let a: Vec<_> = a.chars().rev().collect();
@@ -2130,11 +2130,11 @@ pub fn p067_add_binary(a: String, b: String) -> String {
     out.into_iter().rev().collect()
 }
 
-pub fn p068_my_sqrt(x: i32) -> i32 {
+pub fn p0068_my_sqrt(x: i32) -> i32 {
     (x as f64).sqrt() as i32
 }
 
-pub fn p069_climb_stairs(n: i32) -> i32 {
+pub fn p0069_climb_stairs(n: i32) -> i32 {
     let mut walked = std::collections::HashMap::new(); walked.insert(0, 1);
     let mut curr = 0;
     for _ in 0..n {
@@ -2156,7 +2156,7 @@ pub fn p069_climb_stairs(n: i32) -> i32 {
     curr + walked.remove(&n).unwrap_or(0)
 }
 
-pub fn p071_simplify_path(path: String) -> String {
+pub fn p0071_simplify_path(path: String) -> String {
     let mut path_stack = vec![];
     for p in path.split("/") {
         match p {
@@ -2174,7 +2174,7 @@ pub fn p071_simplify_path(path: String) -> String {
     out
 }
 
-pub fn p073_set_zeroes(matrix: &mut Vec<Vec<i32>>) {
+pub fn p0073_set_zeroes(matrix: &mut Vec<Vec<i32>>) {
     use std::collections::HashSet;
 
     let m = matrix.len(); if m == 0 { return; }
@@ -2203,7 +2203,7 @@ pub fn p073_set_zeroes(matrix: &mut Vec<Vec<i32>>) {
     }
 }
 
-pub fn p074_search_matrix(matrix: Vec<Vec<i32>>, target: i32) -> bool {
+pub fn p0074_search_matrix(matrix: Vec<Vec<i32>>, target: i32) -> bool {
     if matrix.len() == 0 || matrix[0].len() == 0 { return false; }
     let first: Vec<i32> = matrix.iter().map(|v| v[0]).collect();
     if let Err(idx) = first.binary_search(&target) {
@@ -2249,7 +2249,7 @@ pub fn p1223_die_simulator(n: i32, roll_max: Vec<i32>) -> i32 {
     answer
 }
 
-pub fn p075_sort_colors(nums: &mut Vec<i32>) {
+pub fn p0075_sort_colors(nums: &mut Vec<i32>) {
     /*
      *    let (mut count1, mut count2, _) = (0, 0, 0);
      *    for num in nums.iter() {
@@ -2291,7 +2291,7 @@ pub fn p075_sort_colors(nums: &mut Vec<i32>) {
     }
 }
 
-pub fn p077_combine(n: i32, k: i32) -> Vec<Vec<i32>> {
+pub fn p0077_combine(n: i32, k: i32) -> Vec<Vec<i32>> {
     let mut walked: Vec<Vec<i32>> = vec![]; walked.push(vec![]);
     let mut out = Vec::new(); let k = k as usize;
     if k == 0 { return out; }
@@ -2316,7 +2316,7 @@ pub fn p077_combine(n: i32, k: i32) -> Vec<Vec<i32>> {
     out
 }
 
-pub fn p078_subsets(nums: Vec<i32>) -> Vec<Vec<i32>> {
+pub fn p0078_subsets(nums: Vec<i32>) -> Vec<Vec<i32>> {
     let mut out = vec![vec![]];
     for num in nums.into_iter() {
         for mut curr in out.clone().into_iter() {
@@ -2327,7 +2327,7 @@ pub fn p078_subsets(nums: Vec<i32>) -> Vec<Vec<i32>> {
     out
 }
 
-pub fn p079_exist(board: Vec<Vec<char>>, word: String) -> bool {
+pub fn p0079_exist(board: Vec<Vec<char>>, word: String) -> bool {
     use std::collections::HashSet;
 
     let wlen = word.len(); let m = board.len();
@@ -2378,145 +2378,145 @@ pub mod tests {
     use crate::listnode;
 
     #[test]
-    fn t001() {
-        assert_eq!(p001_two_sum(&vec![2, 7, 11, 15], 9), (0, 1));
-        assert_eq!(p001_two_sum(&vec![3, 2, 4], 6), (1, 2));
+    fn t0001() {
+        assert_eq!(p0001_two_sum(&vec![2, 7, 11, 15], 9), (0, 1));
+        assert_eq!(p0001_two_sum(&vec![3, 2, 4], 6), (1, 2));
     }
 
     #[test]
-    fn t002() {
+    fn t0002() {
         let mut num1 = LinkedList::new(); num1.push_back(2); num1.push_back(4); num1.push_back(3);
         let mut num2 = LinkedList::new(); num2.push_back(5); num2.push_back(6); num2.push_back(4);
         let mut num3 = LinkedList::new(); num3.push_back(7); num3.push_back(0); num3.push_back(8);
-        assert_eq!(p002_add_two_numbers(&num1, &num2), num3);
+        assert_eq!(p0002_add_two_numbers(&num1, &num2), num3);
 
         let mut num1 = LinkedList::new(); num1.push_back(9); num1.push_back(9); num1.push_back(9); num1.push_back(9);
         let mut num2 = LinkedList::new(); num2.push_back(9); num2.push_back(9); num2.push_back(9); num2.push_back(9); num2.push_back(9); num2.push_back(9);
         let mut num3 = LinkedList::new(); num3.push_back(8); num3.push_back(9); num3.push_back(9); num3.push_back(9); num3.push_back(0); num3.push_back(0); num3.push_back(1);
-        assert_eq!(p002_add_two_numbers(&num1, &num2), num3);
+        assert_eq!(p0002_add_two_numbers(&num1, &num2), num3);
     }
 
     #[test]
-    fn t003() {
-        assert_eq!(p003_longest_substring("abcabcabc"), "abc".to_string());
-        assert_eq!(p003_longest_substring("abcbcabcabc"), "abc".to_string());
-        assert_eq!(p003_longest_substring("pwwkew"), "wke".to_string());
-        assert_eq!(p003_longest_substring("bbbbb"), "b".to_string());
+    fn t0003() {
+        assert_eq!(p0003_longest_substring("abcabcabc"), "abc".to_string());
+        assert_eq!(p0003_longest_substring("abcbcabcabc"), "abc".to_string());
+        assert_eq!(p0003_longest_substring("pwwkew"), "wke".to_string());
+        assert_eq!(p0003_longest_substring("bbbbb"), "b".to_string());
     }
 
     #[test]
-    fn t004() {
-        assert_eq!(p004_median_of_two_sorted_arrays(&vec![1, 3], &vec![2, 4]), 2.5);
-        assert_eq!(p004_median_of_two_sorted_arrays(&vec![1, 2], &vec![3, 4, 5]), 3.0);
-        assert_eq!(p004_median_of_two_sorted_arrays(&vec![2], &vec![]), 2.0);
-        assert_eq!(p004_median_of_two_sorted_arrays(&vec![1, 2], &vec![]), 1.5);
+    fn t0004() {
+        assert_eq!(p0004_median_of_two_sorted_arrays(&vec![1, 3], &vec![2, 4]), 2.5);
+        assert_eq!(p0004_median_of_two_sorted_arrays(&vec![1, 2], &vec![3, 4, 5]), 3.0);
+        assert_eq!(p0004_median_of_two_sorted_arrays(&vec![2], &vec![]), 2.0);
+        assert_eq!(p0004_median_of_two_sorted_arrays(&vec![1, 2], &vec![]), 1.5);
     }
 
     #[test]
-    fn t010() {
-        assert!(p010_regular_expression_matching("mississippi".to_string(), "mis*is*ip*.".to_string()));
-        assert!(!p010_regular_expression_matching("mississippi".to_string(), "mis*is*p*.".to_string()));
-        assert!(p010_regular_expression_matching("ab".to_string(), ".*".to_string()));
-        assert!(p010_regular_expression_matching("aab".to_string(), "c*a*b".to_string()));
-        assert!(!p010_regular_expression_matching("aa".to_string(), "a".to_string()));
-        assert!(p010_regular_expression_matching("aa".to_string(), "a*".to_string()));
+    fn t0010() {
+        assert!(p0010_regular_expression_matching("mississippi".to_string(), "mis*is*ip*.".to_string()));
+        assert!(!p0010_regular_expression_matching("mississippi".to_string(), "mis*is*p*.".to_string()));
+        assert!(p0010_regular_expression_matching("ab".to_string(), ".*".to_string()));
+        assert!(p0010_regular_expression_matching("aab".to_string(), "c*a*b".to_string()));
+        assert!(!p0010_regular_expression_matching("aa".to_string(), "a".to_string()));
+        assert!(p0010_regular_expression_matching("aa".to_string(), "a*".to_string()));
     }
 
     #[test]
-    fn t012() {
-        assert_eq!(p012_int_to_roman(3), "III".to_string());
-        assert_eq!(p012_int_to_roman(39), "XXXIX".to_string());
-        assert_eq!(p012_int_to_roman(99), "XCIX".to_string());
-        assert_eq!(p012_int_to_roman(98), "XCVIII".to_string());
-        assert_eq!(p012_int_to_roman(993), "CMXCIII".to_string());
+    fn t0012() {
+        assert_eq!(p0012_int_to_roman(3), "III".to_string());
+        assert_eq!(p0012_int_to_roman(39), "XXXIX".to_string());
+        assert_eq!(p0012_int_to_roman(99), "XCIX".to_string());
+        assert_eq!(p0012_int_to_roman(98), "XCVIII".to_string());
+        assert_eq!(p0012_int_to_roman(993), "CMXCIII".to_string());
     }
 
     #[test]
-    fn t013() {
-        assert_eq!(p013_roman_to_int("III".to_string()), 3);
-        assert_eq!(p013_roman_to_int("CMXCIII".to_string()), 993);
-        assert_eq!(p013_roman_to_int("LVIII".to_string()), 58);
+    fn t0013() {
+        assert_eq!(p0013_roman_to_int("III".to_string()), 3);
+        assert_eq!(p0013_roman_to_int("CMXCIII".to_string()), 993);
+        assert_eq!(p0013_roman_to_int("LVIII".to_string()), 58);
     }
 
     #[test]
-    fn t014() {
-        assert_eq!(p014_longest_common_prefix(
+    fn t0014() {
+        assert_eq!(p0014_longest_common_prefix(
                 vec![ "flower".to_string(), "flow".to_string(), "flight".to_string()
         ]), "fl".to_string());
-        assert_eq!(p014_longest_common_prefix(
+        assert_eq!(p0014_longest_common_prefix(
                 vec![ "dog".to_string(), "racecar".to_string(), "car".to_string()
         ]), "".to_string());
 
     }
 
     #[test]
-    fn t015() {
-        assert_eq!(p015_three_sum( vec![ -1, 0, 1, 2, -1, -4 ] ), vec![ vec![-1, -1, 2], vec![-1, 0, 1] ]);
-        assert_eq!(p015_three_sum( vec![ -1, 0, 2 ] ), vec![  ] as Vec<Vec<i32>>);
-        assert_eq!(p015_three_sum( vec![ 0, 0, 0, 0 ] ), vec![ vec![ 0, 0, 0 ] ] );
-        assert_eq!(p015_three_sum( vec![2,0,-2,-5,-5,-3,2,-4] ), vec![ vec![-4, 2, 2], vec![-2, 0, 2] ]);
-        assert_eq!(p015_three_sum( vec![2,-3,0,-2,-5,-5,-4,1,2,-2,2,0,2,-4] ), vec![ vec![-4, 2, 2], vec![-3, 1, 2], vec![-2, 0, 2] ]);
-        assert_eq!(p015_three_sum( vec![-2,0,1,1,2] ), vec![ vec![-2,0,2], vec![-2, 1, 1] ]);
+    fn t0015() {
+        assert_eq!(p0015_three_sum( vec![ -1, 0, 1, 2, -1, -4 ] ), vec![ vec![-1, -1, 2], vec![-1, 0, 1] ]);
+        assert_eq!(p0015_three_sum( vec![ -1, 0, 2 ] ), vec![  ] as Vec<Vec<i32>>);
+        assert_eq!(p0015_three_sum( vec![ 0, 0, 0, 0 ] ), vec![ vec![ 0, 0, 0 ] ] );
+        assert_eq!(p0015_three_sum( vec![2,0,-2,-5,-5,-3,2,-4] ), vec![ vec![-4, 2, 2], vec![-2, 0, 2] ]);
+        assert_eq!(p0015_three_sum( vec![2,-3,0,-2,-5,-5,-4,1,2,-2,2,0,2,-4] ), vec![ vec![-4, 2, 2], vec![-3, 1, 2], vec![-2, 0, 2] ]);
+        assert_eq!(p0015_three_sum( vec![-2,0,1,1,2] ), vec![ vec![-2,0,2], vec![-2, 1, 1] ]);
     }
 
     #[test]
-    fn t016() {
-        assert_eq!(p016_three_sum_closest( vec![-1, 2, 1, -4, -1, 1], 1), 1);
-        assert_eq!(p016_three_sum_closest( vec![0, 1, 2], 0), 3);
-        assert_eq!(p016_three_sum_closest( vec![0, 2, 1, -3], 1), 0);
+    fn t0016() {
+        assert_eq!(p0016_three_sum_closest( vec![-1, 2, 1, -4, -1, 1], 1), 1);
+        assert_eq!(p0016_three_sum_closest( vec![0, 1, 2], 0), 3);
+        assert_eq!(p0016_three_sum_closest( vec![0, 2, 1, -3], 1), 0);
     }
 
     #[test]
-    fn t017() {
-        assert_eq!(p017_letter_combinations("23".to_string()),
+    fn t0017() {
+        assert_eq!(p0017_letter_combinations("23".to_string()),
                    vec!["ad", "bd", "cd", "ae", "be", "ce", "af", "bf", "cf"].into_iter().map(
                        |s| s.to_string()).collect::<Vec<String>>()
                    );
     }
 
     #[test]
-    fn t018() {
-        assert_eq!(p018_four_sum( vec![1, 0, -1, 0, -2, 2], 0 ), vec![ vec![-2, -1, 1, 2], vec![-2, 0, 0, 2], vec![-1, 0, 0, 1] ]);
-        assert_eq!(p018_four_sum( vec![-3,-2,-1,0,0,1,2,3], 0 ), vec![
+    fn t0018() {
+        assert_eq!(p0018_four_sum( vec![1, 0, -1, 0, -2, 2], 0 ), vec![ vec![-2, -1, 1, 2], vec![-2, 0, 0, 2], vec![-1, 0, 0, 1] ]);
+        assert_eq!(p0018_four_sum( vec![-3,-2,-1,0,0,1,2,3], 0 ), vec![
                    vec![-3, -2, 2, 3], vec![-3, -1, 1, 3], vec![-3, 0, 0, 3], vec![-3, 0, 1, 2],
                    vec![-2, -1, 0, 3], vec![-2, -1, 1, 2], vec![-2, 0, 0, 2], vec![-1, 0, 0, 1]]);
     }
 
     #[test]
-    fn t019() {
+    fn t0019() {
         assert_eq!(
-            p019_remove_nth_from_end(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 2), Some(Box::new( listnode!(1, 2, 3, 5) ))
+            p0019_remove_nth_from_end(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 2), Some(Box::new( listnode!(1, 2, 3, 5) ))
         );
         assert_eq!(
-            p019_remove_nth_from_end(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 1), Some(Box::new( listnode!(1, 2, 3, 4) ))
+            p0019_remove_nth_from_end(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 1), Some(Box::new( listnode!(1, 2, 3, 4) ))
         );
     }
 
     #[test]
-    fn t020() {
-        assert!(p020_is_valid("()".to_string()));
-        assert!(p020_is_valid("()[]{}".to_string()));
-        assert!(!p020_is_valid("([)]".to_string()));
-        assert!(p020_is_valid("([])".to_string()));
-        assert!(!p020_is_valid("(".to_string()));
+    fn t0020() {
+        assert!(p0020_is_valid("()".to_string()));
+        assert!(p0020_is_valid("()[]{}".to_string()));
+        assert!(!p0020_is_valid("([)]".to_string()));
+        assert!(p0020_is_valid("([])".to_string()));
+        assert!(!p0020_is_valid("(".to_string()));
     }
 
     #[test]
-    fn t022() {
-        assert_eq!(p022_generate_parenthesis(1), vec!["()".to_string()]);
-        //assert_eq!(p022_generate_parenthesis(4), vec!["()".to_string()]);
+    fn t0022() {
+        assert_eq!(p0022_generate_parenthesis(1), vec!["()".to_string()]);
+        //assert_eq!(p0022_generate_parenthesis(4), vec!["()".to_string()]);
     }
 
     #[test]
-    fn t023() {
-        //println!("{:?}", p023_merge_k_lists(
+    fn t0023() {
+        //println!("{:?}", p0023_merge_k_lists(
                 //vec![
                 //Some(Box::new(listnode!(1, 3))),
                 //Some(Box::new(listnode!(1, 2))),
                 //]
         //));
         //assert_eq!(
-            //p023_merge_k_lists(
+            //p0023_merge_k_lists(
                 //vec![
                 //Some(Box::new(listnode!(1, 3))),
                 //Some(Box::new(listnode!(1, 2))),
@@ -2527,67 +2527,67 @@ pub mod tests {
     }
 
     #[test]
-    fn t024() {
+    fn t0024() {
         assert_eq!(
-            p024_swap_pairs(Some(Box::new(listnode!(1, 2, 3, 4, 5)))),
+            p0024_swap_pairs(Some(Box::new(listnode!(1, 2, 3, 4, 5)))),
             Some(Box::new(listnode!(2, 1, 4, 3, 5)))
             );
     }
 
     #[test]
-    fn t026() {
+    fn t0026() {
         let mut v1 = vec![0,0,1,1,1,2,2,3,3,4];
-        assert_eq!( p026_remove_duplicates(&mut v1), 5 );
+        assert_eq!( p0026_remove_duplicates(&mut v1), 5 );
     }
 
     #[test]
-    fn t027() {
+    fn t0027() {
         let mut v = vec![0,1,2,2,3,0,4,2];
-        assert_eq!( p027_remove_element(&mut v, 2), 5 );
+        assert_eq!( p0027_remove_element(&mut v, 2), 5 );
     }
 
     #[test]
-    fn t028() {
-        assert_eq!( p028_str_str( "hello".into(), "ll".into() ), 2 );
-        assert_eq!( p028_str_str( "aaaaa".into(), "bba".into() ), -1 );
-        assert_eq!( p028_str_str( "aaaaa".into(), "".into() ), 0 );
-        assert_eq!( p028_str_str( "".into(), "a".into() ), -1 );
-        assert_eq!( p028_str_str( "".into(), "".into() ), 0 );
-        assert_eq!( p028_str_str( "ab".into(), "ab".into() ), 0 );
+    fn t0028() {
+        assert_eq!( p0028_str_str( "hello".into(), "ll".into() ), 2 );
+        assert_eq!( p0028_str_str( "aaaaa".into(), "bba".into() ), -1 );
+        assert_eq!( p0028_str_str( "aaaaa".into(), "".into() ), 0 );
+        assert_eq!( p0028_str_str( "".into(), "a".into() ), -1 );
+        assert_eq!( p0028_str_str( "".into(), "".into() ), 0 );
+        assert_eq!( p0028_str_str( "ab".into(), "ab".into() ), 0 );
     }
 
     #[test]
-    fn t029() {
-        assert_eq!( p029_divide(10, 3), 3 );
-        assert_eq!( p029_divide(7, -3), -2 );
-        assert_eq!( p029_divide(7, 1), 7 );
-        assert_eq!( p029_divide(-7, 1), -7 );
-        assert_eq!( p029_divide(-7, -1), 7 );
-        assert_eq!( p029_divide(2147483647, 1), 2147483647);
-        assert_eq!( p029_divide(-2147483648, -1), 2147483647);
+    fn t0029() {
+        assert_eq!( p0029_divide(10, 3), 3 );
+        assert_eq!( p0029_divide(7, -3), -2 );
+        assert_eq!( p0029_divide(7, 1), 7 );
+        assert_eq!( p0029_divide(-7, 1), -7 );
+        assert_eq!( p0029_divide(-7, -1), 7 );
+        assert_eq!( p0029_divide(2147483647, 1), 2147483647);
+        assert_eq!( p0029_divide(-2147483648, -1), 2147483647);
     }
 
     #[test]
-    fn t030() {
-        assert_eq!( p030_find_substring( "".to_string(), vec![ "a".to_string() ] ), vec![] );
-        assert_eq!( p030_find_substring( "a".to_string(), vec![ "a".to_string() ] ), vec![0] );
-        assert_eq!( p030_find_substring( "a".to_string(), vec![ ] ), vec![] );
-        assert_eq!( p030_find_substring( "barfoothefoobarman".to_string(), vec![ "foo".to_string(), "bar".to_string() ] ), vec![0, 9] );
+    fn t0030() {
+        assert_eq!( p0030_find_substring( "".to_string(), vec![ "a".to_string() ] ), vec![] );
+        assert_eq!( p0030_find_substring( "a".to_string(), vec![ "a".to_string() ] ), vec![0] );
+        assert_eq!( p0030_find_substring( "a".to_string(), vec![ ] ), vec![] );
+        assert_eq!( p0030_find_substring( "barfoothefoobarman".to_string(), vec![ "foo".to_string(), "bar".to_string() ] ), vec![0, 9] );
         assert_eq!(
-            p030_find_substring(
+            p0030_find_substring(
                 "wordgoodgoodgoodbestword".to_string(),
                 vec!["word","good","best", "word"].into_iter().map(|s| s.into()).collect::<Vec<String>>() ),
             vec![] );
 
         assert_eq!(
-            p030_find_substring(
+            p0030_find_substring(
                 "xcsgedisbnkkiperkawetuiokxjmrapqcjyjpgbqulcecgxoitudpcrcccotcglhpjqeptwlhasjgpaqlutaznebptwszhbostvhmtvtunfcehtpboscbwdrpzlqgohahcivxfpruwuydpqgdijhgmaymloubxvizfdxkuqeqmetduajejqnxqlldbgezdoaitzuosagegakdcthnjwmzjyeleimjyotrqphipooxqyasrihagtbqthdzppipfbhvqodheufushomrvmyrqokxrkpiuepwnloeqyikfdfmrrepfcgvqsvjektbqixetnkmlsyqxddpwhgclozdgumnghoxpndlapxohvghbjyxsebfsbiaxwnedddvsggvxdjgapnbblbvpcbhdjibixhlbkgtsooptzvurlxswynmdoviafjidsvgcebwsslmrjiiufcsgqgjgcrghdomvmuaqwwkokwhvgsrmujskqbruszdxqqtckvuirewddgyjypxszpdrswlnvoklefprajzsqyxtewecncuorzfmvqztfjglrwcrfelxcjqghvkuzgjsgoedfdwmpdxgbcxiglgiuyqdtaxuginoxrsevqsmvpuwrrhxenhalxdhzbbilqwiiqofjgrewldpemplzwlmupvvsxddncoxsccdlvkjinypbnaamloiakdujhyylmwdqajbwtkgijvjyvlkhzsjlyeufctsorvergipzswhdrqcpbowdjfohjjonegdvdkoksejkcrovjsklgiorqeybnmprusoyedkwjthnmxkwpxjxfzpvdpxtcokyibwnggjrcseopqmgnvgtuvqamntqbfpmgnzowifydloscdbpyhkvebvqqqhuvwgclfshpyfsjwnnzodzxpudqrtjhcddajhmqztfzbajxnywddxatsdllyuvbzabkjnaihikiivhvtfyxcaswfdidafebfimovoyeyioidvfzadwffqbkvlovquzvcnjydkecstkyoqxrvvwdlznildebyfzasiavufznamnqcmhzhfcufscsvitvpswhdyfxdemfqbwundwwlaqsuvkqffnvalcfkjepotvgurdiwzehbxbwsnozvbuvnzcxigmyzjfuaicxjigkfkgzxuzuytplutkdaybbiixisbhdkqopawrztqurlleghojhmmkuxifrjovtellghcicsetfrxlylwhalsuiczblqwhuhsdpwlrqpnvimhhafoaqiuakwcwmyfiizlzvyqlpfiysrfsxvsneoqomsmasrjaqwznvsakzjiraplxlfnrwdfixujpluseqtrlluyldiedasdlxscvvjeudplrjdxbxqpkkpxpxctxuyktqornyxhdmuwxytaxmphwefoejhbfhmazarmaovecpczpwcokrwiydwcofftmttlwnzwbwceoffddhsnbqxzvubjzieocxbymduozzungztjjlykdxlarojtwpjyokwbntppujcakvlvilfniqnceyvdnebcqadgtuvpfzppxanhlsvvlkxrjuuyywarwdzrzwgevxwuzjemdzholfgwzcvayvtwbspaoxhlwdivmmhpnpgywovxqqzrnsnqmfrceaobdywrkeixvovrcsqtkqkyizovghxljnmmlkfvqoulesehkvcxlo".to_string(),
                 vec!["dbpyhkvebvqqqhuvwgclfshpyfs","jwnnzodzxpudqrtjhcddajhmqzt","fzbajxnywddxatsdllyuvbzabkj","naihikiivhvtfyxcaswfdidafeb","fimovoyeyioidvfzadwffqbkvlo","vquzvcnjydkecstkyoqxrvvwdlz","nildebyfzasiavufznamnqcmhzh","fcufscsvitvpswhdyfxdemfqbwu","ndwwlaqsuvkqffnvalcfkjepotv","gurdiwzehbxbwsnozvbuvnzcxig","myzjfuaicxjigkfkgzxuzuytplu","tkdaybbiixisbhdkqopawrztqur","lleghojhmmkuxifrjovtellghci","csetfrxlylwhalsuiczblqwhuhs","dpwlrqpnvimhhafoaqiuakwcwmy","fiizlzvyqlpfiysrfsxvsneoqom","smasrjaqwznvsakzjiraplxlfnr","wdfixujpluseqtrlluyldiedasd","lxscvvjeudplrjdxbxqpkkpxpxc","txuyktqornyxhdmuwxytaxmphwe","foejhbfhmazarmaovecpczpwcok","rwiydwcofftmttlwnzwbwceoffd","dhsnbqxzvubjzieocxbymduozzu","ngztjjlykdxlarojtwpjyokwbnt","ppujcakvlvilfniqnceyvdnebcq"].into_iter().map(|s| s.into()).collect::<Vec<String>>()
             ),
             vec![873]);
 
         assert_eq!(
-            p030_find_substring(
+            p0030_find_substring(
                 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string(),
                 vec!["a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a"].into_iter().map(|s| s.into()).collect::<Vec<String>>()
             ),
@@ -2595,55 +2595,55 @@ pub mod tests {
     }
 
     #[test]
-    fn t031() {
+    fn t0031() {
         let mut arr = vec![1,2,3,4];
-        p031_next_permutation(&mut arr);
+        p0031_next_permutation(&mut arr);
         assert_eq!( arr, vec![1, 2, 4, 3] );
 
         let mut arr = vec![3,2,1];
-        p031_next_permutation(&mut arr);
+        p0031_next_permutation(&mut arr);
         assert_eq!( arr, vec![1,2,3] );
 
         let mut arr = vec![1,3,2];
-        p031_next_permutation(&mut arr);
+        p0031_next_permutation(&mut arr);
         assert_eq!( arr, vec![2,1,3] );
     }
 
     #[test]
-    fn t032() {
-        assert_eq!( p032_longest_valid_parentheses( "()(())".into() ), 6 );
-        assert_eq!( p032_longest_valid_parentheses( "(()".into() ), 2 );
-        assert_eq!( p032_longest_valid_parentheses( ")()())".into() ), 4 );
-        assert_eq!( p032_longest_valid_parentheses( ")((()))())".into() ), 8 );
+    fn t0032() {
+        assert_eq!( p0032_longest_valid_parentheses( "()(())".into() ), 6 );
+        assert_eq!( p0032_longest_valid_parentheses( "(()".into() ), 2 );
+        assert_eq!( p0032_longest_valid_parentheses( ")()())".into() ), 4 );
+        assert_eq!( p0032_longest_valid_parentheses( ")((()))())".into() ), 8 );
     }
 
     #[test]
-    fn t033() {
-        assert_eq!(p033_search(vec![4,5,6,7,0,1,2], 4), 0);
-        assert_eq!(p033_search(vec![4,5,6,7,0,1,2], 7), 3);
-        assert_eq!(p033_search(vec![4,5,6,7,0,1,2], 0), 4);
-        assert_eq!(p033_search(vec![4,5,6,7,0,1,2], 1), 5);
-        assert_eq!(p033_search(vec![0,1], 3), -1);
-        assert_eq!(p033_search(vec![0,1], 1), 1);
-        assert_eq!(p033_search(vec![1], 0), -1);
-        assert_eq!(p033_search(vec![3, 1], 1), 1);
+    fn t0033() {
+        assert_eq!(p0033_search(vec![4,5,6,7,0,1,2], 4), 0);
+        assert_eq!(p0033_search(vec![4,5,6,7,0,1,2], 7), 3);
+        assert_eq!(p0033_search(vec![4,5,6,7,0,1,2], 0), 4);
+        assert_eq!(p0033_search(vec![4,5,6,7,0,1,2], 1), 5);
+        assert_eq!(p0033_search(vec![0,1], 3), -1);
+        assert_eq!(p0033_search(vec![0,1], 1), 1);
+        assert_eq!(p0033_search(vec![1], 0), -1);
+        assert_eq!(p0033_search(vec![3, 1], 1), 1);
     }
 
     #[test]
-    fn t034() {
-        assert_eq!(p034_search_range(vec![5,7,7,8,8,10], 8), vec![3,4]);
-        assert_eq!(p034_search_range(vec![5,7,7,8,8,10], 6), vec![-1,-1]);
-        assert_eq!(p034_search_range(vec![5,7,7,8,8,10], 10), vec![5,5]);
-        assert_eq!(p034_search_range(vec![5,7,7,8,8,10], 5), vec![0,0]);
+    fn t0034() {
+        assert_eq!(p0034_search_range(vec![5,7,7,8,8,10], 8), vec![3,4]);
+        assert_eq!(p0034_search_range(vec![5,7,7,8,8,10], 6), vec![-1,-1]);
+        assert_eq!(p0034_search_range(vec![5,7,7,8,8,10], 10), vec![5,5]);
+        assert_eq!(p0034_search_range(vec![5,7,7,8,8,10], 5), vec![0,0]);
     }
 
     #[test]
-    fn t035() {
-        assert_eq!(p035_search_insert(vec![1,3,5,6], 5), 2);
+    fn t0035() {
+        assert_eq!(p0035_search_insert(vec![1,3,5,6], 5), 2);
     }
 
     #[test]
-    fn t036() {
+    fn t0036() {
         let sudoku1: Vec<Vec<char>> = vec![
             vec!['5','3','.','.','7','.','.','.','.'],
             vec!['6','.','.','1','9','5','.','.','.'],
@@ -2656,13 +2656,13 @@ pub mod tests {
             vec!['.','.','.','.','8','.','.','7','9'],
         ];
 
-        assert!(p036_is_valid_sudoku(sudoku1));
+        assert!(p0036_is_valid_sudoku(sudoku1));
     }
 
     #[test]
     #[warn(dead_code)] // not work now
     #[allow(unused_variables)]
-    fn t037() {
+    fn t0037() {
         let mut sudoku1: Vec<Vec<char>> = vec![
             vec!['.','.','9','7','4','8','.','.','.'],
             vec!['7','.','.','.','.','.','.','.','.'],
@@ -2696,7 +2696,7 @@ pub mod tests {
             vec!['8','3','2','4','9','1','7','5','6'],
             vec!['6','4','1','2','7','5','9','8','3'],
         ];
-        p037_solve_sudoku(&mut sudoku1);
+        p0037_solve_sudoku(&mut sudoku1);
         //assert_eq!( sudoku1, sol );
 
 
@@ -2723,106 +2723,106 @@ pub mod tests {
          *    vec!['2','8','7','4','1','9','6','3','5'],
          *    vec!['3','4','5','2','8','6','1','7','9']
          *];
-         *p037_solve_sudoku(&mut sudoku1);
+         *p0037_solve_sudoku(&mut sudoku1);
          *assert_eq!( sudoku1, sol )
          */
     }
 
     #[test]
-    fn t038() {
-        assert_eq!(p038_count_and_say(1), "1".to_string());
-        assert_eq!(p038_count_and_say(4), "1211".to_string());
-        assert_eq!(p038_count_and_say(6), "312211".to_string());
+    fn t0038() {
+        assert_eq!(p0038_count_and_say(1), "1".to_string());
+        assert_eq!(p0038_count_and_say(4), "1211".to_string());
+        assert_eq!(p0038_count_and_say(6), "312211".to_string());
     }
 
     #[test]
-    fn t039() {
-        assert_eq!(p039_combination_sum(vec![2,3,6,7], 7), vec![vec![7], vec![2,2,3]]);
-        assert_eq!(p039_combination_sum(vec![7], 7), vec![vec![7]]);
+    fn t0039() {
+        assert_eq!(p0039_combination_sum(vec![2,3,6,7], 7), vec![vec![7], vec![2,2,3]]);
+        assert_eq!(p0039_combination_sum(vec![7], 7), vec![vec![7]]);
     }
 
     #[test]
-    fn t040() {
-        assert_eq!(p040_combination_sum(vec![10,1,2,7,6,1,5], 8), vec![vec![2, 6], vec![1, 7], vec![1, 2, 5], vec![1, 1, 6]]);
+    fn t0040() {
+        assert_eq!(p0040_combination_sum(vec![10,1,2,7,6,1,5], 8), vec![vec![2, 6], vec![1, 7], vec![1, 2, 5], vec![1, 1, 6]]);
     }
 
     #[test]
-    fn t041() {
-        assert_eq!(p041_first_missing_positive(vec![3, 4, -1, 1]), 2);
-        assert_eq!(p041_first_missing_positive(vec![7,8,9,11,12]), 1);
-        assert_eq!(p041_first_missing_positive(vec![3,4,-1,1]), 2);
+    fn t0041() {
+        assert_eq!(p0041_first_missing_positive(vec![3, 4, -1, 1]), 2);
+        assert_eq!(p0041_first_missing_positive(vec![7,8,9,11,12]), 1);
+        assert_eq!(p0041_first_missing_positive(vec![3,4,-1,1]), 2);
     }
 
     #[test]
-    fn t042() {
-        assert_eq!(p042_trap(vec![0,1,0,2,1,0,1,3,2,1,2,1]), 6);
-        assert_eq!(p042_trap(vec![0,1,0,2,1,0]), 1);
-        assert_eq!(p042_trap(vec![0,1,0,2,1,0,1]), 2);
+    fn t0042() {
+        assert_eq!(p0042_trap(vec![0,1,0,2,1,0,1,3,2,1,2,1]), 6);
+        assert_eq!(p0042_trap(vec![0,1,0,2,1,0]), 1);
+        assert_eq!(p0042_trap(vec![0,1,0,2,1,0,1]), 2);
     }
 
     #[test]
-    fn t043() {
-        assert_eq!(p043_multiply("999".into(), "999".into()), "998001".to_string());
-        assert_eq!(p043_multiply("123".into(), "456".into()), "56088".to_string());
-        assert_eq!(p043_multiply("123456789".into(), "987654321".into()), "121932631112635269".to_string());
-        assert_eq!(p043_multiply("999".into(), "0".into()), "0".to_string());
+    fn t0043() {
+        assert_eq!(p0043_multiply("999".into(), "999".into()), "998001".to_string());
+        assert_eq!(p0043_multiply("123".into(), "456".into()), "56088".to_string());
+        assert_eq!(p0043_multiply("123456789".into(), "987654321".into()), "121932631112635269".to_string());
+        assert_eq!(p0043_multiply("999".into(), "0".into()), "0".to_string());
     }
 
     #[test]
-    fn t044() {
-        assert_eq!(p044_is_match("aab".into(), "c*a*b".into()), false);
-        assert_eq!(p044_is_match("aa".into(), "a".into()), false);
-        assert_eq!(p044_is_match("aa".into(), "*".into()), true);
-        assert_eq!(p044_is_match("cb".into(), "?a".into()), false);
-        assert_eq!(p044_is_match("adceb".into(), "*a*b".into()), true);
-        assert_eq!(p044_is_match("ssippi".into(), "ss*?i*pi".into()), false);
-        assert_eq!(p044_is_match("mississippi".into(), "m??*ss*?i*pi".into()), false);
-        assert_eq!(p044_is_match("ho".into(), "ho**".into()), true);
-        assert_eq!(p044_is_match("bbbbbbbabbaabbabbbbaaabbabbabaaabbababbbabbbabaaabaab".into(), "b*b*ab**ba*b**b***bba".into()), false);
+    fn t0044() {
+        assert_eq!(p0044_is_match("aab".into(), "c*a*b".into()), false);
+        assert_eq!(p0044_is_match("aa".into(), "a".into()), false);
+        assert_eq!(p0044_is_match("aa".into(), "*".into()), true);
+        assert_eq!(p0044_is_match("cb".into(), "?a".into()), false);
+        assert_eq!(p0044_is_match("adceb".into(), "*a*b".into()), true);
+        assert_eq!(p0044_is_match("ssippi".into(), "ss*?i*pi".into()), false);
+        assert_eq!(p0044_is_match("mississippi".into(), "m??*ss*?i*pi".into()), false);
+        assert_eq!(p0044_is_match("ho".into(), "ho**".into()), true);
+        assert_eq!(p0044_is_match("bbbbbbbabbaabbabbbbaaabbabbabaaabbababbbabbbabaaabaab".into(), "b*b*ab**ba*b**b***bba".into()), false);
     }
 
     #[test]
-    fn t045() {
-        assert_eq!(p045_jump(vec![2,3,1,1,4]), 2);
-        assert_eq!(p045_jump(vec![1,1,1,1,1]), 4);
-        assert_eq!(p045_jump(vec![1,2,1,1,1]), 3);
-        assert_eq!(p045_jump(vec![2,3,0,1,4]), 2);
-        assert_eq!(p045_jump(vec![0]), 0);
+    fn t0045() {
+        assert_eq!(p0045_jump(vec![2,3,1,1,4]), 2);
+        assert_eq!(p0045_jump(vec![1,1,1,1,1]), 4);
+        assert_eq!(p0045_jump(vec![1,2,1,1,1]), 3);
+        assert_eq!(p0045_jump(vec![2,3,0,1,4]), 2);
+        assert_eq!(p0045_jump(vec![0]), 0);
     }
 
     #[test]
-    fn t046() {
-        assert_eq!(p046_permute(vec![1]), vec![vec![1]]);
-        assert_eq!(p046_permute(vec![1, 2]), vec![vec![2, 1], vec![1, 2]]);
+    fn t0046() {
+        assert_eq!(p0046_permute(vec![1]), vec![vec![1]]);
+        assert_eq!(p0046_permute(vec![1, 2]), vec![vec![2, 1], vec![1, 2]]);
     }
 
     #[test]
-    fn t047() {
-        assert_eq!(p047_permute_unique(vec![1]), vec![vec![1]]);
+    fn t0047() {
+        assert_eq!(p0047_permute_unique(vec![1]), vec![vec![1]]);
 
-        let mut res = p047_permute_unique(vec![1, 1, 2]);
+        let mut res = p0047_permute_unique(vec![1, 1, 2]);
         let mut matched = vec![vec![2, 1, 1], vec![1, 2, 1], vec![1, 1, 2]];
         res.sort();matched.sort();
         assert_eq!(res, matched);
 
-        let mut res = p047_permute_unique(vec![1, 1, 2, 2]);
+        let mut res = p0047_permute_unique(vec![1, 1, 2, 2]);
         let mut matched = vec![vec![2, 1, 2, 1], vec![2, 1, 1, 2], vec![1, 2, 1, 2], vec![2, 2, 1, 1], vec![1, 2, 2, 1], vec![1, 1, 2, 2]];
         res.sort();matched.sort();
         assert_eq!(res, matched);
 
-        let mut res = p047_permute_unique(vec![2, 3, 3, 3, 2]);
+        let mut res = p0047_permute_unique(vec![2, 3, 3, 3, 2]);
         let mut matched = vec![vec![2,2,3,3,3], vec![2,3,2,3,3], vec![2,3,3,2,3], vec![2,3,3,3,2], vec![3,2,2,3,3], vec![3,2,3,2,3], vec![3,2,3,3,2], vec![3,3,2,2,3], vec![3,3,2,3,2], vec![3,3,3,2,2], ];
         res.sort();matched.sort();
         assert_eq!(res, matched);
     }
 
     #[test]
-    fn t048() {
+    fn t0048() {
         let mut input = vec![
             vec![1, 2, 3],
             vec![4, 5, 6],
             vec![7, 8, 9], ];
-        p048_rotate(&mut input);
+        p0048_rotate(&mut input);
         let matched = vec![
             vec![7, 4, 1],
             vec![8, 5, 2],
@@ -2836,7 +2836,7 @@ pub mod tests {
             vec![13, 3, 6, 7],
             vec![15,14,12,16],
         ];
-        p048_rotate(&mut input);
+        p0048_rotate(&mut input);
         let matched = vec![
             vec![15, 13, 2, 5],
             vec![14, 3, 4, 1],
@@ -2847,30 +2847,30 @@ pub mod tests {
     }
 
     #[test]
-    fn t049() {
-        assert_eq!(p049_group_anagrams(vec!["eat".to_string(), "tea".to_string()]), vec![ vec!["eat".to_string(), "tea".to_string()] ]);
+    fn t0049() {
+        assert_eq!(p0049_group_anagrams(vec!["eat".to_string(), "tea".to_string()]), vec![ vec!["eat".to_string(), "tea".to_string()] ]);
     }
 
     #[test]
-    fn t050() {
-        assert_eq!(p050_my_pow(2.0, 1), 2.0);
-        assert_eq!(p050_my_pow(2.0, 10), 1024.0);
-        assert_eq!(p050_my_pow(1.0, 214748364), 1.0);
-        assert_eq!(p050_my_pow(0.00001, 2147483647), 0.0);
-        assert_eq!(p050_my_pow(1.0, 2147483647), 1.0);
+    fn t0050() {
+        assert_eq!(p0050_my_pow(2.0, 1), 2.0);
+        assert_eq!(p0050_my_pow(2.0, 10), 1024.0);
+        assert_eq!(p0050_my_pow(1.0, 214748364), 1.0);
+        assert_eq!(p0050_my_pow(0.00001, 2147483647), 0.0);
+        assert_eq!(p0050_my_pow(1.0, 2147483647), 1.0);
     }
 
     #[test]
-    fn t053() {
-        assert_eq!(p053_max_sub_array(vec![-2,1,-3,4,-1,2,1,-5,4]), 6);
-        assert_eq!(p053_max_sub_array(vec![-2,1,-3,4,-1,2]), 5);
-        assert_eq!(p053_max_sub_array(vec![-2]), -2);
+    fn t0053() {
+        assert_eq!(p0053_max_sub_array(vec![-2,1,-3,4,-1,2,1,-5,4]), 6);
+        assert_eq!(p0053_max_sub_array(vec![-2,1,-3,4,-1,2]), 5);
+        assert_eq!(p0053_max_sub_array(vec![-2]), -2);
     }
 
     #[test]
-    fn t054() {
+    fn t0054() {
         assert_eq!(
-            p054_spiral_order(
+            p0054_spiral_order(
                 vec![
                     vec![1, 2, 3],
                     vec![4, 5, 6],
@@ -2880,7 +2880,7 @@ pub mod tests {
             vec![1,2,3,6,9,8,7,4,5],
             );
         assert_eq!(
-            p054_spiral_order(
+            p0054_spiral_order(
                 vec![
                     vec![1, 2, 3, 4],
                     vec![5, 6, 7, 8],
@@ -2890,7 +2890,7 @@ pub mod tests {
             vec![1,2,3,4,8,12,11,10,9,5,6,7],
             );
         assert_eq!(
-            p054_spiral_order(
+            p0054_spiral_order(
                 vec![
                     vec![3],
                     vec![2],
@@ -2899,7 +2899,7 @@ pub mod tests {
             vec![3, 2],
             );
         assert_eq!(
-            p054_spiral_order(
+            p0054_spiral_order(
                 vec![
                     vec![1, 2, 3],
                     vec![4, 5, 6],
@@ -2908,7 +2908,7 @@ pub mod tests {
             vec![1, 2, 3, 6, 5, 4],
             );
         assert_eq!(
-            p054_spiral_order(
+            p0054_spiral_order(
                 vec![
                     vec![1, 2],
                     vec![3, 4],
@@ -2919,63 +2919,63 @@ pub mod tests {
     }
 
     #[test]
-    fn t051() {
-        assert_eq!(p052_total_n_queens(1), 1);
-        assert_eq!(p052_total_n_queens(2), 0);
-        assert_eq!(p052_total_n_queens(3), 0);
-        assert_eq!(p052_total_n_queens(4), 2);
-        assert_eq!(p052_total_n_queens(5), 10);
-        assert_eq!(p052_total_n_queens(8), 92);
-        //assert_eq!(p052_total_n_queens(12), 14200); // emmm..., it can't reach here
+    fn t0051() {
+        assert_eq!(p0052_total_n_queens(1), 1);
+        assert_eq!(p0052_total_n_queens(2), 0);
+        assert_eq!(p0052_total_n_queens(3), 0);
+        assert_eq!(p0052_total_n_queens(4), 2);
+        assert_eq!(p0052_total_n_queens(5), 10);
+        assert_eq!(p0052_total_n_queens(8), 92);
+        //assert_eq!(p0052_total_n_queens(12), 14200); // emmm..., it can't reach here
     }
 
     #[test]
-    fn t055() {
-        assert_eq!(p055_can_jump(vec![1, 2, 3]), true);
-        assert_eq!(p055_can_jump(vec![8,2,4,4,4,9,5,2,5,8,8,0,8,6,9,1,1,6,3,5,1,2,6,6,0,4,8,6,0,3,2,8,7,6,5,1,7,0,3,4,8,3,5,9,0,4,0,1,0,5,9,2,0,7,0,2,1,0,8,2,5,1,2,3,9,7,4,7,0,0,1,8,5,6,7,5,1,9,9,3,5,0,7,5]), true);
-        assert_eq!(p055_can_jump(vec![2, 0, 2]), true);
-        assert_eq!(p055_can_jump(vec![2, 0]), true);
-        assert_eq!(p055_can_jump(vec![3, 2, 1, 0, 4]), false);
-        assert_eq!(p055_can_jump(vec![3, 2, 1, 0]), true);
-        assert_eq!(p055_can_jump(vec![3, 2, 2, 0, 0]), true);
-        assert_eq!(p055_can_jump(vec![3, 2, 2, 0, 0, 1]), false);
-        assert_eq!(p055_can_jump(vec![3, 0, 0, 0]), true);
-        assert_eq!(p055_can_jump(vec![0]), true);
-        assert_eq!(p055_can_jump(vec![2, 1, 0, 0]), false);
+    fn t0055() {
+        assert_eq!(p0055_can_jump(vec![1, 2, 3]), true);
+        assert_eq!(p0055_can_jump(vec![8,2,4,4,4,9,5,2,5,8,8,0,8,6,9,1,1,6,3,5,1,2,6,6,0,4,8,6,0,3,2,8,7,6,5,1,7,0,3,4,8,3,5,9,0,4,0,1,0,5,9,2,0,7,0,2,1,0,8,2,5,1,2,3,9,7,4,7,0,0,1,8,5,6,7,5,1,9,9,3,5,0,7,5]), true);
+        assert_eq!(p0055_can_jump(vec![2, 0, 2]), true);
+        assert_eq!(p0055_can_jump(vec![2, 0]), true);
+        assert_eq!(p0055_can_jump(vec![3, 2, 1, 0, 4]), false);
+        assert_eq!(p0055_can_jump(vec![3, 2, 1, 0]), true);
+        assert_eq!(p0055_can_jump(vec![3, 2, 2, 0, 0]), true);
+        assert_eq!(p0055_can_jump(vec![3, 2, 2, 0, 0, 1]), false);
+        assert_eq!(p0055_can_jump(vec![3, 0, 0, 0]), true);
+        assert_eq!(p0055_can_jump(vec![0]), true);
+        assert_eq!(p0055_can_jump(vec![2, 1, 0, 0]), false);
 
         //let mut vec: Vec<i32> = (0..25000+1).rev().collect();
         //vec.push(0);
-        //assert_eq!(p055_can_jump(vec), false);
+        //assert_eq!(p0055_can_jump(vec), false);
     }
 
     #[test]
-    fn t056() {
-        assert_eq!(p056_merge(vec![vec![1,4], vec![4,5]]), vec![vec![1, 5]]);
-        assert_eq!(p056_merge(vec![ vec![1,3], vec![2,6], vec![8,10], vec![15,18] ]), vec![ vec![1,6], vec![8,10], vec![15,18] ]);
-        assert_eq!(p056_merge(vec![ vec![-1, 5], vec![2,3], vec![4,5], vec![6,7], vec![8,9], vec![1,10] ]), vec![ vec![-1,10] ]);
+    fn t0056() {
+        assert_eq!(p0056_merge(vec![vec![1,4], vec![4,5]]), vec![vec![1, 5]]);
+        assert_eq!(p0056_merge(vec![ vec![1,3], vec![2,6], vec![8,10], vec![15,18] ]), vec![ vec![1,6], vec![8,10], vec![15,18] ]);
+        assert_eq!(p0056_merge(vec![ vec![-1, 5], vec![2,3], vec![4,5], vec![6,7], vec![8,9], vec![1,10] ]), vec![ vec![-1,10] ]);
     }
 
     #[test]
-    fn t057() {
-        assert_eq!(p057_insert(vec![vec![1,3], vec![6,9]], vec![2,5]), vec![vec![1, 5], vec![6, 9]]);
+    fn t0057() {
+        assert_eq!(p0057_insert(vec![vec![1,3], vec![6,9]], vec![2,5]), vec![vec![1, 5], vec![6, 9]]);
     }
 
     #[test]
-    fn t058() {
-        assert_eq!(p058_length_of_last_word("Hello World".into()), 5);
-        assert_eq!(p058_length_of_last_word("a ".into()), 1);
+    fn t0058() {
+        assert_eq!(p0058_length_of_last_word("Hello World".into()), 5);
+        assert_eq!(p0058_length_of_last_word("a ".into()), 1);
     }
 
     #[test]
-    fn t060() {
-        assert_eq!(p060_get_permutation(3, 3), "213");
-        assert_eq!(p060_get_permutation(4, 9), "2314");
-        assert_eq!(p060_get_permutation(9, 24479), "168975423");
+    fn t0060() {
+        assert_eq!(p0060_get_permutation(3, 3), "213");
+        assert_eq!(p0060_get_permutation(4, 9), "2314");
+        assert_eq!(p0060_get_permutation(9, 24479), "168975423");
     }
 
     #[test]
-    fn t061() {
-        //assert_eq!( p061_rotate_right( Some(Box::new(listnode!(1, 2, 3, 4, 5))), 1 ), Some( Box::new(listnode!(2, 1, 4, 3, 5)) ));
+    fn t0061() {
+        //assert_eq!( p0061_rotate_right( Some(Box::new(listnode!(1, 2, 3, 4, 5))), 1 ), Some( Box::new(listnode!(2, 1, 4, 3, 5)) ));
     }
 
     #[test]
@@ -2984,104 +2984,104 @@ pub mod tests {
     }
 
     #[test]
-    fn t062() {
-        assert_eq!(p062_unique_path(2, 100), 100);
-        assert_eq!(p062_unique_path(3, 2), 3);
-        assert_eq!(p062_unique_path(4, 2), 4);
-        assert_eq!(p062_unique_path(7, 3), 28);
-        assert_eq!(p062_unique_path(10, 10), 48620);
+    fn t0062() {
+        assert_eq!(p0062_unique_path(2, 100), 100);
+        assert_eq!(p0062_unique_path(3, 2), 3);
+        assert_eq!(p0062_unique_path(4, 2), 4);
+        assert_eq!(p0062_unique_path(7, 3), 28);
+        assert_eq!(p0062_unique_path(10, 10), 48620);
     }
 
     #[test]
-    fn t063() {
-        assert_eq!(p063_unique_paths_with_obstacles(vec![vec![0,0,0,0], vec![0,0,0,0], vec![0,0,0,0], vec![0,0,1,0]]), 10);
+    fn t0063() {
+        assert_eq!(p0063_unique_paths_with_obstacles(vec![vec![0,0,0,0], vec![0,0,0,0], vec![0,0,0,0], vec![0,0,1,0]]), 10);
 
-        assert_eq!(p063_unique_paths_with_obstacles(vec![vec![1]]), 0);
-        assert_eq!(p063_unique_paths_with_obstacles(vec![vec![0, 0, 0], vec![0, 1, 0], vec![0, 0, 0]]), 2);
-        assert_eq!(p063_unique_paths_with_obstacles(vec![vec![0, 0, 0], vec![0, 0, 0], vec![0, 1, 0]]), 3);
-        assert_eq!(p063_unique_paths_with_obstacles(vec![vec![0, 0, 0, 0], vec![1, 0, 0, 0]]), 3);
-        assert_eq!(p063_unique_paths_with_obstacles(vec![vec![0, 0, 0, 0], vec![1, 1, 1, 0]]), 1);
-        assert_eq!(p063_unique_paths_with_obstacles(vec![vec![0, 0, 0, 0], vec![1, 1, 1, 0], vec![1, 1, 1, 0]]), 1);
-        assert_eq!(p063_unique_paths_with_obstacles(vec![vec![0, 0, 0, 0], vec![1, 1, 1, 0], vec![1, 1, 1, 1]]), 0);
+        assert_eq!(p0063_unique_paths_with_obstacles(vec![vec![1]]), 0);
+        assert_eq!(p0063_unique_paths_with_obstacles(vec![vec![0, 0, 0], vec![0, 1, 0], vec![0, 0, 0]]), 2);
+        assert_eq!(p0063_unique_paths_with_obstacles(vec![vec![0, 0, 0], vec![0, 0, 0], vec![0, 1, 0]]), 3);
+        assert_eq!(p0063_unique_paths_with_obstacles(vec![vec![0, 0, 0, 0], vec![1, 0, 0, 0]]), 3);
+        assert_eq!(p0063_unique_paths_with_obstacles(vec![vec![0, 0, 0, 0], vec![1, 1, 1, 0]]), 1);
+        assert_eq!(p0063_unique_paths_with_obstacles(vec![vec![0, 0, 0, 0], vec![1, 1, 1, 0], vec![1, 1, 1, 0]]), 1);
+        assert_eq!(p0063_unique_paths_with_obstacles(vec![vec![0, 0, 0, 0], vec![1, 1, 1, 0], vec![1, 1, 1, 1]]), 0);
     }
 
     #[test]
-    fn t064() {
-        assert_eq!(p064_min_path_sum(vec![vec![1,1,1]]), 3);
-        assert_eq!(p064_min_path_sum(vec![vec![1,3,1],vec![1,5,1],vec![4,2,1]]), 7);
+    fn t0064() {
+        assert_eq!(p0064_min_path_sum(vec![vec![1,1,1]]), 3);
+        assert_eq!(p0064_min_path_sum(vec![vec![1,3,1],vec![1,5,1],vec![4,2,1]]), 7);
     }
 
 
     #[test]
-    fn t065() {
-        assert!( p065_is_number("0".into()));
-        assert!( p065_is_number(" 0.1 ".into()));
-        assert!(!p065_is_number("abc".into()));
-        assert!( p065_is_number("2e10".into()));
-        assert!(!p065_is_number("1 a".into()));
-        assert!(!p065_is_number(" 1e".into()));
-        assert!(!p065_is_number(" e3".into()));
-        assert!( p065_is_number(" 6e-1".into()));
-        assert!(!p065_is_number("99e2.5".into()));
-        assert!( p065_is_number("54.5e93".into()));
-        assert!(!p065_is_number(" --6".into()));
-        assert!(!p065_is_number("-+3".into()));
-        assert!( p065_is_number("00.3".into()));
-        assert!(!p065_is_number("95a54e53".into()));
-        assert!( p065_is_number(".1".into()));
-        assert!(!p065_is_number(".".into()));
-        assert!( p065_is_number("-1.".into()));
-        assert!( p065_is_number("01".into()));
-        assert!( p065_is_number("03.004e005".into()));
-        assert!( p065_is_number("03.004e5".into()));
-        assert!(!p065_is_number("4e+".into()));
-        assert!( p065_is_number("4e+10".into()));
+    fn t0065() {
+        assert!( p0065_is_number("0".into()));
+        assert!( p0065_is_number(" 0.1 ".into()));
+        assert!(!p0065_is_number("abc".into()));
+        assert!( p0065_is_number("2e10".into()));
+        assert!(!p0065_is_number("1 a".into()));
+        assert!(!p0065_is_number(" 1e".into()));
+        assert!(!p0065_is_number(" e3".into()));
+        assert!( p0065_is_number(" 6e-1".into()));
+        assert!(!p0065_is_number("99e2.5".into()));
+        assert!( p0065_is_number("54.5e93".into()));
+        assert!(!p0065_is_number(" --6".into()));
+        assert!(!p0065_is_number("-+3".into()));
+        assert!( p0065_is_number("00.3".into()));
+        assert!(!p0065_is_number("95a54e53".into()));
+        assert!( p0065_is_number(".1".into()));
+        assert!(!p0065_is_number(".".into()));
+        assert!( p0065_is_number("-1.".into()));
+        assert!( p0065_is_number("01".into()));
+        assert!( p0065_is_number("03.004e005".into()));
+        assert!( p0065_is_number("03.004e5".into()));
+        assert!(!p0065_is_number("4e+".into()));
+        assert!( p0065_is_number("4e+10".into()));
     }
 
     #[test]
-    fn t066() {
-        assert_eq!(p066_plus_one(vec![4,3,2,1]), vec![4,3,2,2]);
-        assert_eq!(p066_plus_one(vec![9]), vec![1,0]);
+    fn t0066() {
+        assert_eq!(p0066_plus_one(vec![4,3,2,1]), vec![4,3,2,2]);
+        assert_eq!(p0066_plus_one(vec![9]), vec![1,0]);
     }
 
     #[test]
-    fn t067() {
-        assert_eq!(&p067_add_binary("11".into(), "1".into()), "100");
-        assert_eq!(&p067_add_binary("1010".into(), "1011".into()), "10101");
+    fn t0067() {
+        assert_eq!(&p0067_add_binary("11".into(), "1".into()), "100");
+        assert_eq!(&p0067_add_binary("1010".into(), "1011".into()), "10101");
     }
 
     #[test]
-    fn t068() {
-        assert_eq!(p068_my_sqrt(4), 2);
-        assert_eq!(p068_my_sqrt(8), 2);
-        assert_eq!(p068_my_sqrt(2147395599), 46339);
+    fn t0068() {
+        assert_eq!(p0068_my_sqrt(4), 2);
+        assert_eq!(p0068_my_sqrt(8), 2);
+        assert_eq!(p0068_my_sqrt(2147395599), 46339);
     }
 
     #[test]
-    fn t069() {
-        assert_eq!(p069_climb_stairs(3), 3);
-        assert_eq!(p069_climb_stairs(2), 2);
+    fn t0069() {
+        assert_eq!(p0069_climb_stairs(3), 3);
+        assert_eq!(p0069_climb_stairs(2), 2);
     }
 
     #[test]
-    fn t071() {
-        assert_eq!(&p071_simplify_path("/../".into()), "/");
-        assert_eq!(&p071_simplify_path("/home/".into()), "/home");
-        assert_eq!(&p071_simplify_path("/a/./b/../../c/".into()), "/c");
-        assert_eq!(&p071_simplify_path("/home//foo/".into()), "/home/foo");
-        assert_eq!(&p071_simplify_path("/a//b////c/d//././/..".into()), "/a/b/c");
+    fn t0071() {
+        assert_eq!(&p0071_simplify_path("/../".into()), "/");
+        assert_eq!(&p0071_simplify_path("/home/".into()), "/home");
+        assert_eq!(&p0071_simplify_path("/a/./b/../../c/".into()), "/c");
+        assert_eq!(&p0071_simplify_path("/home//foo/".into()), "/home/foo");
+        assert_eq!(&p0071_simplify_path("/a//b////c/d//././/..".into()), "/a/b/c");
     }
 
     #[test]
-    fn t074() {
-        assert!(!p074_search_matrix(vec![ vec![1,   3,  5,  7], vec![10, 11, 16, 20], vec![23, 30, 34, 50] ], 13) );
-        assert!(!p074_search_matrix(vec![vec![]], 1) );
+    fn t0074() {
+        assert!(!p0074_search_matrix(vec![ vec![1,   3,  5,  7], vec![10, 11, 16, 20], vec![23, 30, 34, 50] ], 13) );
+        assert!(!p0074_search_matrix(vec![vec![]], 1) );
     }
 
     #[test]
-    fn t075() {
+    fn t0075() {
         fn test(mut v: Vec<i32>) -> Vec<i32> {
-            p075_sort_colors(&mut v);
+            p0075_sort_colors(&mut v);
             v
         }
 
@@ -3089,26 +3089,26 @@ pub mod tests {
     }
 
     #[test]
-    fn t077() {
-        assert_eq!(p077_combine(4, 2).len(), 6);
-        assert_eq!(p077_combine(5, 1).len(), 5);
+    fn t0077() {
+        assert_eq!(p0077_combine(4, 2).len(), 6);
+        assert_eq!(p0077_combine(5, 1).len(), 5);
     }
 
     #[test]
-    fn t078() {
-        assert_eq!(p078_subsets(vec![1,2,3]).len(), 8);
-        assert_eq!(p078_subsets(vec![1,2,3,4]).len(), 16);
+    fn t0078() {
+        assert_eq!(p0078_subsets(vec![1,2,3]).len(), 8);
+        assert_eq!(p0078_subsets(vec![1,2,3,4]).len(), 16);
     }
 
     #[test]
-    fn t079() {
+    fn t0079() {
         fn test(s: &str, target: &str, res: bool) {
             let mut out: Vec<Vec<char>> = vec![];
             for row in s.split(",") {
                 out.push(row.chars().collect());
             }
             println!("compare {:?} {}", out, target);
-            assert_eq!(res, p079_exist(out, target.into()));
+            assert_eq!(res, p0079_exist(out, target.into()));
         }
 
         test("ABCE,SFCS,ADEE", "ABCCED", true);

@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use crate::util::{ListNode};
 
-pub fn p055_can_jump(nums: Vec<i32>) -> bool {
+pub fn p0055_can_jump(nums: Vec<i32>) -> bool {
     let mut hist = HashMap::new();
     let nums: Vec<usize> = nums.into_iter().filter(|n| *n >= 0).map(|n| n as usize).collect();
-    p055_can_jump_rec(0, nums.len()-1, &nums, &mut hist)
+    p0055_can_jump_rec(0, nums.len()-1, &nums, &mut hist)
 }
 
-fn p055_can_jump_rec(start: usize, stop: usize, nums: &Vec<usize>, mut hist: &mut HashMap<(usize, usize), bool>) -> bool {
+fn p0055_can_jump_rec(start: usize, stop: usize, nums: &Vec<usize>, mut hist: &mut HashMap<(usize, usize), bool>) -> bool {
     println!("{} {}", start, stop);
     if !hist.contains_key(&(start, stop)) {
         let mut connect = false;
@@ -16,7 +16,7 @@ fn p055_can_jump_rec(start: usize, stop: usize, nums: &Vec<usize>, mut hist: &mu
             connect = true;
         } else if start < nums.len() {
             for step in (1..nums[start]+1).rev() {
-                if p055_can_jump_rec(start+step, stop, &nums, &mut hist) {
+                if p0055_can_jump_rec(start+step, stop, &nums, &mut hist) {
                     connect = true; break;
                 }
             }
@@ -26,7 +26,7 @@ fn p055_can_jump_rec(start: usize, stop: usize, nums: &Vec<usize>, mut hist: &mu
     hist[&(start, stop)]
 }
 
-pub fn p061_rotate_right(head: Option<Box<ListNode>>, mut k: i32) -> Option<Box<ListNode>> {
+pub fn p0061_rotate_right(head: Option<Box<ListNode>>, mut k: i32) -> Option<Box<ListNode>> {
     fn get_length(head: &Option<Box<ListNode>>) -> usize {
         if head.is_none() { return 0; }
         return 1 + get_length(&head.as_ref().unwrap().next);
@@ -78,10 +78,10 @@ mod tests {
     use crate::*;
 
     #[test]
-    fn test_p061() {
-        assert_eq!(p061_rotate_right(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 2), Some(Box::new(listnode!(4, 5, 1, 2, 3))));
-        assert_eq!(p061_rotate_right(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 7), Some(Box::new(listnode!(4, 5, 1, 2, 3))));
-        assert_eq!(p061_rotate_right(None, 0), None);
-        assert_eq!(p061_rotate_right(None, 9), None);
+    fn test_p0061() {
+        assert_eq!(p0061_rotate_right(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 2), Some(Box::new(listnode!(4, 5, 1, 2, 3))));
+        assert_eq!(p0061_rotate_right(Some(Box::new(listnode!(1, 2, 3, 4, 5))), 7), Some(Box::new(listnode!(4, 5, 1, 2, 3))));
+        assert_eq!(p0061_rotate_right(None, 0), None);
+        assert_eq!(p0061_rotate_right(None, 9), None);
     }
 }

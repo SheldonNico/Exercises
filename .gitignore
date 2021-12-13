@@ -1,6 +1,7 @@
 # haskell
 *~
 *#*
+*.tmp
 
 # CABAL
 /dist
