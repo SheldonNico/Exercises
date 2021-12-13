@@ -261,17 +261,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_p1295() {
+    fn t1295() {
         assert_eq!(p1295_find_numbers(vec![12,345,2,6,7896]), 2);
     }
 
     #[test]
-    fn test_p0315() {
+    fn t0315() {
         assert_eq!(p0315_count_smaller(vec![5, 2, 6, 1]), vec![2, 1, 1, 0]);
     }
 
     #[test]
-    fn test_p1266() {
+    fn t1266() {
         assert_eq!(p1266_min_time_to_visit_all_points(vec![vec![0,0], vec![5,0]]), 5);
         assert_eq!(p1266_min_time_to_visit_all_points(vec![vec![3,2], vec![-2,2]]), 5);
         assert_eq!(p1266_min_time_to_visit_all_points(vec![vec![1,1], vec![3,4], vec![-1,0]]), 7);
@@ -282,26 +282,26 @@ mod tests {
     }
 
     #[test]
-    fn test_p1051() {
+    fn t1051() {
         assert_eq!(p1051_height_checker(vec![1,1,4,2,1,3]), 3);
         assert_eq!(p1051_height_checker(vec![5,1,2,3,4]), 5);
         assert_eq!(p1051_height_checker(vec![1,2,3,4,5]), 0);
     }
 
     #[test]
-    fn test_p1252() {
+    fn t1252() {
         assert_eq!(p1252_odd_cells(2, 3, vec![vec![0,1], vec![1,1]]), 6);
         assert_eq!(p1252_odd_cells(2, 2, vec![vec![1,1], vec![0,0]]), 0);
     }
 
     #[test]
-    fn test_p0229() {
+    fn t0229() {
         assert_eq!(p0229_majority_element(vec![1,1,1,3,3,2,2,2]), vec![1, 2]);
         assert_eq!(p0229_majority_element(vec![3,2,3]), vec![3]);
     }
 
     #[test]
-    fn test_p0126() {
+    fn t0126() {
         fn test(s: &str, e: &str, list: Vec<&str>, target: Vec<Vec<&str>>) {
             let out = p0126_find_ladders(s.to_string(), e.to_string(), list.into_iter().map(|s| s.to_string()).collect());
             let mut out: Vec<String> = out.into_iter().map(|sl| sl.into_iter().collect()).collect();
@@ -321,7 +321,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p0121() {
+    fn t0121() {
         assert_eq!(p0121_max_profit(vec![7, 1, 5, 3, 6, 4]), 5);
         assert_eq!(p0121_max_profit(vec![7, 6, 4, 3, 1]), 0);
     }

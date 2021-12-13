@@ -312,9 +312,107 @@ pub fn p0091_num_decodings(s: &[char]) -> i32 {
     p0091_num_decodings_rec(s, 0, &mut mem) as _
 }
 
+pub fn p0093_restore_ip_addresses(s: String) -> Vec<String> {
+    let mut out: Vec<Vec<String>> = vec![vec!["".to_owned()]];
+    for c in s.chars().into_iter() {
+        for mut addr in std::mem::replace(&mut out, Default::default()).into_iter() {
+            let mut addr_ = addr.clone();
+            let len = addr.len();
+
+            let last = addr.last_mut().unwrap();
+
+            if let Some(_) = p0093_get_digits(last) {
+                addr_.push(c.to_string());
+                out.push(addr_);
+            }
+
+            if last.len() < 3 && len <= 4 {
+                last.push(c);
+                out.push(addr);
+            }
+        }
+    }
+
+    let out = out.into_iter().filter(|words| {
+        words.len() == 4 && p0093_get_digits(words.last().unwrap()).is_some()
+    }).map(|words| words.join(".")).collect();
+    // println!("{:?}", out);
+    out
+}
+
+fn p0093_get_digits(digits: &str) -> Option<u8> {
+    if digits.len() == 0 { return None; }
+    if digits.starts_with("0") && digits.len() > 1 { return None; }
+    digits.parse::<u8>().ok()
+}
+
+fn p0097_is_interleave_rec(
+    s1: &[char], s2: &[char], s3: &[char], n1: usize, n2: usize, mem: &mut HashMap<(usize, usize), bool>
+) -> bool {
+    if n1 == s1.len() { return s2[n2..] == s3[n1+n2..]; }
+    if n2 == s2.len() { return s1[n1..] == s3[n1+n2..]; }
+
+    if let Some(v) = mem.get(&(n1, n2)) { return *v; }
+
+    let rtn = if s1[n1] == s3[n1+n2] && p0097_is_interleave_rec(
+        s1, s2, s3, n1+1, n2, mem
+    ) {
+        true
+    } else if s2[n2] == s3[n1+n2] && p0097_is_interleave_rec(
+        s1, s2, s3, n1, n2+1, mem
+    ) {
+        true
+    } else {
+        false
+    };
+    mem.insert((n1, n2), rtn);
+
+    rtn
+}
+
+pub fn p0097_is_interleave(s1: &[char], s2: &[char], s3: &[char]) -> bool {
+    if s1.len() + s2.len() != s3.len() { return false; }
+    let mut mem = Default::default();
+    p0097_is_interleave_rec(s1, s2, s3, 0, 0, &mut mem)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn t0097() {
+        for (idx, (s1, s2, s3, expected)) in vec![
+            ("aabcc", "dbbca", "aadbbcbcac", true),
+            ("aabcc", "dbbca", "aadbbbaccc", false),
+            ("", "", "", true),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0097_is_interleave(&s1.chars().collect::<Vec<_>>(), &s2.chars().collect::<Vec<_>>(), &s3.chars().collect::<Vec<_>>()),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t0093() {
+        for (idx, (ip, expected)) in vec![
+            ("25525511135", 2),
+            ("0000", 1),
+            ("1111", 1),
+            ("010010", 2),
+            ("101023", 5),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0093_restore_ip_addresses(ip.to_owned()).len(),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
 
     #[test]
     fn t0091() {
@@ -377,7 +475,6 @@ mod tests {
             ("abcdg", "caebd", false),
             ("ccabcbabcbabbbbcbb","bbbbabccccbbbabcba", false),
             ("eebaacbcbcadaaedceaaacadccd", "eadcaacabaddaceacbceaabeccd", false),
-            // ("bcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcdebcde", "cebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebdcebd", false),
         ].into_iter().enumerate() {
             assert_eq!(
                 p0087_is_scramble(&s1.chars().collect::<Vec<_>>(), &s2.chars().collect::<Vec<_>>()),

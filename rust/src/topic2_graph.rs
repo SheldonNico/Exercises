@@ -630,14 +630,14 @@ mod tests {
 
 
     #[test]
-    fn test_p0997() {
+    fn t0997() {
         assert_eq!(p0997_find_judge(1, vec![]), 1);
         assert_eq!(p0997_find_judge(2, vec![vec![1,2]]), 2);
         assert_eq!(p0997_find_judge(3, vec![vec![1,3], vec![2,3], vec![3,1]]), -1);
     }
 
     #[test]
-    fn test_p0797() {
+    fn t0797() {
         assert_eq_set!(p0797_all_paths_source_target(vec![vec![2], vec![3], vec![1], vec![]]), vec![vec![0, 2, 1, 3]]);
         assert_eq_set!(p0797_all_paths_source_target(vec![vec![1,2], vec![3], vec![3], vec![]]), vec![vec![0, 1, 3], vec![0, 2, 3]]);
         assert_eq_set!(p0797_all_paths_source_target(vec![vec![1], vec![]]), vec![vec![0, 1]]);
@@ -647,13 +647,13 @@ mod tests {
     }
 
     #[test]
-    fn test_p1557() {
+    fn t1557() {
         assert_eq_set!(p1557_find_smallest_set_of_vertices(6, vec![vec![0,1], vec![0,2], vec![2,5], vec![3,4], vec![4,2]]), vec![0, 3]);
         assert_eq_set!(p1557_find_smallest_set_of_vertices(5, vec![vec![0,1], vec![2,1], vec![3,1], vec![1,4], vec![2,4]]), vec![0, 2, 3]);
     }
 
     #[test]
-    fn test_p1387() {
+    fn t1387() {
         assert_eq!(p1387_get_kth(12, 15, 2), 13);
         assert_eq!(p1387_get_kth(1, 1, 1), 1);
         assert_eq!(p1387_get_kth(7, 11, 4), 7);
@@ -662,7 +662,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p0950() {
+    fn t0950() {
         assert_eq!(p0959_regions_by_slashes(vec![" /".into(), "/ ".into()]), 2);
         assert_eq!(p0959_regions_by_slashes(vec![" /".into(), "  ".into()]), 1);
         assert_eq!(p0959_regions_by_slashes(vec!["\\/".into(), "/\\".into()]), 4);
@@ -671,13 +671,13 @@ mod tests {
     }
 
     #[test]
-    fn test_p0841() {
+    fn t0841() {
         assert_eq!(p0841_can_visit_all_rooms(vec![vec![1], vec![2], vec![3], vec![]]), true);
         assert_eq!(p0841_can_visit_all_rooms(vec![vec![1,3], vec![3,0,1], vec![2], vec![0]]), false);
     }
 
     #[test]
-    fn test_p0684() {
+    fn t0684() {
         assert_eq!(p0684_find_redundant_connection(vec![
                 vec![2,7], vec![7,8], vec![3,6], vec![2,5], vec![6,8],
                 vec![4,8], vec![2,8], vec![1,8], vec![7,10], vec![3,9]]), vec![2, 8]);
@@ -687,7 +687,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p1267() {
+    fn t1267() {
         assert_eq!(p1267_count_servers(vec![vec![1,0,0,1,0], vec![0,0,0,0,0], vec![0,0,0,1,0]]), 3);
         assert_eq!(p1267_count_servers(vec![vec![1,0], vec![0,1]]), 0);
         assert_eq!(p1267_count_servers(vec![vec![1,0], vec![1,1]]), 3);
@@ -695,7 +695,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p0399() {
+    fn t0399() {
         assert_eq!(
             p0399_calc_equation(
                 [["a","b"],["b","c"],["bc","cd"]].iter().map(|c| c.iter().map(|v| v.to_string()).collect()).collect(),
@@ -723,14 +723,14 @@ mod tests {
     }
 
     #[test]
-    fn test_p1615() {
+    fn t1615() {
         assert_eq!(p1615_maximal_network_rank(4, [[0,1],[0,3],[1,2],[1,3]].iter().map(|s| s.into_iter().map(|s| *s as i32).collect()).collect()), 4);
         assert_eq!(p1615_maximal_network_rank(5, [[0,1],[0,3],[1,2],[1,3],[2,3],[2,4]].iter().map(|s| s.into_iter().map(|s| *s as i32).collect()).collect()), 5);
         assert_eq!(p1615_maximal_network_rank(8, [[0,1],[1,2],[2,3],[2,4],[5,6],[5,7]].iter().map(|s| s.into_iter().map(|s| *s as i32).collect()).collect()), 5);
     }
 
     #[test]
-    fn test_p1631() {
+    fn t1631() {
         // assert_eq!(p1631_minimum_effort_path([
         //         [4,  3, 4,  10, 5,  5, 9, 2],
         //         [10, 8, 2,  10, 9,  7, 5, 6],
@@ -744,7 +744,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p0802() {
+    fn t0802() {
         // assert_eq!(
         //     p0802_eventual_safe_nodes(
         //     ),
