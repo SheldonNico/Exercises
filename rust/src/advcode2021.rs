@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap, VecDeque};
+use std::collections::{HashSet, HashMap};
 use nom::IResult;
 
 type P08Signal = HashSet<char>;
@@ -1257,4 +1257,91 @@ fn p13_parse(input: &str) -> IResult<&str, (Vec<(usize, usize)>, Vec<(P13Dir, us
     })(input)?;
 
     Ok((input, (points, dirs)))
+}
+
+pub fn p14() {
+    let contents: &str = r"NNCB
+
+CH -> B
+HH -> N
+CB -> H
+NH -> C
+HB -> C
+HC -> B
+HN -> C
+NN -> C
+BH -> H
+NC -> B
+NB -> B
+BN -> B
+BB -> N
+BC -> B
+CC -> N
+CN -> C";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv14.txt").unwrap(); let contents: &str = &_contents;
+
+    let (_, (polymer, insertions)) = p14_parse(contents).unwrap();
+    println!("{:?} {:?}", polymer, insertions);
+
+    let mut pairs: HashMap<(char, char), usize> = Default::default();
+    let start = polymer[0];
+    let end = polymer[polymer.len()-1];
+    for idx in 0..polymer.len()-1 {
+        let start = polymer[idx];
+        let end = polymer[idx+1];
+        *pairs.entry((start, end)).or_default() += 1;
+    }
+
+    for _ in 0..40 {
+        let mut pending = vec![];
+        for (start, end, to) in insertions.iter() {
+            if let Some(count) = pairs.remove(&(*start, *end)) {
+                pending.push((*start, *to, count));
+                pending.push((*to, *end, count));
+            }
+        }
+        for (start, end, count) in pending.into_iter() {
+            *pairs.entry((start, end)).or_default() += count;
+        }
+
+        let counts = p14_count(&pairs, start, end);
+        let mut counts_s: Vec<_> = counts.values().map(|v| *v).collect();
+        counts_s.sort();
+        println!("{:?} => {}", counts, counts_s[counts_s.len()-1] - counts_s[0]);
+        // println!(">>>>> {:?}", pairs);
+    }
+}
+
+pub fn p14_count(pairs: &HashMap<(char, char), usize>, start: char, end: char) -> HashMap<char, usize> {
+    let mut out: HashMap<char, usize> = vec![(start, 1), (end, 1)].into_iter().collect();
+    for ((start, end), count) in pairs.iter() {
+        *out.entry(*start).or_default() += count;
+        *out.entry(*end).or_default() += count;
+    }
+    for (_, count) in out.iter_mut() {
+        assert!(*count % 2 == 0);
+        *count = (*count) / 2;
+    }
+    out
+}
+
+pub fn p14_parse(input: &str) -> IResult<&str, (Vec<char>, Vec<(char, char, char)>)> {
+    use nom::multi::many1;
+    use nom::character::complete::{satisfy, newline};
+    use nom::bytes::complete::tag;
+    use nom::multi::separated_list1;
+
+    let anychar = || satisfy(|c| c.is_alphabetic());
+
+    let (input, polymer) = many1(anychar())(input)?;
+    let (input, _) = many1(newline)(input)?;
+    let (input, insts) = separated_list1(newline, move |input| {
+        let (input, start) = anychar()(input)?;
+        let (input, end) = anychar()(input)?;
+        let (input, _) = tag(" -> ")(input)?;
+        let (input, to) = anychar()(input)?;
+        Ok((input, (start, end, to)))
+    })(input)?;
+
+    Ok((input, (polymer, insts)))
 }
