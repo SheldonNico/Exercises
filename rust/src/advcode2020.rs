@@ -186,73 +186,71 @@ pub struct Passport {
 }
 
 fn byr_p<'a>(input: &'a str) -> nom::IResult<&'a str, u32> {
+    use nom::combinator::verify;
+    use nom::combinator::map_res;
     let (input, _) = nom::bytes::complete::tag("byr:")(input)?;
-    let (input, res) = nom::character::complete::digit1(input)?;
-    if res.len() != 4 {
-        return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-    }
-    let res = res.parse().map_err(
-        |_| nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo))
-    )?;
-    if !(res >= 1920 && res <= 2002) {
-        return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-    }
+    let (input, res) = verify(
+        map_res(
+            verify(nom::character::complete::digit1, |s: &str| s.len() == 4),
+            |s: &str| s.parse()
+        ),
+        |n: &u32| (*n >= 1920) && (*n <= 2002)
+    )(input)?;
+
     let (input, _) = nom::multi::many0(nom::character::complete::satisfy(|c| c == ' ' || c == '\n' || c == '\t'))(input)?;
     Ok((input, res))
 }
 
 fn iyr_p<'a>(input: &'a str) -> nom::IResult<&'a str, u32> {
+    use nom::combinator::verify;
+    use nom::combinator::map_res;
     let (input, _) = nom::bytes::complete::tag("iyr:")(input)?;
-    let (input, res) = nom::character::complete::digit1(input)?;
-    if res.len() != 4 {
-        return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-    }
-    let res = res.parse().map_err(
-        |_| nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo))
-    )?;
-    if !(res >= 2010 && res <= 2020) {
-        return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-    }
+    let (input, res) = verify(
+        map_res(
+            verify(nom::character::complete::digit1, |s: &str| s.len() == 4),
+            |s: &str| s.parse()
+        ),
+        |n: &u32| (*n >= 2010) && (*n <= 2020)
+    )(input)?;
+
     let (input, _) = nom::multi::many0(nom::character::complete::satisfy(|c| c == ' ' || c == '\n' || c == '\t'))(input)?;
     Ok((input, res))
 }
 
 fn eyr_p<'a>(input: &'a str) -> nom::IResult<&'a str, u32> {
+    use nom::combinator::verify;
+    use nom::combinator::map_res;
     let (input, _) = nom::bytes::complete::tag("eyr:")(input)?;
-    let (input, res) = nom::character::complete::digit1(input)?;
-    if res.len() != 4 {
-        return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-    }
-    let res = res.parse().map_err(
-        |_| nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo))
-    )?;
-    if !(res >= 2020 && res <= 2030) {
-        return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-    }
+    let (input, res) = verify(
+        map_res(
+            verify(nom::character::complete::digit1, |s: &str| s.len() == 4),
+            |s: &str| s.parse()
+        ),
+        |n: &u32| (*n >= 2020) && (*n <= 2030)
+    )(input)?;
+
     let (input, _) = nom::multi::many0(nom::character::complete::satisfy(|c| c == ' ' || c == '\n' || c == '\t'))(input)?;
     Ok((input, res))
 }
 
 fn hgt_p<'a>(input: &'a str) -> nom::IResult<&'a str, i32> {
+    use nom::combinator::map_res;
+    use nom::bytes::complete::tag;
     let (input, _) = nom::bytes::complete::tag("hgt:")(input)?;
-    let (input, res) = nom::character::complete::digit1(input)?;
-    let res: i32 = res.parse().map_err(
-        |_| nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo))
-    )?;
-    let input = match nom::bytes::complete::tag::<_, _, nom::error::Error<&str>>("cm")(input) {
-        Ok((input, _)) => {
-            if !(res >= 150 && res <= 193) {
-                return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-            }
-            input
-        },
-        _ => {
-            let (input, _) = nom::bytes::complete::tag("in")(input)?;
-            if !(res >= 59 && res <= 76) {
-                return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-            }
-            input
+
+    let (mut input, res) = map_res(nom::character::complete::digit1, |s: &str| s.parse())(input)?;
+
+    let input = if tag::<_, &str, nom::error::Error<_>>("cm")(input).is_ok() {
+        if !(res >= 150 && res <= 193) {
+            return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::Verify)));
         }
+        input
+    } else {
+        let (input, _) = nom::bytes::complete::tag("in")(input)?;
+        if !(res >= 59 && res <= 76) {
+            return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::Verify)));
+        }
+        input
     };
 
     let (input, _) = nom::multi::many0(nom::character::complete::satisfy(|c| c == ' ' || c == '\n' || c == '\t'))(input)?;
@@ -287,14 +285,14 @@ fn ecl_p<'a>(input: &'a str) -> nom::IResult<&'a str, EclItem> {
 }
 
 fn pid_p<'a>(input: &'a str) -> nom::IResult<&'a str, u32> {
+    use nom::combinator::verify;
+    use nom::combinator::map_res;
     let (input, _) = nom::bytes::complete::tag("pid:")(input)?;
-    let (input, res) = nom::character::complete::digit1(input)?;
-    if res.len() != 9 {
-        return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-    }
-    let res = res.parse().map_err(
-        |_| nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo))
-    )?;
+    let (input, res) = map_res(
+            verify(nom::character::complete::digit1, |s: &str| s.len() == 9),
+            |s: &str| s.parse()
+    )(input)?;
+
     let (input, _) = nom::multi::many0(nom::character::complete::satisfy(|c| c == ' ' || c == '\n' || c == '\t'))(input)?;
     Ok((input, res))
 }
@@ -1295,6 +1293,7 @@ pub enum MaskManip {
 }
 
 pub fn mask_set_p(input: &str) -> nom::IResult<&str, MaskManip> {
+    use nom::combinator::verify;
     let (input, _) = nom::bytes::complete::tag("mask")(input)?;
     let (input, _) = nom::character::complete::space0(input)?;
     let (input, _) = nom::bytes::complete::tag("=")(input)?;
@@ -1302,12 +1301,12 @@ pub fn mask_set_p(input: &str) -> nom::IResult<&str, MaskManip> {
     let x = nom::combinator::value(-1, nom::character::complete::char('X'));
     let one = nom::combinator::value(1, nom::character::complete::char('1'));
     let zero = nom::combinator::value(0, nom::character::complete::char('0'));
-    let (input, res) = nom::multi::many1(nom::branch::alt((one, x, zero)))(input)?;
-    if res.len() != 36 {
-        return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-    } else {
-        return Ok((input, MaskManip::SetMask(res)));
-    }
+    let (input, res) = verify(
+        nom::multi::many1(nom::branch::alt((one, x, zero))),
+        |sm: &Vec<i32>| sm.len() == 36
+    )(input)?;
+
+    return Ok((input, MaskManip::SetMask(res)));
 }
 
 pub fn mask_man_p(input: &str) -> nom::IResult<&str, MaskManip> {
@@ -1921,6 +1920,7 @@ impl P19Rule {
     }
 
     fn parse(input: &str) -> nom::IResult<&str, (usize, Self)> {
+        use nom::combinator::eof;
         let (input, id) = nom::combinator::map_res(
             nom::character::complete::digit1,
             |s: &str| s.parse::<usize>()
@@ -1933,9 +1933,7 @@ impl P19Rule {
                 Self::parse_any,
         ))(input)?;
 
-        if input.len() != 0 {
-            return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-        }
+        let (input, _) = eof(input)?;
 
         Ok((input, (id, res)))
     }
@@ -2116,14 +2114,14 @@ impl Tile {
     }
 
     pub fn parse_data(input: &str) -> nom::IResult<&str, [[Pixel; 10]; 10]> {
-        let (input, res) = nom::multi::separated_list0(
-            nom::character::complete::newline,
-            Self::parse_col
+        use nom::combinator::verify;
+        let (input, res) = verify(
+            nom::multi::separated_list0(
+                nom::character::complete::newline,
+                Self::parse_col),
+                |s: &Vec<[Pixel; 10]>| s.len() == 10
         )(input)?;
 
-        if res.len() != 10 {
-            return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::ParseTo)));
-        }
         Ok((input, res.try_into().unwrap()))
     }
 

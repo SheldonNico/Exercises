@@ -11,5 +11,5 @@ name = "leetcode"
 
 [dependencies]
 regex = "1"
-nom = "6.0.1"
+nom = "7.1.0"
 rand = "0.8.3"
