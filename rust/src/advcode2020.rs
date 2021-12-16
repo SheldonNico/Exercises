@@ -238,7 +238,7 @@ fn hgt_p<'a>(input: &'a str) -> nom::IResult<&'a str, i32> {
     use nom::bytes::complete::tag;
     let (input, _) = nom::bytes::complete::tag("hgt:")(input)?;
 
-    let (mut input, res) = map_res(nom::character::complete::digit1, |s: &str| s.parse())(input)?;
+    let (input, res) = map_res(nom::character::complete::digit1, |s: &str| s.parse())(input)?;
 
     let input = if tag::<_, &str, nom::error::Error<_>>("cm")(input).is_ok() {
         if !(res >= 150 && res <= 193) {

@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet, HashMap, BTreeSet};
 use nom::IResult;
 
 type P08Signal = HashSet<char>;
@@ -1345,3 +1345,150 @@ pub fn p14_parse(input: &str) -> IResult<&str, (Vec<char>, Vec<(char, char, char
 
     Ok((input, (polymer, insts)))
 }
+
+pub fn p15() {
+    let contents: &str = r"
+1163751742
+1381373672
+2136511328
+3694931569
+7463417111
+1319128137
+1359912421
+3125421639
+1293138521
+2311944581";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv15.txt").unwrap(); let contents: &str = &_contents;
+
+    let levels: Vec<Vec<isize>> = contents.trim().lines().map(
+        |line| line.chars().map(|c| c.to_digit(10).unwrap() as isize).collect()
+    ).collect();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    let nrow = levels.len();
+    let ncol = levels[0].len();
+    let mut mem: Vec<Vec<isize>> = vec![vec![isize::MAX; ncol]; nrow];
+    let mut curr: BTreeSet<(isize, usize, usize)> = Default::default();
+    curr.insert((0, 0, 0));
+    mem[0][0] = 0;
+
+    while let Some((dis_last, px, py)) = curr.pop_first() {
+        for (nx, ny) in p15_neighbor(px, py, nrow, ncol).into_iter() {
+            let dis = dis_last + levels[nx][ny];
+            if mem[nx][ny] > dis {
+                mem[nx][ny] = dis;
+                curr.insert((dis, nx, ny));
+            }
+        }
+    }
+    println!("{}x{}: {:?}", nrow, ncol, mem[nrow-1][ncol-1]);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    let mut nlevels: Vec<Vec<isize>> = vec![vec![0; ncol*5]; nrow*5];
+    for idr in 0..(nrow*5) {
+        for idc in 0..(ncol*5) {
+            let xr = idr / nrow;
+            let xc = idc / ncol;
+            let val = levels[idr % nrow][idc % ncol] + ((xr+xc) as isize);
+            nlevels[idr][idc] = (val-1) % 9 + 1;
+        }
+    }
+    let levels = nlevels;
+
+    let nrow = levels.len();
+    let ncol = levels[0].len();
+    let mut mem: Vec<Vec<isize>> = vec![vec![isize::MAX; ncol]; nrow];
+    let mut curr: BTreeSet<(isize, usize, usize)> = Default::default();
+    curr.insert((0, 0, 0));
+    mem[0][0] = 0;
+
+    while let Some((dis_last, px, py)) = curr.pop_first() {
+        for (nx, ny) in p15_neighbor(px, py, nrow, ncol).into_iter() {
+            let dis = dis_last + levels[nx][ny];
+            if mem[nx][ny] > dis {
+                mem[nx][ny] = dis;
+                curr.insert((dis, nx, ny));
+            }
+        }
+    }
+
+    println!("{}x{}: {:?}", nrow, ncol, mem[nrow-1][ncol-1]);
+
+    /*
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Shity solutions:
+    let mut mem: HashMap<(usize, usize), isize> = Default::default();
+    mem.insert((0, 0), 0);
+    let mut points: Vec<((usize, usize), isize)> = vec![((0, 0), 0)];
+
+    while points.len() > 0 {
+        let mut neighbor: HashMap<(usize, usize), isize> = Default::default();
+        for ((px, py), limit) in std::mem::replace(&mut points, Default::default()).into_iter() {
+            for (nx, ny) in p15_neighbor(px, py, nrow, ncol) {
+                if mem.contains_key(&(nx, ny)) { continue; }
+                let distance = levels[nx][ny]+mem.get(&(px, py)).unwrap();
+                let last = neighbor.entry((nx, ny)).or_insert(isize::MAX);
+                *last = (*last).min(distance);
+            }
+        }
+        // println!(">>>> {:?}", neighbor);
+
+        for ((px, py), limit) in neighbor.into_iter() {
+            let mut curr: HashMap<(usize, usize), isize> = vec![((px, py), limit)].into_iter().collect();
+            let mut stacked = curr.clone();
+            let mut minimum = limit;
+
+            while curr.len() > 0 {
+                // println!("----{:?}", curr);
+                for ((cx, cy), left) in std::mem::replace(&mut curr, Default::default()).into_iter() {
+                    let left = left - levels[cx][cy];
+                    for (nx, ny) in p15_neighbor(cx, cy, nrow, ncol) {
+                        if let Some(last_res) = stacked.get_mut(&(nx, ny)) {
+                            if *last_res >= left { continue; }
+                            *last_res = left;
+                        }
+
+                        if let Some(last) = mem.get(&(nx, ny)) {
+                            let distance = limit - (left - last);
+                            if distance < minimum { minimum = distance; }
+                            continue;
+                        }
+
+                        if let Some(last_res) = curr.get(&(nx, ny)) {
+                            if *last_res >= left {
+                                continue;
+                            }
+                        }
+
+                        if left > levels[nx][ny] {
+                            curr.insert((nx, ny), left);
+                        }
+                        stacked.insert((nx, ny), left);
+                    }
+                }
+            }
+
+            mem.insert((px, py), minimum);
+            points.push(((px, py), minimum));
+        }
+        println!("{:?}", points);
+    }
+
+
+    println!("{:?}", levels);
+    println!("{}x{}: {:?}", nrow, ncol, mem.get(&(nrow-1, ncol-1)));
+    */
+}
+
+fn p15_neighbor(x: usize, y: usize, nrow: usize, ncol: usize) -> Vec<(usize, usize)> {
+    let mut out = vec![];
+    for (dx, dy) in [(0, 1), (0, -1), (1, 0), (-1, 0)].iter() {
+        let nx = x as isize + dx;
+        let ny = y as isize + dy;
+        if nx >= 0 && nx < nrow as isize && ny >= 0 && ny < ncol as isize {
+            out.push((nx as usize, ny as usize));
+        }
+    }
+    out
+}
+

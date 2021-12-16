@@ -569,9 +569,192 @@ pub fn p0127_ladder_length(begin_word: String, end_word: String, word_list: Vec<
     0
 }
 
+pub fn p0128_longest_consecutive_fast(nums: Vec<i32>) -> i32 {
+    let nums: HashSet<i32> = nums.into_iter().collect();
+    let mut max = 0;
+
+    for num in nums.iter() {
+        if !nums.contains(&(num-1)) {
+            let mut stroke = 1;
+            let mut curr = num + 1;
+            while nums.contains(&curr) {
+                curr += 1;
+                stroke += 1;
+            }
+
+            if stroke > max {
+                max = stroke;
+            }
+        }
+    }
+
+    max
+}
+
+pub fn p0128_longest_consecutive(mut nums: Vec<i32>) -> i32 {
+    if nums.len() == 0 { return 0; }
+    nums.sort();
+    let mut len = 1; let mut count = 1;
+    for idx in 1..nums.len() {
+        if nums[idx-1]+1 == nums[idx] {
+            count += 1;
+        } else if nums[idx-1] == nums[idx] {
+
+        } else {
+            if count > len {
+                len = count;
+            }
+            count = 1;
+        }
+    }
+
+    len.max(count)
+}
+
+pub fn p0130_solve(board: &mut Vec<Vec<char>>) {
+    let nrow = board.len();
+    if nrow == 0 { return; }
+    let ncol = board[0].len();
+    if ncol == 0 { return; }
+
+    let mut walked = HashSet::new();
+    for idr in 0..nrow {
+        for idc in 0..ncol {
+            if board[idr][idc] == 'X' { continue; }
+            let mut path = HashSet::new();
+            let mut points = vec![(idr, idc)];
+
+            let mut is_edge = false;
+            while points.len() > 0 {
+                for (px, py) in std::mem::replace(&mut points, Default::default()).into_iter() {
+                    path.insert((px, py));
+
+                    let px = px as isize; let py = py as isize;
+                    for (dx, dy) in [(0, -1), (0, 1), (1, 0), (-1, 0)].iter() {
+                        if px+dx >= 0 && px+dx < nrow as isize && py+dy >= 0 && py+dy < ncol as isize {
+                            let nx = (px + dx) as usize;
+                            let ny = (py + dy) as usize;
+                            if board[nx][ny] == 'X' { continue; }
+                            if walked.contains(&(nx, ny)) { is_edge = true; break; }
+                            if path.contains(&(nx, ny)) { continue; }
+                            points.push((nx, ny));
+                        } else {
+                            is_edge = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            for (px, py) in path.into_iter() {
+                if is_edge {
+                    walked.insert((px, py));
+                } else {
+                    board[px][py] = 'X';
+                }
+            }
+        }
+    }
+}
+
+fn p0131_is_palindrome(old: &[char], n: char) -> bool {
+    old.iter().all(|&o| o == n)
+}
+
+pub fn p0131_partition(s: String) -> Vec<Vec<String>> {
+    let mut out: Vec<Vec<Vec<char>>> = vec![vec![]];
+    for ch in s.chars() {
+        let mut new = vec![];
+        for os in out.iter_mut() {
+            if os.len() > 0 && p0131_is_palindrome(os.last().unwrap(), ch) {
+                let mut os = os.clone();
+                os.last_mut().unwrap().push(ch);
+                new.push(os);
+            } else if os.len() > 1 && os[os.len()-2] == vec![ch] {
+                let mut os = os.clone();
+                let mut last = os.pop().unwrap();
+                os.pop().unwrap();
+                last.insert(0, ch);
+                last.push(ch);
+                os.push(last);
+                new.push(os);
+            }
+
+            os.push(vec![ch]);
+        }
+        // println!("{:?} {:?}", out, new);
+        out.append(&mut new);
+    }
+
+    out.into_iter().map(|os| os.into_iter().map(|cs| cs.into_iter().collect()).collect()).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn t0131() {
+        for (idx, (s, expected)) in vec![
+            ("fff", vec![vec!["f","f","f"],vec!["f","ff"],vec!["ff","f"],vec!["fff"]]),
+            ("aab", vec![vec!["a", "a", "b"],vec!["aa", "b"]]),
+            ("efe", vec![vec!["e", "f", "e"],vec!["efe"]]),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0131_partition(s.to_owned()).len(),
+                expected.len(),
+                "Test #{} failed...",
+                idx
+            );
+            assert_eq!(
+                p0131_partition(s.to_owned()).into_iter().collect::<HashSet<_>>(),
+                expected.into_iter().map(|os| os.into_iter().map(|s| s.to_owned()).collect()).collect::<HashSet<_>>(),
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t0130() {
+        for (idx, (mut board, expected)) in vec![
+            (vec![vec!['X','X','X','X'],vec!['X','O','O','X'],vec!['X','X','O','X'],vec!['X','O','X','X']],
+             vec![vec!['X','X','X','X'],vec!['X','X','X','X'],vec!['X','X','X','X'],vec!['X','O','X','X']]),
+            (vec![vec!['X']], vec![vec!['X']]),
+        ].into_iter().enumerate() {
+            p0130_solve(&mut board);
+            assert_eq!(
+                board,
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+
+    }
+
+    #[test]
+    fn t0128() {
+        for (idx, (nums, expected)) in vec![
+            (vec![0,3,7,2,5,8,4,6,0,1], 9),
+            (vec![0, 0], 1),
+            (vec![], 0),
+            (vec![100,4,200,1,3,2], 4),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0128_longest_consecutive_fast(nums.clone()),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+            assert_eq!(
+                p0128_longest_consecutive(nums),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
 
     #[test]
     fn t0127() {
