@@ -1492,3 +1492,212 @@ fn p15_neighbor(x: usize, y: usize, nrow: usize, ncol: usize) -> Vec<(usize, usi
     out
 }
 
+pub fn p16() {
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv16.txt").unwrap(); let contents: &str = &_contents;
+
+    for line in [
+        "D2FE28",
+        "38006F45291200",
+        "EE00D40C823060",
+        "8A004A801A8002F478",
+        "620080001611562C8802118E34",
+        "C0015000016115A2E0802F182340",
+        "A0016C880162017C3686B18A3D4780",
+
+        "C200B40A82",
+        "04005AC33890",
+        "880086C3E88112",
+        "CE00C43D881120",
+        "D8005AC2A8F0",
+        "F600BC2D8F",
+        "9C005AC2F8F0",
+        "9C0141080250320F1802104A08",
+        contents.trim(),
+    ] {
+        let r = P16Packet::parse_str(line).unwrap();
+        println!("{} x {}: {:?}", r.calculate(), r.version_sum(), r);
+    }
+
+}
+
+#[derive(Debug, Clone)]
+pub struct P16Header {
+    pub version: u8,
+    pub id: u8,
+}
+
+#[derive(Debug, Clone)]
+pub enum P16Packet {
+    Lit(P16Header, usize),
+    Op(P16Header, Vec<P16Packet>),
+}
+
+impl P16Packet {
+    fn version_sum(&self) -> usize {
+        let mut sum = 0;
+        match self {
+            Self::Lit(h, _) => { sum += h.version as usize; }
+            Self::Op(h, vs) => {
+                sum += h.version as usize;
+                for v in vs.iter() {
+                    sum += v.version_sum();
+                }
+            }
+        }
+
+        sum
+    }
+
+    fn calculate(&self) -> usize {
+        match self {
+            Self::Lit(_, v) => *v,
+            Self::Op(h, vs) => {
+                match h.id {
+                    0 => vs.iter().map(|v| v.calculate()).sum::<usize>(),
+                    1 => vs.iter().map(|v| v.calculate()).product::<usize>(),
+                    2 => vs.iter().map(|v| v.calculate()).min().unwrap(),
+                    3 => vs.iter().map(|v| v.calculate()).max().unwrap(),
+                    5 => {
+                        assert_eq!(vs.len(), 2);
+                        if vs[0].calculate() > vs[1].calculate() { 1 } else { 0 }
+                    },
+                    6 => {
+                        assert_eq!(vs.len(), 2);
+                        if vs[0].calculate() < vs[1].calculate() { 1 } else { 0 }
+                    },
+                    7 => {
+                        assert_eq!(vs.len(), 2);
+                        if vs[0].calculate() == vs[1].calculate() { 1 } else { 0 }
+                    },
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+
+    fn parse_str(input: &str) -> Result<Self, String> {
+        let mut chars: Vec<char> = vec![];
+
+        for c in input.chars() {
+            for i in format!("{:04b}", c.to_digit(16).unwrap()).chars() {
+                chars.push(i);
+            }
+        }
+
+        let (_, s) = Self::parse(&chars)?;
+        Ok(s)
+    }
+
+    fn parse(input: &[char]) -> Result<(&[char], Self), String> {
+        // println!(">>> {}", input.iter().collect::<String>());
+        let version = Self::parse_usize(&input[..3])? as u8;
+        let id = Self::parse_usize(&input[3..6])? as u8;
+        let header = P16Header { version, id };
+
+        match id {
+            4 => Self::parse_lit(&input[6..], header),
+            _ => Self::parse_op(&input[6..], header),
+        }
+    }
+
+    fn parse_op(input: &[char], header: P16Header) -> Result<(&[char], Self), String> {
+        if input.len() == 0 {
+            return Err("parse_op failed: length is zero".into());
+        }
+        match input[0] {
+            '0' => Self::parse_op1(&input[1..], header),
+            '1' => Self::parse_op2(&input[1..], header),
+            _ => unreachable!(),
+        }
+    }
+
+    fn parse_op1(mut input: &[char], header: P16Header) -> Result<(&[char], Self), String> {
+        if input.len() < 15 {
+            return Err("parse_op1 failed: length is less than 15".into());
+        }
+        let len = Self::parse_usize(&input[..15])?;
+        input = &input[15..];
+        if input.len() < len {
+            return Err(format!("parse_op1 failed: length should be greater than {}, but actually {}", len, input.len()));
+
+        }
+
+        let mut vs = vec![];
+        let mut slice = &input[..len];
+        while slice.len() > 0 {
+            match Self::parse(slice) {
+                Ok((slice_new, v)) => {
+                    vs.push(v);
+                    slice = slice_new;
+                },
+                Err(_) => {
+                    if !slice.iter().all(|c| *c == '0') {
+                        return Err("parse_op1 pase number failed.".into());
+                    }
+                    break;
+                }
+            }
+        }
+
+
+        Ok((&input[len..], Self::Op(header, vs)))
+    }
+
+    fn parse_op2(mut input: &[char], header: P16Header) -> Result<(&[char], Self), String> {
+        if input.len() < 11 {
+            return Err("parse_op2 failed: length is less than 15".into());
+        }
+        let len = Self::parse_usize(&input[..11])?;
+        input = &input[11..];
+
+        let mut vs = vec![];
+        for _ in 0..len {
+            let (input_new, v) = Self::parse(input)?;
+            vs.push(v);
+            input = input_new;
+        }
+
+        Ok((input, Self::Op(header, vs)))
+    }
+
+    fn parse_lit(input: &[char], header: P16Header) -> Result<(&[char], Self), String> {
+        let mut start = 0;
+        let mut vs = vec![];
+        let mut is_exit = false;
+        while start < input.len() {
+            if input[start] == '0' {
+                is_exit = true;
+            }
+            for idx in start+1..start+5 {
+                vs.push(input[idx]);
+            }
+            start += 5;
+            if is_exit { break; }
+        }
+        let num = Self::parse_usize(&vs)?;
+
+        Ok((&input[start..], Self::Lit(header, num)))
+    }
+
+    fn parse_usize(vs: &[char]) -> Result<usize, String> {
+        if vs.len() == 0 { return Err("Empty string is not valid number".to_owned()); }
+        if vs.len() > 64 { return Err("length of usize must be less than 64".to_owned()); }
+        let mut sum = 0;
+        for c in vs.iter() {
+            sum *= 2;
+            if *c == '1' {
+                sum += 1;
+            }
+        }
+
+        Ok(sum)
+    }
+}
+
+
+#[derive(Debug, Clone)]
+enum P16Lit {
+    Lit(usize),
+    Op1(usize, usize),
+}
+
