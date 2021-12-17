@@ -1694,10 +1694,115 @@ impl P16Packet {
     }
 }
 
+pub fn p17() {
+    let contents: &str = r"target area: x=20..30, y=-10..-5";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv17.txt").unwrap(); let contents: &str = &_contents;
 
-#[derive(Debug, Clone)]
-enum P16Lit {
-    Lit(usize),
-    Op1(usize, usize),
+    let (_, ((sx, ex), (ey, sy))) = p17_parse(contents).unwrap();
+    println!("{} x {} => {} x {}", sx, ex, sy, ey);
+    assert_eq!(true, p17_right((0, 4), (-1, 1), (1, -1)));
+    assert_eq!(true, p17_left((0, -4), (-1, 1), (1, -1)));
+    // println!("{:?}", p17_solve((30, -10), (sx, ex), (sy, ey)));
+
+    let mut height = 0;
+    let mut inits = vec![];
+    for vx in 1..ex+1 {
+        if (vx+1)*vx / 2 < sx { continue; }
+
+        let mut vy = ey;
+
+        loop {
+            assert!(vy < 500);
+            if vy > -ey { break; }
+
+            match p17_solve((vx, vy), (sx, ex), (sy, ey)) {
+                P17Dir::Left => { vy += 1; }
+                _ => break,
+            }
+        }
+
+        loop {
+            assert!(vy < 500);
+            if vy > -ey { break; }
+
+            match p17_solve((vx, vy), (sx, ex), (sy, ey)) {
+                P17Dir::Inner(h) => {
+                    if h >= 0 {
+                        inits.push((vx, vy));
+                    }
+                    height = height.max(h); vy += 1;
+                }
+                _ => break,
+            }
+        }
+
+        // println!("--- {} {}: {}", vx, vy, height);
+    }
+    println!("Result: {} x {}: {:?}", height, inits.len(), &inits[..5]);
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum P17Dir {
+    Left,
+    Right,
+    Inner(i64)
+}
+
+fn p17_right((px, py): (i64, i64), (sx, sy): (i64, i64), (ex, ey): (i64, i64)) -> bool {
+    (ey-sy)*(px-sx) < (py-sy)*(ex-sx)
+}
+
+fn p17_left((px, py): (i64, i64), (sx, sy): (i64, i64), (ex, ey): (i64, i64)) -> bool {
+    (ey-sy)*(px-sx) > (py-sy)*(ex-sx)
+}
+
+fn p17_solve((mut vx, mut vy): (i64, i64), (sx, ex): (i64, i64), (sy, ey): (i64, i64)) -> P17Dir {
+    // println!("-----------------------------: {} {}", vx, vy);
+    let mut xx = 0; let mut yy = 0;
+    let mut last_xx = 0; let mut last_yy = 0;
+    let mut height: i64 = yy;
+    while xx < ex && yy > ey {
+        last_xx = xx;
+        last_yy = yy;
+
+        xx += vx;
+        yy += vy;
+        height = yy.max(height);
+
+        vy -= 1;
+        if vx > 0 {
+            vx -= 1;
+        } else if vx < 0 {
+            vx += 1;
+        }
+        // println!(">>>> {} x {}: {} {}", xx, yy, vx, vy);
+
+        if xx >= sx && xx <= ex && yy <= sy && yy >= ey {
+            return P17Dir::Inner(height);
+        }
+    }
+
+    if p17_right((sx, ey), (last_xx, last_yy), (xx, yy)) {
+        P17Dir::Left
+    } else if p17_left((ex, sy), (last_xx, last_yy), (xx, yy)) {
+        P17Dir::Right
+    } else {{
+        P17Dir::Inner(i64::MIN)
+    }}
+}
+
+fn p17_parse(input: &str) -> IResult<&str, ((i64, i64), (i64, i64))> {
+    use nom::bytes::complete::tag;
+    use nom::character::complete::i64;
+
+    let (input, _) = tag("target area: x=")(input)?;
+    let (input, sx) = i64(input)?;
+    let (input, _) = tag("..")(input)?;
+    let (input, ex) = i64(input)?;
+    let (input, _) = tag(", y=")(input)?;
+    let (input, sy) = i64(input)?;
+    let (input, _) = tag("..")(input)?;
+    let (input, ey) = i64(input)?;
+
+    Ok((input, ((sx, ex), (sy, ey))))
+}

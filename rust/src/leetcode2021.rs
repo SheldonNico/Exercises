@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet, HashMap, BinaryHeap};
 
 pub fn p0080_remove_duplicates(nums: &mut Vec<i32>) -> i32 {
     let mut left = 2; let mut right = nums.len();
@@ -689,9 +689,119 @@ pub fn p0131_partition(s: String) -> Vec<Vec<String>> {
     out.into_iter().map(|os| os.into_iter().map(|cs| cs.into_iter().collect()).collect()).collect()
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+struct P0132Cuts {
+    len: usize,
+    cuts: Vec<usize>,
+}
+
+impl PartialOrd for P0132Cuts {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.cuts.len().partial_cmp(&other.cuts.len()).map(std::cmp::Ordering::reverse)
+    }
+}
+
+impl Ord for P0132Cuts {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.cuts.len().cmp(&other.cuts.len()).reverse()
+    }
+}
+
+pub fn p0132_min_cut_fast(s: &[char]) -> i32 {
+    let mut splits: BinaryHeap<P0132Cuts> = Default::default();
+    splits.push(P0132Cuts { len: 0, cuts: vec![] });
+    let mut minimum = i32::MAX;
+    while let Some(mut split) = splits.pop() {
+        if minimum < i32::MAX && split.cuts.len() as i32 > minimum + 1 + 1 { continue; }
+        if split.len >= s.len() {
+            minimum = (split.cuts.len() as i32 - 1).min(minimum);
+            continue;
+        }
+        split.len += 1;
+
+        if split.cuts.len() > 0 {
+            let last = split.cuts[split.cuts.len()-1];
+            if s[..split.len].iter().rev().take(last+1).all(|c| *c == s[split.len-1]) {
+                let mut split = split.clone();
+                let last = split.cuts.pop().unwrap();
+                split.cuts.push(last+1);
+                splits.push(split);
+            }
+        }
+        if split.cuts.len() > 1 {
+            let last1 = split.cuts[split.cuts.len()-1];
+            let last2 = split.cuts[split.cuts.len()-2];
+            assert!(split.len >= 1+last1);
+            if last2 == 1 && s[split.len - 1 - last1-1] == s[split.len-1] {
+                let mut split = split.clone();
+                let last = split.cuts.pop().unwrap();
+                let _ = split.cuts.pop().unwrap();
+                split.cuts.push(last+2);
+                splits.push(split);
+            }
+        }
+
+        split.cuts.push(1);
+        // println!("--- {:?}", split);
+        splits.push(split);
+        // println!(">>> {:?}", splits);
+    }
+
+    minimum
+}
+
+pub fn p0132_min_cut(s: &[char]) -> i32 {
+    let mut splits: Vec<Vec<usize>> = vec![vec![]];
+    for idx in 0..s.len() {
+        for mut split in std::mem::replace(&mut splits, Default::default()).into_iter() {
+            eprintln!(">>> {:?}", split);
+            if split.len() > 0 && s[..idx].iter().rev().take(split[split.len()-1]).all(|c| *c == s[idx]) {
+                let mut split = split.clone();
+                let last = split.pop().unwrap();
+                split.push(last+1);
+                splits.push(split);
+            }
+
+            if split.len() > 1 && split[split.len()-2] == 1 && s[idx-split[split.len()-1]-1] == s[idx] {
+                let mut split = split.clone();
+                let last = split.pop().unwrap();
+                let _ = split.pop().unwrap();
+                split.push(last+2);
+                splits.push(split);
+            }
+            split.push(1);
+            splits.push(split);
+        }
+    }
+
+    // println!("{:?}", splits);
+    splits.into_iter().map(|vs| vs.len() as i32 - 1).min().unwrap_or(0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn t0132() {
+        for (idx, (s, expected)) in vec![
+            ("ababababa", 0),
+            ("ababababababababababababcbabababababababababababa", 0),
+            ("efe", 0),
+            ("cdd", 1),
+            ("aab", 1),
+            ("a", 0),
+            ("ab", 1),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0132_min_cut_fast(&s.chars().collect::<Vec<_>>()),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+
+    }
 
     #[test]
     fn t0131() {
