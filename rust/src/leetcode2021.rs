@@ -691,8 +691,7 @@ pub fn p0131_partition(s: String) -> Vec<Vec<String>> {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 struct P0132Cuts {
-    len: usize,
-    cuts: Vec<usize>,
+    cuts: Vec<(usize, usize)>,
 }
 
 impl PartialOrd for P0132Cuts {
@@ -707,54 +706,54 @@ impl Ord for P0132Cuts {
     }
 }
 
+fn p0132_get(mem: &mut Vec<Vec<i8>>, s: &[char], st: usize, et: usize) -> bool {
+    match mem[st][et] {
+        1 => { return true; }
+        0 => { return false; }
+        _  => {
+            let mut out = true;
+            for shift in 0..((et-st) / 2) {
+                if s[st+shift] != s[et-1-shift] {
+                    out = false;
+                    break;
+                }
+            }
+            mem[st][et] = if out { 1 } else { 0 };
+            out
+        }
+    }
+}
+
 pub fn p0132_min_cut_fast(s: &[char]) -> i32 {
+    if s.len() == 0 { return 0; }
     let mut splits: BinaryHeap<P0132Cuts> = Default::default();
-    splits.push(P0132Cuts { len: 0, cuts: vec![] });
-    let mut minimum = i32::MAX;
-    while let Some(mut split) = splits.pop() {
-        if minimum < i32::MAX && split.cuts.len() as i32 > minimum + 1 + 1 { continue; }
-        if split.len >= s.len() {
-            minimum = (split.cuts.len() as i32 - 1).min(minimum);
-            continue;
-        }
-        split.len += 1;
+    let mut mem: Vec<Vec<i8>> = vec![vec![-1; s.len()+1]; s.len()+1];
+    splits.push(P0132Cuts { cuts: vec![(0, s.len())] });
 
-        if split.cuts.len() > 0 {
-            let last = split.cuts[split.cuts.len()-1];
-            if s[..split.len].iter().rev().take(last+1).all(|c| *c == s[split.len-1]) {
-                let mut split = split.clone();
-                let last = split.cuts.pop().unwrap();
-                split.cuts.push(last+1);
-                splits.push(split);
-            }
-        }
-        if split.cuts.len() > 1 {
-            let last1 = split.cuts[split.cuts.len()-1];
-            let last2 = split.cuts[split.cuts.len()-2];
-            assert!(split.len >= 1+last1);
-            if last2 == 1 && s[split.len - 1 - last1-1] == s[split.len-1] {
-                let mut split = split.clone();
-                let last = split.cuts.pop().unwrap();
-                let _ = split.cuts.pop().unwrap();
-                split.cuts.push(last+2);
-                splits.push(split);
-            }
+    while let Some(split) = splits.pop() {
+        if split.cuts.iter().all( |(st, et)| p0132_get(&mut mem, s, *st, *et) ) {
+            return split.cuts.len() as i32 - 1;
         }
 
-        split.cuts.push(1);
-        // println!("--- {:?}", split);
-        splits.push(split);
-        // println!(">>> {:?}", splits);
+        for idx in 0..split.cuts.len() {
+            let (st, et) = split.cuts[idx];
+            for s in st+1..et {
+                let mut new = split.clone();
+                new.cuts[idx] = (s, et);
+                new.cuts.insert(idx, (st, s));
+                splits.push(new);
+            }
+        }
     }
 
-    minimum
+    s.len() as i32 - 1
+
 }
 
 pub fn p0132_min_cut(s: &[char]) -> i32 {
     let mut splits: Vec<Vec<usize>> = vec![vec![]];
     for idx in 0..s.len() {
         for mut split in std::mem::replace(&mut splits, Default::default()).into_iter() {
-            eprintln!(">>> {:?}", split);
             if split.len() > 0 && s[..idx].iter().rev().take(split[split.len()-1]).all(|c| *c == s[idx]) {
                 let mut split = split.clone();
                 let last = split.pop().unwrap();
@@ -785,6 +784,7 @@ mod tests {
     #[test]
     fn t0132() {
         for (idx, (s, expected)) in vec![
+            ("eegiicgaeadbcfacfhifdbiehbgejcaeggcgbahfcajfhjjdgj", 0),
             ("ababababa", 0),
             ("ababababababababababababcbabababababababababababa", 0),
             ("efe", 0),

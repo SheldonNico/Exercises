@@ -1806,3 +1806,255 @@ fn p17_parse(input: &str) -> IResult<&str, ((i64, i64), (i64, i64))> {
 
     Ok((input, ((sx, ex), (sy, ey))))
 }
+
+pub fn p18() {
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv18.txt").unwrap(); let contents: &str = &_contents;
+
+    for contents in vec![
+        "[[[[4,3],4],4],[7,[[8,4],9]]]\n[1,1]",
+        r#"[1,1]
+[2,2]
+[3,3]
+[4,4]
+[5,5]"#,
+        r#"[1,1]
+[2,2]
+[3,3]
+[4,4]
+[5,5]
+[6,6]"#,
+        r#"[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]
+[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]
+[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]
+[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]
+[7,[5,[[3,8],[1,4]]]]
+[[2,[2,2]],[8,[8,1]]]
+[2,9]
+[1,[[[9,3],9],[[9,0],[0,7]]]]
+[[[5,[7,4]],7],1]
+[[[[4,2],2],6],[8,7]]"#,
+        r#"[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
+[[[5,[2,8]],4],[5,[[9,9],0]]]
+[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
+[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
+[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]
+[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]
+[[[[5,4],[7,7]],8],[[8,3],8]]
+[[9,3],[[9,9],[6,[4,9]]]]
+[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
+[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]"#,
+        contents,
+    ].into_iter() {
+        let res: Vec<_> = contents.trim().lines().map(
+            |line| {
+                P18Pair::parse(line).unwrap().1
+            }
+        ).collect();
+        // let res: Vec<_> = res[..2].iter().map(Clone::clone).collect();
+        let mut st = res[0].clone();
+        for idx in 1..res.len() {
+            st = st + res[idx].clone();
+        }
+        let res_s = res.iter().take(5).map(|p| format!("{}", p)).collect::<Vec<_>>().join(" + ");
+
+        let mut max = 0;
+        for idx in 0..res.len() {
+            for idy in 0..res.len() {
+                if idx == idy { continue; }
+                max = max.max((res[idx].clone()+res[idy].clone()).magnitude());
+            }
+        }
+        println!("{} => {} {} = {}", max, st.magnitude(), st, res_s);
+
+
+
+    }
+}
+
+#[derive(Clone)]
+pub struct P18Pair {
+    left: P18Elem,
+    right: P18Elem,
+}
+
+#[derive(Clone)]
+pub enum P18Elem {
+    Elem(usize),
+    Value(Box<P18Pair>),
+}
+
+impl P18Elem{
+    fn _add_left(&mut self, val: Option<usize>) -> Option<usize> {
+        if let Some(v) = val {
+            match self {
+                P18Elem::Elem(e) => { *e = *e + v; None }
+                P18Elem::Value(b) => { b.left._add_left(Some(v)) }
+            }
+        } else {
+            None
+        }
+    }
+
+    fn _add_right(&mut self, val: Option<usize>) -> Option<usize> {
+        if let Some(v) = val {
+            match self {
+                P18Elem::Elem(e) => { *e = *e + v; None }
+                P18Elem::Value(b) => { b.right._add_right(Some(v)) }
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn magnitude(&self) -> usize {
+        match self {
+            P18Elem::Elem(e) => { *e }
+            P18Elem::Value(b) => { b.magnitude() }
+        }
+    }
+}
+
+impl P18Pair {
+    fn _explode(&mut self, level: i32)-> (bool, Option<usize>, Option<usize>) {
+        if level > 0 {
+            if let P18Elem::Value(v) = &mut self.left {
+                if let (true, left, right) = v._explode(level-1) {
+                    let right = self.right._add_left(right);
+                    return (true, left, right);
+                }
+            }
+
+            if let P18Elem::Value(v) = &mut self.right {
+                if let (true, left, right) = v._explode(level-1) {
+                    let left = self.left._add_right(left);
+                    return (true, left, right);
+                }
+            }
+        } else {
+            if let P18Elem::Value(v) = &mut self.left {
+                if let P18Pair { left: P18Elem::Elem(l), right: P18Elem::Elem(r) } = &mut **v {
+                    let l = *l; let r = *r;
+                    self.left = P18Elem::Elem(0);
+                    let right = self.right._add_left(Some(r));
+                    return (true, Some(l), right);
+                } else {
+                    if let (true, left, right) = v._explode(level-1) {
+                        let right = self.right._add_left(right);
+                        return (true, left, right)
+                    }
+                }
+            }
+
+            if let P18Elem::Value(v) = &mut self.right {
+                if let P18Pair { left: P18Elem::Elem(l), right: P18Elem::Elem(r) } = &mut **v {
+                    let l = *l; let r = *r;
+                    self.right = P18Elem::Elem(0);
+                    let left = self.left._add_right(Some(l));
+                    return (true, left, Some(r));
+                } else {
+                    if let (true, left, right) = v._explode(level-1) {
+                        let left = self.left._add_right(left);
+                        return (true, left, right);
+                    }
+                }
+            }
+        }
+
+        (false, None, None)
+    }
+
+    fn explode(&mut self) -> bool {
+        self._explode(3).0
+    }
+
+    pub fn magnitude(&self) -> usize {
+        self.left.magnitude() * 3 + self.right.magnitude() * 2
+    }
+
+
+    fn split(&mut self) -> bool {
+        for leaf in vec![&mut self.left, &mut self.right] {
+            match leaf {
+                P18Elem::Elem(v) => {
+                    let v = *v;
+                    if v >= 10 {
+                        *leaf = P18Elem::Value(Box::new(P18Pair { left: P18Elem::Elem(v/2), right: P18Elem::Elem(v/2 +v%2) }));
+                        return true;
+                    }
+                },
+                P18Elem::Value(v) => {
+                    if v.split() {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
+    fn parse_elem(input: &str) -> IResult<&str, P18Elem> {
+        use nom::character::complete::digit1;
+        use nom::combinator::{map_res, map};
+        use nom::branch::alt;
+
+        let elem = map_res(digit1, |s: &str| s.parse::<usize>());
+
+        alt((
+            map(elem, P18Elem::Elem),
+            map(Self::parse, |v| P18Elem::Value(Box::new(v))),
+        ))(input)
+    }
+
+    pub fn parse(input: &str) -> IResult<&str, Self> {
+        use nom::bytes::complete::tag;
+
+        let (input, _) = tag("[")(input)?;
+        let (input, left) = Self::parse_elem(input)?;
+        let (input, _) = tag(",")(input)?;
+        let (input, right) = Self::parse_elem(input)?;
+        let (input, _) = tag("]")(input)?;
+        Ok((input, P18Pair { left, right }))
+    }
+
+    pub fn reduce(&mut self) {
+        loop {
+            if !(self.explode() || self.split()) {
+                break
+            }
+        }
+    }
+}
+
+impl std::ops::Add for P18Pair {
+    type Output =  Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        let mut o = Self {
+            left: P18Elem::Value(Box::new(self)),
+            right: P18Elem::Value(Box::new(rhs)),
+        };
+        o.reduce();
+        o
+    }
+}
+
+impl std::fmt::Debug for P18Pair {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "[{},{}]", self.left, self.right)
+    }
+}
+
+impl std::fmt::Display for P18Elem {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            P18Elem::Elem(v) => write!(f, "{}", v),
+            P18Elem::Value(v) => write!(f, "{}", v)
+        }
+    }
+}
+
+impl std::fmt::Display for P18Pair {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "[{},{}]", self.left, self.right)
+    }
+}
