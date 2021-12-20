@@ -2303,4 +2303,107 @@ fn p19_parse(input: &str) -> IResult<&str, Vec<Vec<(i64, i64, i64)>>> {
         separated_list1(newline, tup)(input)
     };
 
-    separated_list0(many1(newline), scaner)(input)}
+    separated_list0(many1(newline), scaner)(input)
+}
+
+pub fn p20() {
+    let contents = "..#.#..#####.#.#.#.###.##.....###.##.#..###.####..#####..#....#..#..##..##\
+#..######.###...####..#..#####..##..#.#####...##.#.#..#.##..#.#......#.###\
+.######.###.####...#.##.##..#..#..#####.....#.#....###..#.##......#.....#.\
+.#..#..##..#...##.######.####.####.#.#...#.......#..#.#.#...####.##.#.....\
+.#..#...##.#.##..#...##.#.##..###.#......#.#.......#.#.#.####.###.##...#..\
+...####.#..#..#.##.#....##..#.####....##...##..#...#......#.#.......#.....\
+..##..####..#...#.#.#...##..#.#..###..#####........#..####......#..#\n\
+\n\
+#..#.\n\
+#....\n\
+##..#\n\
+..#..\n\
+..###";
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv20.txt").unwrap(); let contents: &str = &_contents;
+
+    let (_, (algorithm, mut image)) = p20_parse(contents.trim()).unwrap();
+    println!("{} = {} x {}: \n{}", algorithm.len(), image.len(), image[0].len(), p20_display(&image));
+
+    let mut outlier = false;
+    for idx in 0..50 {
+        let out = p20_iter(image, outlier, &algorithm);
+        image = out.0;
+        outlier = out.1;
+        println!(
+            "{} - {} - {} - {}:\n{}",
+            idx,
+            image.len(),
+            image.iter().map(|line| line.iter().filter(|c| **c).count()).sum::<usize>(),
+            outlier,
+            if image.len() < 50 { p20_display(&image) } else { "".to_owned() },
+        );
+    }
+
+}
+
+fn p20_iter(image: Vec<Vec<bool>>, outlier: bool, algorithm: &[bool]) -> (Vec<Vec<bool>>, bool) {
+    let nrow = image.len();
+    let ncol = image[0].len();
+
+    let out_outlier = if outlier { *algorithm.last().unwrap() } else { algorithm[0] };
+
+    let mut out = vec![vec![out_outlier; ncol+2]; nrow+2];
+
+    for idx in 0..nrow+2 {
+        for idy in 0..ncol+2 {
+            let mut encode = 0;
+
+            for sx in [-1, 0, 1] {
+                for sy in [-1, 0, 1] {
+                    let nx = idx as isize + sx - 1;
+                    let ny = idy as isize + sy - 1;
+
+                    encode *= 2;
+                    let is_light = if nx >= 0 && nx < nrow as isize && ny >= 0 && ny < ncol as isize {
+                        image[nx as usize][ny as usize]
+                    } else {
+                        outlier
+                    };
+
+                    if is_light {
+                        encode += 1;
+                    }
+                }
+            }
+
+            out[idx][idy] = algorithm[encode];
+        }
+    }
+
+    (out, out_outlier)
+}
+
+fn p20_display(image: &Vec<Vec<bool>>) -> String {
+    let mut out = "".to_owned();
+    for line in image.iter() {
+        for &c in line.iter() {
+            if c {
+                out.push('#');
+            } else {
+                out.push('.');
+            }
+        }
+        out.push('\n');
+    }
+    out
+}
+
+fn p20_parse(input: &str) -> IResult<&str, (Vec<bool>, Vec<Vec<bool>>)> {
+    use nom::character::complete::{char as char_p, newline};
+    use nom::combinator::value;
+    use nom::multi::{many1, many0, separated_list1};
+    use nom::branch::alt;
+
+    let bool_p = || alt((value(true, char_p('#')), value(false, char_p('.'))));
+    let (input, algorithm) = many0(bool_p())(input)?;
+
+    let (input, _) = many1(newline)(input)?;
+    let (input, image) = separated_list1(newline, many1(bool_p()))(input)?;
+    Ok((input, (algorithm, image)))
+}

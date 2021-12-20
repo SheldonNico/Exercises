@@ -689,67 +689,6 @@ pub fn p0131_partition(s: String) -> Vec<Vec<String>> {
     out.into_iter().map(|os| os.into_iter().map(|cs| cs.into_iter().collect()).collect()).collect()
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-struct P0132Cuts {
-    cuts: Vec<(usize, usize)>,
-}
-
-impl PartialOrd for P0132Cuts {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.cuts.len().partial_cmp(&other.cuts.len()).map(std::cmp::Ordering::reverse)
-    }
-}
-
-impl Ord for P0132Cuts {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.cuts.len().cmp(&other.cuts.len()).reverse()
-    }
-}
-
-fn p0132_get(mem: &mut Vec<Vec<i8>>, s: &[char], st: usize, et: usize) -> bool {
-    match mem[st][et] {
-        1 => { return true; }
-        0 => { return false; }
-        _  => {
-            let mut out = true;
-            for shift in 0..((et-st) / 2) {
-                if s[st+shift] != s[et-1-shift] {
-                    out = false;
-                    break;
-                }
-            }
-            mem[st][et] = if out { 1 } else { 0 };
-            out
-        }
-    }
-}
-
-pub fn p0132_min_cut_fast(s: &[char]) -> i32 {
-    if s.len() == 0 { return 0; }
-    let mut splits: BinaryHeap<P0132Cuts> = Default::default();
-    let mut mem: Vec<Vec<i8>> = vec![vec![-1; s.len()+1]; s.len()+1];
-    splits.push(P0132Cuts { cuts: vec![(0, s.len())] });
-
-    while let Some(split) = splits.pop() {
-        if split.cuts.iter().all( |(st, et)| p0132_get(&mut mem, s, *st, *et) ) {
-            return split.cuts.len() as i32 - 1;
-        }
-
-        for idx in 0..split.cuts.len() {
-            let (st, et) = split.cuts[idx];
-            for s in st+1..et {
-                let mut new = split.clone();
-                new.cuts[idx] = (s, et);
-                new.cuts.insert(idx, (st, s));
-                splits.push(new);
-            }
-        }
-    }
-
-    s.len() as i32 - 1
-
-}
-
 pub fn p0132_min_cut(s: &[char]) -> i32 {
     let mut splits: Vec<Vec<usize>> = vec![vec![]];
     for idx in 0..s.len() {
@@ -777,6 +716,54 @@ pub fn p0132_min_cut(s: &[char]) -> i32 {
     splits.into_iter().map(|vs| vs.len() as i32 - 1).min().unwrap_or(0)
 }
 
+fn p0132_get(mem: &mut Vec<Vec<i8>>, s: &[char], st: usize, et: usize) -> bool {
+    match mem[st][et] {
+        1 => { return true; }
+        0 => { return false; }
+        _  => {
+            let mut out = true;
+            for shift in 0..((et-st) / 2) {
+                if s[st+shift] != s[et-1-shift] {
+                    out = false;
+                    break;
+                }
+            }
+            mem[st][et] = if out { 1 } else { 0 };
+            out
+        }
+    }
+}
+
+pub fn p0132_min_cut_fast(s: &[char]) -> i32 {
+    if s.len() == 0 { return 0; }
+    let mut mem: Vec<Vec<i8>> = vec![vec![-1; s.len()+1]; s.len()+1];
+    let mut cuts: Vec<Vec<(usize, usize)>> = vec![vec![(0, s.len())]];
+    for _ in 0..s.len() {
+        println!(">>>>>>>>>> {:?}", cuts.len());
+        let mut cuts_n: HashSet<_> = Default::default();
+        for cut in std::mem::replace(&mut cuts, Default::default()) {
+            if cut.iter().all(|(st, et)| p0132_get(&mut mem, s, *st, *et)) {
+                println!("WTF: {:?}", cut);
+                return cut.len() as i32 - 1;
+            }
+
+            for idx in 0..cut.len() {
+                let (st, et) = cut[idx];
+                for s in st+1..et {
+                    let mut new = cut.clone();
+                    new[idx] = (s, et);
+                    new.insert(idx, (st, s));
+                    cuts_n.insert(new);
+                }
+            }
+        }
+
+        cuts = cuts_n.into_iter().collect();
+    }
+
+    s.len() as i32 - 1
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -784,7 +771,8 @@ mod tests {
     #[test]
     fn t0132() {
         for (idx, (s, expected)) in vec![
-            ("eegiicgaeadbcfacfhifdbiehbgejcaeggcgbahfcajfhjjdgj", 0),
+            // ("cabababcbc", 3),
+            ("eegiicgaeadbcfacfhifdbiehbgejcaeggcgbahfcajfhjjdgj", 49),
             ("ababababa", 0),
             ("ababababababababababababcbabababababababababababa", 0),
             ("efe", 0),
