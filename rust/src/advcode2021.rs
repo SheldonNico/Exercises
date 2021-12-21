@@ -2407,3 +2407,95 @@ fn p20_parse(input: &str) -> IResult<&str, (Vec<bool>, Vec<Vec<bool>>)> {
     let (input, image) = separated_list1(newline, many1(bool_p()))(input)?;
     Ok((input, (algorithm, image)))
 }
+
+pub fn p21() {
+    let contents = r#"Player 1 starting position: 4
+Player 2 starting position: 8"#;
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv21.txt").unwrap(); let contents: &str = &_contents;
+
+    let (_, (mut p1, mut p2)) = p21_parse(contents).unwrap();
+
+    let mut dice = 0;
+    let mut s1 = 0; let mut s2 = 0;
+    let mut count = 0;
+    loop {
+        p21_roll(&mut dice, &mut p1);
+        count += 3;
+        s1 += p1 as usize;
+        if s1 >= 1000 { break; }
+
+        p21_roll(&mut dice, &mut p2);
+        count += 3;
+        s2 += p2 as usize;
+        if s2 >= 1000 { break; }
+    }
+
+    println!("Res for part one: {} * ({}/{}) = {}", count, s1, s2, count*(s2.min(s1) as usize));
+
+    let (_, (p1, p2)) = p21_parse(contents).unwrap();
+
+    let mut ps1: Vec<HashMap<usize, usize>> = vec![Default::default(); 10]; ps1[p1 as usize - 1].insert(0, 1);
+    let mut ps2: Vec<HashMap<usize, usize>> = vec![Default::default(); 10]; ps2[p2 as usize - 1].insert(0, 1);
+
+    let mut win1 = 0;
+    let mut win2 = 0;
+    loop {
+        println!("Looping ...");
+        let len2 = ps2.iter().map(|h| h.values().sum::<usize>()).sum::<usize>();
+        if len2 == 0 { break; }
+        win1 += p21_roll_quantum(&mut ps1) * len2;
+
+        let len1 = ps1.iter().map(|h| h.values().sum::<usize>()).sum::<usize>();
+        if len1 == 0 { break; }
+        win2 += p21_roll_quantum(&mut ps2) * len1;
+    }
+    println!("Res for part two: {} x {}", win1, win2);
+}
+
+fn p21_roll_quantum(ps: &mut Vec<HashMap<usize, usize>>) -> usize {
+    let mut out = 0;
+    for (idx, scores) in std::mem::replace(ps, vec![Default::default(); 10]).into_iter().enumerate() {
+        let mut ndx = vec![idx];
+        for _ in 0..3 {
+            ndx = ndx.into_iter().map(
+                |n| (1..4).into_iter().map(|s| (n+s) % 10).collect::<Vec<_>>()
+            ).flatten().collect();
+        }
+
+        for n in ndx.into_iter() {
+            for (&s, &c) in scores.iter() {
+                let score = s+n+1; // NOTE: the score is index+1
+                if score >= 21 {
+                    out += c;
+                } else {
+                    *ps[n].entry(score).or_default() += c;
+                }
+            }
+        }
+    }
+
+    out
+}
+
+fn p21_roll(dice: &mut usize, position: &mut u8) {
+    for _ in 0..3 {
+        *dice += 1;
+        *dice = (*dice - 1) % 100 + 1;
+        *position = (*position + (*dice as u8) - 1) % 10 + 1;
+    }
+}
+
+fn p21_parse(input: &str) -> IResult<&str, (u8, u8)> {
+    use nom::sequence::{preceded, tuple};
+    use nom::bytes::complete::tag;
+    use nom::character::complete::{digit1, newline};
+    use nom::character::complete::u8 as u8_p;
+
+    let player = || preceded(tuple((tag("Player "), digit1, tag(" starting position: "))), u8_p);
+
+
+    let (input, p1) = player()(input)?;
+    let (input, _) = newline(input)?;
+    let (input, p2) = player()(input)?;
+    Ok((input, (p1, p2)))
+}
