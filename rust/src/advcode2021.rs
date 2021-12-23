@@ -2737,3 +2737,451 @@ fn p22_parse(input: &str) -> IResult<&str, Vec<(bool, std::ops::Range<i32>, std:
 
     separated_list1(newline, cmd)(input)
 }
+
+pub fn p23() {
+
+    let (_, init) = Amphipod::<2>::parse(r#"
+#############
+#...........#
+###B#C#B#D###
+  #A#D#C#A#
+  #########
+        "#.trim()).unwrap();
+    p23_solve(init);
+
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv23.txt").unwrap(); let contents: &str = &_contents;
+    let (_, init) = Amphipod::<2>::parse(contents.trim()).unwrap();
+    p23_solve(init);
+
+    let (_, init) = Amphipod::<4>::parse(r#"
+#############
+#...........#
+###B#C#B#D###
+  #D#C#B#A#
+  #D#B#A#C#
+  #A#D#C#A#
+  #########
+        "#.trim()).unwrap();
+    p23_solve(init);
+
+    // manually change our input here.
+    let (_, init) = Amphipod::<4>::parse(r#"
+#############
+#...........#
+###D#D#B#A###
+  #D#C#B#A#
+  #D#B#A#C#
+  #C#A#B#C#
+  #########
+        "#.trim()).unwrap();
+    p23_solve(init);
+
+}
+
+fn p23_solve<const N: usize>(init: Amphipod<N>) {
+    let mut walked: BTreeSet<AmphipodMap<N>> = Default::default();
+    walked.insert(AmphipodMap {
+        cost: 0,
+        map: init.clone()
+    });
+    let mut minimum = isize::MAX;
+
+    let mut count = 0;
+    while let Some(curr) = walked.pop_first() {
+        assert!(!curr.map.finished());
+        if curr.cost >= minimum { continue; }
+        if count % 1000 == 0 || walked.len() == 0{
+            if curr.map.finished() { minimum = curr.cost; }
+            // println!("#{} {} {}", count, minimum.min(-1), curr);
+        }
+
+        for (mut delta, mut next) in curr.map.next() {
+            delta += next.reduce();
+            let cost = delta + curr.cost;
+            if cost >= minimum { continue; }
+            if next.finished() {
+                minimum = cost;
+                break;
+            } else {
+                walked.insert(AmphipodMap { cost, map: next });
+            }
+        }
+        count += 1;
+    }
+    println!("Ans {}:\n{}", minimum, init);
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Bod {
+    A,
+    B,
+    C,
+    D,
+    Dot,
+}
+
+impl Default for Bod {
+    fn default() -> Self {
+        Self::Dot
+    }
+}
+
+// Size is small, should be copy efficiently...
+// 我们需要一个结构能够储存位置信息，同时足够小。
+// 理论上只记录每个点的位置就可以，但这样获取每行或者没列就比较麻烦
+// 而且如果表示第一个限制条件?
+//
+// 可以使用两种方式:
+// - [[u8; 11]; 5] 的矩阵
+// - [(usize, usize)] 记录所有点位
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct Amphipod<const N: usize> {
+    hall: [Bod; 11],
+    bucket1: [Bod; N],
+    bucket2: [Bod; N],
+    bucket3: [Bod; N],
+    bucket4: [Bod; N],
+}
+
+impl<const N: usize> Default for Amphipod<N> {
+    fn default() -> Self {
+        Self {
+            hall: [Bod::Dot; 11],
+            bucket1: [Bod::Dot; N],
+            bucket2: [Bod::Dot; N],
+            bucket3: [Bod::Dot; N],
+            bucket4: [Bod::Dot; N],
+        }
+    }
+}
+
+impl<const N: usize> Amphipod<N> {
+    fn parse(input: &str) -> IResult<&str, Self> {
+        use nom::bytes::complete::tag;
+        use nom::character::complete::{newline, char};
+        use nom::multi::{count, separated_list0, many1};
+        use nom::branch::alt;
+        use nom::combinator::value;
+        use nom::sequence::{delimited, };
+
+        let bod = || alt((
+                value(Bod::A, tag("A")),
+                value(Bod::B, tag("B")),
+                value(Bod::C, tag("C")),
+                value(Bod::D, tag("D")),
+                value(Bod::Dot, tag(".")),
+        ));
+
+        let mut out: Self = Default::default();
+        let (input, _) = tag("#############")(input)?;
+        let (input, _) = newline(input)?;
+
+        let (input, _) = tag("#")(input)?;
+        let (input, bods) = count(bod(), 11)(input)?;
+        for idx in 0..11 { out.hall[idx] = bods[idx]; }
+        let (input, _) = tag("#")(input)?;
+        let (input, _) = newline(input)?;
+
+        let space_or_sharp = || alt((char(' '), char('#')));
+
+        let (input, arr) = separated_list0(
+            newline,
+            delimited(many1(space_or_sharp()), separated_list0(char('#'), bod()), many1(space_or_sharp()))
+        )(input)?;
+
+        for idx in 0..N {
+            out.bucket1[idx] = arr[idx][0];
+            out.bucket2[idx] = arr[idx][1];
+            out.bucket3[idx] = arr[idx][2];
+            out.bucket4[idx] = arr[idx][3];
+        }
+        let (input, _) = newline(input)?;
+
+        let (input, _) = many1(space_or_sharp())(input)?;
+        Ok((input, out))
+    }
+}
+
+impl<const N: usize> Amphipod<N> {
+    fn bot_cost(b: Bod) -> isize {
+        match b {
+            Bod::A => 1,
+            Bod::B => 10,
+            Bod::C => 100,
+            Bod::D => 1000,
+            Bod::Dot => 0,
+        }
+    }
+
+    fn finished(&self) -> bool {
+        self.bucket1.iter().all(|&b| b == Bod::A) &&
+        self.bucket2.iter().all(|&b| b == Bod::B) &&
+        self.bucket3.iter().all(|&b| b == Bod::C) &&
+        self.bucket4.iter().all(|&b| b == Bod::D)
+    }
+
+    /////////////////////////
+    fn _move_to_door(bucket: &[Bod]) -> Option<usize> {
+        for (idx, &b) in bucket.iter().enumerate() {
+            match b {
+                Bod::Dot => {  },
+                _ => { return Some(idx) }
+            }
+        }
+        None
+    }
+
+    fn move_to_door(&self, bod: Bod) -> Option<usize> {
+        let bucket = self.get_bucket(bod);
+        let idx = Self::_move_to_door(bucket)?;
+        if bucket[idx..N].iter().all(|&b| b == bod) {
+            return None;
+        } else {
+            return Some(idx);
+        }
+    }
+
+    fn move_to_target(&self, bod: Bod) -> Option<usize> {
+        let bucket = self.get_bucket(bod);
+        let mut last = 0;
+        for &b in bucket.iter() {
+            if b == Bod::Dot {
+                last += 1;
+            } else {
+                break;
+            }
+        }
+        for &b in bucket[last..].iter() {
+            if b != bod {
+                return None;
+            }
+        }
+
+        if last > 0 {
+            // assert!(last > 0, "the bucket is already, should not be possible if the graph is right");
+            Some(last)
+        } else {
+            None
+        }
+    }
+
+    fn get_bucket_mut(&mut self, bod: Bod) -> &mut [Bod; N] {
+        match bod {
+            Bod::A => &mut self.bucket1,
+            Bod::B => &mut self.bucket2,
+            Bod::C => &mut self.bucket3,
+            Bod::D => &mut self.bucket4,
+            _ => unreachable!(),
+        }
+    }
+
+    fn get_bucket(&self, bod: Bod) -> &[Bod; N] {
+        match bod {
+            Bod::A => &self.bucket1,
+            Bod::B => &self.bucket2,
+            Bod::C => &self.bucket3,
+            Bod::D => &self.bucket4,
+            _ => unreachable!(),
+        }
+    }
+
+    fn door_id(bod: Bod) -> usize {
+        match bod {
+            Bod::A => 2,
+            Bod::B => 4,
+            Bod::C => 6,
+            Bod::D => 8,
+            _ => unreachable!(),
+        }
+    }
+
+    fn move_in_hall(&self, from: usize, to: usize) -> Option<usize> {
+        if from < to {
+            for &b in &self.hall[from+1..to+1] {
+                if b != Bod::Dot { return None }
+            }
+            Some(to-from)
+        } else {
+            for &b in &self.hall[to..from] {
+                if b != Bod::Dot { return None }
+            }
+            Some(from-to)
+        }
+    }
+
+    fn go_from(&self, from: usize) -> Vec<usize> {
+        let mut out = vec![];
+
+        let mut idx = from;
+        while idx > 0 {
+            idx -= 1;
+            if idx == 2 || idx == 4 || idx == 6 || idx == 8 { continue; }
+
+            if self.hall[idx] == Bod::Dot {
+                out.push(idx)
+            } else {
+                break;
+            }
+        }
+
+        let mut idx = from;
+        while idx < 10 {
+            idx += 1;
+            if idx == 2 || idx == 4 || idx == 6 || idx == 8 { continue; }
+
+            if self.hall[idx] == Bod::Dot {
+                out.push(idx)
+            } else {
+                break;
+            }
+        }
+
+        out
+    }
+    /////////////////////////
+    fn next(&self) -> Vec<(isize, Self)> {
+        let mut out = vec![];
+
+        for curr in vec![Bod::A, Bod::B, Bod::C, Bod::D].into_iter() {
+            let door = Self::door_id(curr);
+            if let Some(step0) = self.move_to_door(curr) {
+                for idx in self.go_from(door) {
+                    //           cost to walk out     cost for walk to right point
+                    let cost = ((step0 as isize+1) + (idx as isize - door as isize).abs()) *
+                        Self::bot_cost(self.get_bucket(curr)[step0]);
+
+                    let mut next = self.clone();
+                    next.hall[idx] = self.get_bucket(curr)[step0];
+                    next.get_bucket_mut(curr)[step0] = Bod::Dot;
+                    out.push((cost, next));
+                }
+            }
+        }
+
+        out
+    }
+
+    fn _reduce(&mut self) -> Option<isize> {
+        for (idx, &curr) in self.hall.iter().enumerate() {
+            if curr == Bod::Dot { continue; }
+            if let Some(step1) = self.move_to_target(curr) {
+                if let Some(step2) = self.move_in_hall(idx, Self::door_id(curr)) {
+                    self.hall[idx] = Bod::Dot;
+                    assert_eq!(self.get_bucket_mut(curr)[step1-1], Bod::Dot);
+                    self.get_bucket_mut(curr)[step1-1] = curr;
+                    return Some( ((step1+step2) as isize) * Self::bot_cost(curr) );
+                }
+            }
+        }
+
+        for curr in vec![Bod::A, Bod::B, Bod::C, Bod::D].into_iter() {
+            if let Some(step0) = self.move_to_door(curr) {
+                let to: Bod = self.get_bucket(curr)[step0];
+                if to == curr { continue; }
+                if let Some(step1) = self.move_to_target(to) {
+                    if let Some(step2) = self.move_in_hall(Self::door_id(curr), Self::door_id(to)) {
+                        self.get_bucket_mut(curr)[step0] = Bod::Dot;
+                        assert_eq!(self.get_bucket_mut(to)[step1-1], Bod::Dot);
+                        self.get_bucket_mut(to)[step1-1] = to;
+                        return Some( ((step0+1)+step1+step2) as isize * Self::bot_cost(to) );
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
+    fn reduce(&mut self) -> isize {
+        let mut sum = 0;
+        while let Some(delta) = self._reduce() {
+            sum += delta;
+        }
+
+        sum
+    }
+
+    // NOTE: this function is useless, since we just want one minimum solution
+    // #[allow(dead_code)]
+    fn rest(&self) -> isize {
+        let mut sum = 0;
+        for (from, &curr) in self.hall.iter().enumerate() {
+            if curr == Bod::Dot { continue; }
+            let to = Self::door_id(curr);
+            sum += (from as isize - to as isize).abs() * Self::bot_cost(curr);
+        }
+
+        for curr in vec![Bod::A, Bod::B, Bod::C, Bod::D].into_iter() {
+            let from = Self::door_id(curr);
+            let bucket = self.get_bucket(curr);
+            for &b in bucket.iter() {
+                if b == Bod::Dot { continue; }
+                if b != curr {
+                    let to = Self::door_id(b);
+                    sum += (from as isize - to as isize).abs() * Self::bot_cost(b);
+                }
+            }
+        }
+
+        sum
+    }
+}
+
+impl<const N: usize> AmphipodMap<N> {
+    fn estimate(&self) -> (isize, &Amphipod<N>) {
+        (
+            self.cost,
+            &self.map,
+        )
+    }
+}
+
+impl<const N: usize> std::cmp::PartialOrd for AmphipodMap<N> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.estimate().partial_cmp(&other.estimate())
+    }
+}
+
+impl<const N: usize> std::cmp::Ord for AmphipodMap<N> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.estimate().cmp(&other.estimate())
+    }
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub struct AmphipodMap<const N: usize> {
+    cost: isize,
+    map: Amphipod<N>,
+}
+
+impl<const N: usize> std::fmt::Display for AmphipodMap<N> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "cost: {} \n{}", self.cost, self.map)
+    }
+}
+
+impl std::fmt::Display for Bod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Bod::Dot => write!(f, "{}", "."),
+            _ => write!(f, "{:?}", self),
+        }
+    }
+}
+
+
+impl<const N: usize> std::fmt::Display for Amphipod<N> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "#############\n")?;
+        write!(f, "#{}{}{}{}{}{}{}{}{}{}{}#\n",
+            self.hall[0], self.hall[1], self.hall[2], self.hall[3], self.hall[4], self.hall[5], self.hall[6],
+            self.hall[7], self.hall[8], self.hall[9], self.hall[10]
+        )?;
+        write!(f, "###{}#{}#{}#{}###\n", self.bucket1[0], self.bucket2[0], self.bucket3[0], self.bucket4[0])?;
+        for idx in 1..N {
+            write!(f, "  #{}#{}#{}#{}#  \n", self.bucket1[idx], self.bucket2[idx], self.bucket3[idx], self.bucket4[idx])?;
+        }
+        Ok(())
+    }
+}
+
