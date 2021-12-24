@@ -2739,7 +2739,6 @@ fn p22_parse(input: &str) -> IResult<&str, Vec<(bool, std::ops::Range<i32>, std:
 }
 
 pub fn p23() {
-
     let (_, init) = Amphipod::<2>::parse(r#"
 #############
 #...........#
@@ -2776,6 +2775,20 @@ pub fn p23() {
         "#.trim()).unwrap();
     p23_solve(init);
 
+    // harder
+    let (_, init) = Amphipod::<6>::parse(r#"
+#############
+#...........#
+###D#D#B#A###
+  #D#C#B#A#
+  #D#B#A#C#
+  #D#C#B#A#
+  #D#B#A#C#
+  #C#A#B#C#
+  #########
+        "#.trim()).unwrap();
+    p23_solve(init);
+
 }
 
 fn p23_solve<const N: usize>(init: Amphipod<N>) {
@@ -2801,14 +2814,18 @@ fn p23_solve<const N: usize>(init: Amphipod<N>) {
             if cost >= minimum { continue; }
             if next.finished() {
                 minimum = cost;
-                break;
             } else {
                 walked.insert(AmphipodMap { cost, map: next });
             }
         }
         count += 1;
     }
-    println!("Ans {}:\n{}", minimum, init);
+
+    if minimum < isize::MAX {
+        println!("Ans {}:\n{}", minimum, init);
+    } else {
+        println!("Fail to find solution for:\n{}", init);
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -2831,9 +2848,18 @@ impl Default for Bod {
 // 理论上只记录每个点的位置就可以，但这样获取每行或者没列就比较麻烦
 // 而且如果表示第一个限制条件?
 //
-// 可以使用两种方式:
+// 可以使用这些方式:
 // - [[u8; 11]; 5] 的矩阵
 // - [(usize, usize)] 记录所有点位
+// - 不使用 enum, -1 代表空, 0-3 代表对应的位置
+//
+// ```rust
+// #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+// struct Amphipod<const N: usize> {
+//     hall: [i8; 11],
+//     buckets: [[i8; N]; 4]
+// }
+// ```
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct Amphipod<const N: usize> {
     hall: [Bod; 11],
@@ -3038,6 +3064,7 @@ impl<const N: usize> Amphipod<N> {
 
         out
     }
+
     /////////////////////////
     fn next(&self) -> Vec<(isize, Self)> {
         let mut out = vec![];
@@ -3169,7 +3196,6 @@ impl std::fmt::Display for Bod {
     }
 }
 
-
 impl<const N: usize> std::fmt::Display for Amphipod<N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "#############\n")?;
@@ -3185,3 +3211,124 @@ impl<const N: usize> std::fmt::Display for Amphipod<N> {
     }
 }
 
+pub fn p24() {
+    let (_, cmds) = p24_parse(std::fs::read_to_string("./assets/adv2021/adv24.txt").unwrap().trim()).unwrap();
+
+    let mut mem: HashMap<(usize, [i64; 4]), Option<(i64, i64)>> = Default::default();
+    // change true to false to solve part 2
+    let (_, ans) = p24_dfs(&cmds, [0; 4], 0, &mut mem, true).unwrap();
+    println!("Res: {}", ans);
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum P24Reg {
+    Value(i64),
+    Reg(usize),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum P24Kind {
+    Add,
+    Mul,
+    Div,
+    Mod,
+    Eql,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum P24Cmd {
+    Inp(P24Reg),
+    Op {kind: P24Kind, left: P24Reg, right: P24Reg }
+}
+
+pub fn p24_parse(input: &str) -> IResult<&str, Vec<P24Cmd>> {
+    use nom::multi::separated_list0;
+    use nom::branch::alt;
+    use nom::combinator::{value, map};
+    use nom::bytes::complete::tag;
+    use nom::sequence::tuple;
+    use nom::character::complete::{i64 as i64_p, space1, newline};
+
+    let p_reg_reg = || alt((
+        value(P24Reg::Reg(0), tag("z")),
+        value(P24Reg::Reg(1), tag("y")),
+        value(P24Reg::Reg(2), tag("x")),
+        value(P24Reg::Reg(3), tag("w")),
+    ));
+    let p_reg = || alt((p_reg_reg(), map(i64_p, |v| P24Reg::Value(v))));
+    let p_op = || alt((
+        value(P24Kind::Add, tag("add")),
+        value(P24Kind::Mul, tag("mul")),
+        value(P24Kind::Div, tag("div")),
+        value(P24Kind::Mod, tag("mod")),
+        value(P24Kind::Eql, tag("eql")),
+    ));
+
+    let p_inp = map(tuple((tag("inp"), space1, p_reg_reg())), |(_, _, r)| P24Cmd::Inp(r));
+    let p_op = map(
+        tuple((p_op(), space1, p_reg(), space1, p_reg())),
+        |(k, _, l, _, r)| P24Cmd::Op { kind: k, left: l, right: r }
+    );
+
+    let ins = alt((p_inp, p_op));
+
+    separated_list0(newline, ins)(input)
+}
+
+fn p24_dfs(
+    cmds: &[P24Cmd], reg: [i64; 4], pos_ori: usize, mem: &mut HashMap<(usize, [i64; 4]), Option<(i64, i64)>>, is_rev: bool
+) -> Option<(i64, i64)> {
+    if let Some(v) = mem.get(&(pos_ori, reg)) { return v.clone(); }
+    let ptr = if let P24Cmd::Inp(P24Reg::Reg(ptr)) = cmds[pos_ori] {
+        ptr
+    } else {
+        unreachable!()
+    };
+
+    let wtf: Vec<_> = if is_rev { (1..10).into_iter().rev().collect() } else { (1..10).into_iter().collect() };
+
+    for guess in wtf.into_iter() {
+        let mut reg = reg.clone();
+        reg[ptr] = guess;
+
+        let mut pos = pos_ori + 1;
+        while pos < cmds.len() {
+            match cmds[pos] {
+                P24Cmd::Inp(_) => { break; }
+                P24Cmd::Op { kind, left: P24Reg::Reg(ptr), right } => {
+                    let right = match right {
+                        P24Reg::Value(v) => v,
+                        P24Reg::Reg(vp) => reg[vp],
+                    };
+
+                    match kind {
+                        P24Kind::Add => { reg[ptr] += right },
+                        P24Kind::Mul => { reg[ptr] *= right },
+                        P24Kind::Div => { assert!(right != 0); reg[ptr] /= right },
+                        P24Kind::Mod => { assert!(reg[ptr] >= 0 && right > 0); reg[ptr] %= right },
+                        P24Kind::Eql => { reg[ptr] = if reg[ptr] == right { 1 } else { 0 } },
+                    }
+                }
+                _ => unreachable!(),
+            }
+            pos += 1;
+        }
+
+        if pos < cmds.len() {
+            if let Some((pow, old)) = p24_dfs(cmds, reg, pos, mem, is_rev) {
+                let out = Some((pow+1, 10i64.pow(pow as u32) * guess + old));
+                mem.insert((pos_ori, reg), out);
+                return out
+            }
+        } else {
+            if reg[0] == 0 {
+                let out = Some((1, guess));
+                mem.insert((pos_ori, reg), out);
+                return out;
+            }
+        }
+    }
+    mem.insert((pos_ori, reg), None);
+
+    None
+}
