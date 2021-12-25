@@ -2846,12 +2846,12 @@ impl Default for Bod {
 // Size is small, should be copy efficiently...
 // 我们需要一个结构能够储存位置信息，同时足够小。
 // 理论上只记录每个点的位置就可以，但这样获取每行或者没列就比较麻烦
-// 而且如果表示第一个限制条件?
+// 而且如何表示第一个限制条件?
 //
 // 可以使用这些方式:
 // - [[u8; 11]; 5] 的矩阵
 // - [(usize, usize)] 记录所有点位
-// - 不使用 enum, -1 代表空, 0-3 代表对应的位置
+// - 其实也可以不使用 enum, -1 代表空, 0-3 代表对应的位置
 //
 // ```rust
 // #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -3332,3 +3332,127 @@ fn p24_dfs(
 
     None
 }
+
+pub fn p25() {
+    let contents = r#"v...>>.vv>
+.vv>>.vv..
+>>.>v>...v
+>>v>>.>.v.
+v>v.vv.v..
+>.>>..v...
+.vv..>.>v.
+v.v..>>v.v
+....v..v.>"#;
+    let _contents = std::fs::read_to_string("./assets/adv2021/adv25.txt").unwrap(); let contents = &*_contents;
+
+    let (_,mut map) = P25Map::parse(contents.trim()).unwrap();
+    println!("{}", map);
+
+    let mut idx = 0;
+    loop {
+        idx += 1;
+        let r = map.move_forward();
+        if !r {
+            println!("#{} done={}:\n{}", idx, !r, map);
+            break;
+        }
+    }
+
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum P25Dir {
+    Down,
+    Right,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct P25Map(Vec<Vec<Option<P25Dir>>>);
+
+impl std::fmt::Display for P25Map {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for line in self.0.iter() {
+            for c in line.iter() {
+                match c {
+                    Some(P25Dir::Down) => write!(f, "v")?,
+                    Some(P25Dir::Right) => write!(f, ">")?,
+                    None => write!(f, ".")?,
+                }
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
+    }
+}
+
+impl P25Map {
+    fn move_right(&mut self) -> bool {
+        let nrow = self.0.len();
+        let ncol = self.0[0].len();
+        let mut stack = vec![];
+        for idr in 0..nrow {
+            for idc in 0..ncol {
+                if let Some(P25Dir::Right) = self.0[idr][idc] {
+                    let mut ndc = idc+1;
+                    if ndc >= ncol { ndc = 0; }
+                    if self.0[idr][ndc] == None {
+                        stack.push((idr, idc, ndc));
+                    }
+                }
+            }
+        }
+        if stack.len() == 0 { return false; }
+        for (idr, idc, ndc) in stack.into_iter() {
+            self.0[idr][ndc] = Some(P25Dir::Right);
+            self.0[idr][idc] = None;
+        }
+
+        true
+    }
+
+    fn move_down(&mut self) -> bool {
+        let nrow = self.0.len();
+        let ncol = self.0[0].len();
+        let mut stack = vec![];
+        for idr in 0..nrow {
+            for idc in 0..ncol {
+                if let Some(P25Dir::Down) = self.0[idr][idc] {
+                    let mut ndr = idr+1;
+                    if ndr >= nrow { ndr = 0; }
+                    if self.0[ndr][idc] == None {
+                        stack.push((idc, idr, ndr));
+                    }
+                }
+            }
+        }
+        if stack.len() == 0 { return false; }
+        for (idc, idr, ndr) in stack.into_iter() {
+            self.0[ndr][idc] = Some(P25Dir::Down);
+            self.0[idr][idc] = None;
+        }
+        true
+    }
+
+    fn move_forward(&mut self) -> bool {
+        let r = self.move_right();
+        let d = self.move_down();
+        r || d
+    }
+
+    fn parse(input: &str) -> IResult<&str, Self> {
+        use nom::branch::alt;
+        use nom::combinator::value;
+        use nom::character::complete::{char as char_p, newline};
+        use nom::multi::{separated_list1, many1};
+
+        let dir_p = alt((
+                value(None, char_p('.')),
+                value(Some(P25Dir::Down), char_p('v')),
+                value(Some(P25Dir::Right), char_p('>')),
+        ));
+
+        let (input, inner) = separated_list1(newline, many1(dir_p))(input)?;
+        Ok((input, Self(inner)))
+    }
+}
+
