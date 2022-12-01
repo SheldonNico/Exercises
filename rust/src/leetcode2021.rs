@@ -1,4 +1,5 @@
 use std::collections::{HashSet, HashMap, BinaryHeap};
+use std::iter::FromIterator;
 
 pub fn p0080_remove_duplicates(nums: &mut Vec<i32>) -> i32 {
     let mut left = 2; let mut right = nums.len();
@@ -764,9 +765,136 @@ pub fn p0132_min_cut_fast(s: &[char]) -> i32 {
     s.len() as i32 - 1
 }
 
+pub fn p0134_can_complete_circuit(gas: &[i32], cost: &[i32]) -> Option<usize> {
+    assert_eq!(gas.len(), cost.len());
+    let mut left = 0; let mut right = 0; let mut rdx = 0;
+    for (idx, (&g, &c)) in gas.iter().zip(cost.iter()).enumerate() {
+        let cost = g - c;
+        if left > 0 {
+            left += cost;
+        } else {
+            right += cost;
+            if right < 0 {
+                rdx = idx+1;
+                left += right;
+                right = 0;
+            }
+        }
+    }
+
+    if left + right >= 0 {
+        Some(rdx)
+    } else {
+        None
+    }
+}
+
+pub fn p2202_maximum_up(nums: &[i32], k: usize) -> i32 {
+    if nums.len() == 0 { return -1; }
+    if nums.len() == 1 { if k % 2 == 0 { return nums[0] } else { return -1; } }
+
+    // [0..k-2] 显然可以保留: 前 k-1 步骤remove, k 步 add
+    // [k-1]: 无法保留
+    // [k]: 可以移除k个元素得以保留
+    let mut out = -1;
+    if k >= 1 {
+        for &n in nums[..(k-1).min(nums.len())].iter() {
+            out = out.max(n);
+        }
+    }
+    if nums.len() > k {
+        out = out.max(nums[k])
+    }
+    out
+}
+
+pub fn p0494_find_target_sum_ways(nums: &[i32], target: i32) -> usize {
+    // num.len() <= 20
+    let mut targets: HashMap<i32, usize> = HashMap::from_iter(vec![(target, 1)].into_iter());
+    for &num in nums.iter() {
+        for (target, count) in std::mem::replace(&mut targets, Default::default()) {
+            *targets.entry(target + num).or_insert(0) += count;
+            *targets.entry(target - num).or_insert(0) += count;
+        }
+    }
+    let mut count = 0;
+    for (target, counts) in targets.into_iter() {
+        if target == 0 {
+            count += counts;
+        }
+    }
+
+    count
+}
+
+pub fn p0282_add_operators(num: &str, target: i32) -> Vec<String> {
+    // 这题目的难点在于 乘法与加减法有不同的优先级
+    // let mut targets: vec![]
+    todo!()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn t0282() {
+        for (idx, (nums, target, expected)) in vec![
+            ("123", 6, vec!["1*2*3", "1+2+3"]),
+            ("232", 8, vec!["2*3+2", "2+3*2"]),
+            ("3456237490", 9191, vec![]),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0282_add_operators(nums, target).into_iter().collect::<HashSet<_>>(),
+                expected.into_iter().map(|s| s.to_string()).collect::<HashSet<_>>(),
+                "Test #{} failed...",
+                idx
+            );
+        }
+
+
+    }
+
+    #[test]
+    fn t0494() {
+        for (idx, (nums, k, expected)) in vec![
+            (vec![1, 1, 1, 1, 1], 3, 5),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p0494_find_target_sum_ways(&nums, k),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t2202() {
+        for (idx, (nums, k, expected)) in vec![
+            (vec![5, 2, 2, 4, 0, 6], 4, 5),
+            (vec![2], 1, -1),
+            (vec![1, 2, 3], 5, 3),
+            (vec![1, 2, 3], 4, 3),
+            (vec![1, 2, 3], 3, 2),
+            (vec![1, 3, 2], 5, 3),
+            (vec![31,15,92,84,19,92,55], 4, 92),
+            (vec![18], 3, -1),
+        ].into_iter().enumerate() {
+            assert_eq!(
+                p2202_maximum_up(&nums, k),
+                expected,
+                "Test #{} failed...",
+                idx
+            );
+        }
+    }
+
+    #[test]
+    fn t0134() {
+        assert_eq!(p0134_can_complete_circuit(&[1, 2, 3, 4, 5], &[3, 4, 5, 1, 2]), Some(3));
+        assert_eq!(p0134_can_complete_circuit(&[2, 3, 4], &[3, 4, 3]), None);
+    }
 
     #[test]
     fn t0132() {
@@ -788,7 +916,6 @@ mod tests {
                 idx
             );
         }
-
     }
 
     #[test]
