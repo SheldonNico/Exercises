@@ -15,3 +15,7 @@ pub mod advcode2022;
 pub mod topic1_array;
 pub mod topic2_graph;
 pub mod cpp_algorithms;
+
+pub fn main() {
+    advcode2022::p19();
+}
