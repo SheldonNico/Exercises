@@ -1,1 +1,3 @@
-fn main() { leetcode::main(); }
+fn main() {
+    leetcode::main();
+}
