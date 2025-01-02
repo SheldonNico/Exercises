@@ -1163,7 +1163,7 @@ XXX = (XXX, XXX)"#;
 
     // Rust implementation: https://github.com/TheAlgorithms/Rust/blob/master/src/math/lcm_of_n_numbers.rs
     // or just go online: https://www.calculator.net/lcm-calculator.html?numberinputs=17141%2C18827%2C20513%2C12083%2C22199%2C19951&x=Calculate
-    eprintln!("{:?} => lcm = ???({})", multiplier, 20220305520997);
+    // eprintln!("{:?} => lcm = ???({})", multiplier, 20220305520997);
 }
 
 pub fn p09_parse(input: &str) -> nom::IResult<&str, Vec<Vec<i64>>> {
@@ -3645,7 +3645,7 @@ pub fn p21() {
     //         eprintln!();
     //     }
     // }
-    
+
     // println!("################################################################################");
     // // 我们只需要关注一个点上下左右是否还有 Rect，由此确定是否重复即可
     // // let dir = LEFT | RIGHT | UP | DOWN = 3
@@ -3744,11 +3744,13 @@ pub fn p21() {
 
                         assert!(new_width >= 0);
                         for diamondx in 0..(new_width + 1) {
-                            for diamondy in 0..(new_width-diamondx+1) {
+                            for diamondy in 0..(new_width - diamondx + 1) {
                                 for (shiftx, shifty) in [(1, 1), (1, -1), (-1, 1), (-1, -1)] {
                                     let dx = diamondx * shiftx;
                                     let dy = diamondy * shifty;
-                                    if (dy - oy).abs() + (dx - ox).abs() <= diamondw as isize { continue; }
+                                    if (dy - oy).abs() + (dx - ox).abs() <= diamondw as isize {
+                                        continue;
+                                    }
                                     new_outliers.insert((dx, dy));
                                 }
                             }
@@ -3776,23 +3778,31 @@ pub fn p21() {
                             })
                             .collect();
 
-
                         // eprintln!("({}) {} -> {}", max_width, oldlen, max_outliers.len());
                         if max_width > 20 {
-                            eprintln!("Two diamond merged {} vs {}: {} -> {}", min_width, max_width, oldlen, max_outliers.len());
+                            eprintln!(
+                                "Two diamond merged {} vs {}: {} -> {}",
+                                min_width,
+                                max_width,
+                                oldlen,
+                                max_outliers.len()
+                            );
 
                             for (diamondw, outliers) in [
-                                (min_width, min_outliers.clone()), 
+                                (min_width, min_outliers.clone()),
                                 (max_width, old_outliers_cloned),
                                 (max_width, max_outliers.clone()),
                             ] {
-                                for idy in (-diamondw) .. (diamondw+1) {
-                                    for idx in (-diamondw) .. (diamondw+1) {
-                                        if outliers.iter().find(|&&(x, y)| (x, y) == (idx, idy)).is_some() {
+                                for idy in (-diamondw)..(diamondw + 1) {
+                                    for idx in (-diamondw)..(diamondw + 1) {
+                                        if outliers
+                                            .iter()
+                                            .find(|&&(x, y)| (x, y) == (idx, idy))
+                                            .is_some()
+                                        {
                                             eprint!("#");
                                         } else {
-                                        eprint!(".");
-
+                                            eprint!(".");
                                         }
                                     }
                                     eprintln!();
@@ -3802,7 +3812,9 @@ pub fn p21() {
                             eprintln!();
 
                             // eprintln!("{:?}", max_outliers);
-                            if max_width >= 12 { todo!(); }
+                            if max_width >= 12 {
+                                todo!();
+                            }
                         }
 
                         points.insert((nx, ny), (max_width, max_outliers));
@@ -3813,7 +3825,14 @@ pub fn p21() {
             }
         }
 
-        if idx == 6 || idx == 10 || idx == 50 || idx == 100 || idx == 500 || idx == 1000 || idx == 5000 || idx == step
+        if idx == 6
+            || idx == 10
+            || idx == 50
+            || idx == 100
+            || idx == 500
+            || idx == 1000
+            || idx == 5000
+            || idx == step
         {
             eprintln!("size of points {}", points.len());
             // if idx != step { continue;}
@@ -3840,26 +3859,37 @@ pub fn p22() {
 0,1,6~2,1,6
 1,1,8~1,1,9"#;
 
-
     let contents = std::fs::read_to_string("./assets/adv2023/adv22.txt").unwrap();
-    let bricks: nom::IResult<&str, Vec<((u64, u64, u64), (u64, u64, u64))>> = nom::multi::separated_list1(
-        nom::character::complete::newline, 
-        nom::sequence::separated_pair(
-            nom::sequence::tuple((
+    let bricks: nom::IResult<&str, Vec<((u64, u64, u64), (u64, u64, u64))>> =
+        nom::multi::separated_list1(
+            nom::character::complete::newline,
+            nom::sequence::separated_pair(
+                nom::sequence::tuple((
                     nom::character::complete::u64,
-                    nom::sequence::preceded(nom::character::complete::char(','), nom::character::complete::u64),
-                    nom::sequence::preceded(nom::character::complete::char(','), nom::character::complete::u64),
-                    )), 
-            nom::character::complete::char('~'),
-            nom::sequence::tuple((
+                    nom::sequence::preceded(
+                        nom::character::complete::char(','),
+                        nom::character::complete::u64,
+                    ),
+                    nom::sequence::preceded(
+                        nom::character::complete::char(','),
+                        nom::character::complete::u64,
+                    ),
+                )),
+                nom::character::complete::char('~'),
+                nom::sequence::tuple((
                     nom::character::complete::u64,
-                    nom::sequence::preceded(nom::character::complete::char(','), nom::character::complete::u64),
-                    nom::sequence::preceded(nom::character::complete::char(','), nom::character::complete::u64),
-                    )), 
-            )
+                    nom::sequence::preceded(
+                        nom::character::complete::char(','),
+                        nom::character::complete::u64,
+                    ),
+                    nom::sequence::preceded(
+                        nom::character::complete::char(','),
+                        nom::character::complete::u64,
+                    ),
+                )),
+            ),
         )(&contents);
     let (_, mut bricks) = bricks.unwrap();
-
 
     // bricks.sort_by_key(|&((_, _, z1), (_, _, z2))| z1.min(z2));
 
@@ -3870,22 +3900,34 @@ pub fn p22() {
         is_movable = false;
         for idx in 0..bricks.len() {
             let ((bx1, by1, bz1), (bx2, by2, bz2)) = bricks[idx];
-            let bxmin = bx1.min(bx2); let bxmax = bx1.max(bx2);
-            let bymin = by1.min(by2); let bymax = by1.max(by2);
-            let bzmin = bz1.min(bz2); let bzmax = bz1.max(bz2);
-            if bzmin == 1 { continue; }
+            let bxmin = bx1.min(bx2);
+            let bxmax = bx1.max(bx2);
+            let bymin = by1.min(by2);
+            let bymax = by1.max(by2);
+            let bzmin = bz1.min(bz2);
+            let bzmax = bz1.max(bz2);
+            if bzmin == 1 {
+                continue;
+            }
 
             let mut zfinal = 1;
             // 所有在其下方的 可以挡住它的 rect 的 z的最大值
             // 这里 b 和 t 的命名反了，需要注意
             for jdx in 0..bricks.len() {
-                if idx == jdx { continue; }
+                if idx == jdx {
+                    continue;
+                }
                 let ((tx1, ty1, tz1), (tx2, ty2, tz2)) = bricks[jdx];
-                let txmin = tx1.min(tx2); let txmax = tx1.max(tx2);
-                let tymin = ty1.min(ty2); let tymax = ty1.max(ty2);
-                let tzmin = tz1.min(tz2); let tzmax = tz1.max(tz2);
+                let txmin = tx1.min(tx2);
+                let txmax = tx1.max(tx2);
+                let tymin = ty1.min(ty2);
+                let tymax = ty1.max(ty2);
+                let tzmin = tz1.min(tz2);
+                let tzmax = tz1.max(tz2);
 
-                if tzmax >= bzmin { continue; }
+                if tzmax >= bzmin {
+                    continue;
+                }
 
                 let is_x_disjoin = bxmin > txmax || bxmax < txmin;
                 let is_y_disjoin = bymin > tymax || bymax < tymin;
@@ -3896,7 +3938,7 @@ pub fn p22() {
                     // 不相交
                 } else {
                     // eprintln!("{} {}：相交 {} {}", idx, jdx, is_x_disjoin, is_y_disjoin);
-                    zfinal = zfinal.max(tzmax+1);
+                    zfinal = zfinal.max(tzmax + 1);
                 }
             }
 
@@ -3905,7 +3947,7 @@ pub fn p22() {
             let shift = bzmin - zfinal;
             is_movable |= shift > 0;
             // eprintln!("Shift {} -> {} - {} = {}", idx, bzmin, zfinal, shift);
-            bricks[idx] = ((bx1, by1, bz1-shift), (bx2, by2, bz2-shift)); 
+            bricks[idx] = ((bx1, by1, bz1 - shift), (bx2, by2, bz2 - shift));
         }
     }
     // eprintln!("{:?}", bricks);
@@ -3913,19 +3955,29 @@ pub fn p22() {
     let mut supports: Vec<Vec<usize>> = vec![vec![]; bricks.len()];
     for idx in 0..bricks.len() {
         let ((bx1, by1, bz1), (bx2, by2, bz2)) = bricks[idx];
-        let bxmin = bx1.min(bx2); let bxmax = bx1.max(bx2);
-        let bymin = by1.min(by2); let bymax = by1.max(by2);
-        let bzmin = bz1.min(bz2); let bzmax = bz1.max(bz2);
+        let bxmin = bx1.min(bx2);
+        let bxmax = bx1.max(bx2);
+        let bymin = by1.min(by2);
+        let bymax = by1.max(by2);
+        let bzmin = bz1.min(bz2);
+        let bzmax = bz1.max(bz2);
         // if bzmin == 1 { continue; }
 
         for jdx in 0..bricks.len() {
-            if idx == jdx { continue; }
+            if idx == jdx {
+                continue;
+            }
             let ((tx1, ty1, tz1), (tx2, ty2, tz2)) = bricks[jdx];
-            let txmin = tx1.min(tx2); let txmax = tx1.max(tx2);
-            let tymin = ty1.min(ty2); let tymax = ty1.max(ty2);
-            let tzmin = tz1.min(tz2); let tzmax = tz1.max(tz2);
+            let txmin = tx1.min(tx2);
+            let txmax = tx1.max(tx2);
+            let tymin = ty1.min(ty2);
+            let tymax = ty1.max(ty2);
+            let tzmin = tz1.min(tz2);
+            let tzmax = tz1.max(tz2);
 
-            if tzmin != bzmax + 1 { continue; }
+            if tzmin != bzmax + 1 {
+                continue;
+            }
 
             let is_x_disjoin = bxmin > txmax || bxmax < txmin;
             let is_y_disjoin = bymin > tymax || bymax < tymin;
@@ -3940,20 +3992,28 @@ pub fn p22() {
     let mut sum1 = 0;
     for (idx, supporting) in supports.iter().enumerate() {
         if supporting.iter().all(|&who_is_supported| {
-            supports.iter().enumerate().any(|(jdx, next_supporting)| jdx != idx && next_supporting.contains(&who_is_supported))
+            supports.iter().enumerate().any(|(jdx, next_supporting)| {
+                jdx != idx && next_supporting.contains(&who_is_supported)
+            })
         }) {
             // eprintln!("{} can be disintegrated", idx);
             sum1 += 1;
         }
     }
     eprintln!("sum1 = {sum1}");
-    let grand: Vec<usize> = bricks.iter().enumerate().filter_map(|(idx, ((bx1, by1, bz1), (bx2, by2, bz2)))| {
-        if bz1.min(bz2) <= &1 {
-            Some(idx)
-        } else {
-            None
-        }
-    }).collect();
+    let grand: Vec<usize> = bricks
+        .iter()
+        .enumerate()
+        .filter_map(
+            |(idx, ((bx1, by1, bz1), (bx2, by2, bz2)))| {
+                if bz1.min(bz2) <= &1 {
+                    Some(idx)
+                } else {
+                    None
+                }
+            },
+        )
+        .collect();
     eprintln!("Floor: {:?}", grand);
 
     let mut sum2 = 0;
@@ -3964,7 +4024,9 @@ pub fn p22() {
         let mut points = grand.clone();
         while points.len() > 0 {
             let curr = points.pop().unwrap();
-            if curr == idx { continue; }
+            if curr == idx {
+                continue;
+            }
             is_walked[curr] = true;
 
             for &next in supports[curr].iter() {
@@ -3983,7 +4045,7 @@ pub fn p22() {
 // [[], [0], [0], [1, 2], [1, 2], [3, 4], [5]] -> 被支撑
 // 0        1       2       3    4    5    6
 // [[1, 2], [3, 4], [3, 4], [5], [5], [6], []] -> 支撑
-// 
+//
 // 6 -> {}
 // 5 -> {6}
 // 4 -> {}
@@ -4020,13 +4082,15 @@ pub fn p23() {
     let contents = std::fs::read_to_string("./assets/adv2023/adv23.txt").unwrap();
 
     let trails: nom::IResult<&str, Vec<Vec<char>>> = nom::multi::separated_list1(
-        nom::character::complete::newline, 
-        nom::multi::many1(nom::character::complete::one_of(".#v>^<"))
+        nom::character::complete::newline,
+        nom::multi::many1(nom::character::complete::one_of(".#v>^<")),
     )(&contents);
     let (_, trails) = trails.unwrap();
 
-    let height = trails.len(); let width = trails[0].len();
-    let start = (1, 0); let stop = ((width as isize)-2, (height as isize) -1);
+    let height = trails.len();
+    let width = trails[0].len();
+    let start = (1, 0);
+    let stop = ((width as isize) - 2, (height as isize) - 1);
     eprintln!("{} x {}: {:?} -> {:?}", height, width, start, stop);
     let mut walked = vec![];
     let out1 = p23_search_bfs(&trails, height, width, &mut walked, start, stop);
@@ -4039,29 +4103,46 @@ pub fn p23() {
 }
 
 pub fn p23_search_bfs(
-    trails: &Vec<Vec<char>>, height: usize, width: usize,
+    trails: &Vec<Vec<char>>,
+    height: usize,
+    width: usize,
     walked: &mut Vec<(isize, isize)>,
     (sx, sy): (isize, isize),
     stop: (isize, isize),
 ) -> Option<usize> {
     walked.push((sx, sy));
     // eprintln!("{:?}", walked);
-    if (sx, sy) == stop { return Some(walked.len()); }
+    if (sx, sy) == stop {
+        return Some(walked.len());
+    }
     let mut out = None;
 
     for (ox, oy) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
         match trails[sy as usize][sx as usize] {
-            '^' if oy != -1 => { continue; },
-            'v' if oy !=  1 => { continue; },
-            '<' if ox != -1 => { continue; },
-            '>' if ox !=  1 => { continue; },
-            _ => {},
+            '^' if oy != -1 => {
+                continue;
+            }
+            'v' if oy != 1 => {
+                continue;
+            }
+            '<' if ox != -1 => {
+                continue;
+            }
+            '>' if ox != 1 => {
+                continue;
+            }
+            _ => {}
         }
 
-        let nx = sx + ox; let ny = sy + oy;
+        let nx = sx + ox;
+        let ny = sy + oy;
         if nx >= 0 && nx < width as isize && ny >= 0 && ny < height as isize {
-            if trails[ny as usize][nx as usize] == '#' { continue; }
-            if walked.contains(&(nx, ny)) { continue; }
+            if trails[ny as usize][nx as usize] == '#' {
+                continue;
+            }
+            if walked.contains(&(nx, ny)) {
+                continue;
+            }
 
             let orilen = walked.len();
             if let Some(len1) = p23_search_bfs(trails, height, width, walked, (nx, ny), stop) {
@@ -4080,41 +4161,53 @@ pub fn p23_search_bfs(
 }
 
 pub fn p23_search_map(
-    trails: &Vec<Vec<char>>, 
-    height: usize, 
+    trails: &Vec<Vec<char>>,
+    height: usize,
     width: usize,
     (sx, sy): (isize, isize),
     stop: (isize, isize),
 ) -> std::collections::HashMap<(isize, isize), Vec<(isize, isize, usize)>> {
-    let mut out: std::collections::HashMap<(isize, isize), Vec<(isize, isize, usize)>> = Default::default();
+    let mut out: std::collections::HashMap<(isize, isize), Vec<(isize, isize, usize)>> =
+        Default::default();
     let mut points = vec![(sx, sy)];
     while let Some((sx, sy)) = points.pop() {
-        if out.contains_key(&(sx, sy)) { continue; }
+        if out.contains_key(&(sx, sy)) {
+            continue;
+        }
         let mut reached = vec![];
 
         for (ox, oy) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
-            let mut nx = sx + ox; let mut ny = sy + oy;
+            let mut nx = sx + ox;
+            let mut ny = sy + oy;
             if nx >= 0 && nx < width as isize && ny >= 0 && ny < height as isize {
-                if trails[ny as usize][nx as usize] == '#' { continue; }
-                let mut walked = vec![(sx, sy),];
+                if trails[ny as usize][nx as usize] == '#' {
+                    continue;
+                }
+                let mut walked = vec![(sx, sy)];
 
                 loop {
                     walked.push((nx, ny));
 
                     let mut next = vec![];
                     for (ox, oy) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
-                        let nnx = nx + ox; let nny = ny + oy;
+                        let nnx = nx + ox;
+                        let nny = ny + oy;
                         if nnx >= 0 && nnx < width as isize && nny >= 0 && nny < height as isize {
-                            if trails[nny as usize][nnx as usize] == '#' { continue; }
-                            if walked.contains(&(nnx, nny)) { continue; }
+                            if trails[nny as usize][nnx as usize] == '#' {
+                                continue;
+                            }
+                            if walked.contains(&(nnx, nny)) {
+                                continue;
+                            }
                             next.push((nnx, nny));
                         }
                     }
                     if next.len() == 1 {
                         let (nx_, ny_) = next.pop().unwrap();
-                        nx = nx_; ny = ny_;
+                        nx = nx_;
+                        ny = ny_;
                     } else {
-                        reached.push((nx, ny, walked.len()-1));
+                        reached.push((nx, ny, walked.len() - 1));
                         points.push((nx, ny));
                         break;
                     }
@@ -4143,14 +4236,18 @@ pub fn p23_search_bfs_fast(
     walked: &mut Vec<(isize, isize)>,
 ) -> Option<usize> {
     walked.push((sx, sy));
-    if (sx, sy) == stop { return Some(weight); }
+    if (sx, sy) == stop {
+        return Some(weight);
+    }
 
     let mut out = None;
     if let Some(nextpoint) = trails.get(&(sx, sy)) {
         for &(nx, ny, step) in nextpoint.into_iter() {
-            if walked.contains(&(nx, ny)) { continue; }
+            if walked.contains(&(nx, ny)) {
+                continue;
+            }
             let orilen = walked.len();
-            if let Some(len1) = p23_search_bfs_fast(trails, (nx, ny), stop, weight+step, walked) {
+            if let Some(len1) = p23_search_bfs_fast(trails, (nx, ny), stop, weight + step, walked) {
                 if let Some(len2) = &mut out {
                     // eprintln!("Found: {}", len2);
                     *len2 = len1.max(*len2);
@@ -4169,17 +4266,25 @@ pub fn p23_search_bfs_fast(
 
 pub fn p24_parse(input: &str) -> nom::IResult<&str, Vec<((i64, i64, i64), (i64, i64, i64))>> {
     use nom::bytes::complete::tag;
-    use nom::character::complete::{newline, space0, space1, i64, char};
+    use nom::character::complete::{char, i64, newline, space0, space1};
     use nom::combinator::map;
     use nom::multi::many1;
-    use nom::sequence::{tuple, terminated};
+    use nom::sequence::{terminated, tuple};
 
     nom::multi::separated_list1(
-        newline, 
-        nom::sequence::separated_pair( 
-            tuple((terminated(i64, tuple((char(','), space0))), terminated(i64, tuple((char(','), space0))), i64)),
+        newline,
+        nom::sequence::separated_pair(
+            tuple((
+                terminated(i64, tuple((char(','), space0))),
+                terminated(i64, tuple((char(','), space0))),
+                i64,
+            )),
             nom::sequence::delimited(space0, tag("@"), space0),
-            tuple((terminated(i64, tuple((char(','), space0))), terminated(i64, tuple((char(','), space0))), i64)),
+            tuple((
+                terminated(i64, tuple((char(','), space0))),
+                terminated(i64, tuple((char(','), space0))),
+                i64,
+            )),
         ),
     )(input)
 }
@@ -4189,7 +4294,7 @@ pub fn p24_parse(input: &str) -> nom::IResult<&str, Vec<((i64, i64, i64), (i64, 
 
 // (-2t0 + 19, t0 + 13, -2 t0 + 30)
 // (-2t1 + 19, t1 + 13, -2 t1 + 30)
-// 
+//
 pub fn p24() {
     let contents = r#"19, 13, 30 @ -2,  1, -2
 18, 19, 22 @ -1, -1, -2
@@ -4201,9 +4306,14 @@ pub fn p24() {
 
     let (_, hailstones) = p24_parse(&contents).unwrap();
 
-    let mut count = 0; let (axis_min, axis_max) = if hailstones.len() <= 20 {(7, 27) } else { (200000000000000i64, 400000000000000i64)};
+    let mut count = 0;
+    let (axis_min, axis_max) = if hailstones.len() <= 20 {
+        (7, 27)
+    } else {
+        (200000000000000i64, 400000000000000i64)
+    };
     for idx in 0..hailstones.len() {
-        for jdx in (idx+1)..hailstones.len() {
+        for jdx in (idx + 1)..hailstones.len() {
             let ((x0, y0, z0), (vx0, vy0, vz0)) = hailstones[idx];
             let ((x1, y1, z1), (vx1, vy1, vz1)) = hailstones[jdx];
 
@@ -4211,8 +4321,10 @@ pub fn p24() {
             eprint!("{:?} - {:?}: ", (x0, y0, z0), (x1, y1, z1));
 
             // WTF: number not engouh
-            let (x0, y0, z0) = (x0 as i128, y0 as i128, z0 as i128); let (vx0, vy0, vz0) = (vx0 as i128, vy0 as i128, vz0 as i128);
-            let (x1, y1, z1) = (x1 as i128, y1 as i128, z1 as i128); let (vx1, vy1, vz1) = (vx1 as i128, vy1 as i128, vz1 as i128);
+            let (x0, y0, z0) = (x0 as i128, y0 as i128, z0 as i128);
+            let (vx0, vy0, vz0) = (vx0 as i128, vy0 as i128, vz0 as i128);
+            let (x1, y1, z1) = (x1 as i128, y1 as i128, z1 as i128);
+            let (vx1, vy1, vz1) = (vx1 as i128, vy1 as i128, vz1 as i128);
 
             // (y - y0) * vx0 = (x - x0) * vy0;
             // (y - y1) * vx1 = (x - x1) * vy1;
@@ -4233,22 +4345,37 @@ pub fn p24() {
             //
             // a0 = vx0 b0 = vy0 c0 = y0 * vy0 + x0 * vx0
 
-            let a0 = -vy0; let b0 = vx0; let c0 = x0 * a0 + y0 * b0;
-            let a1 = -vy1; let b1 = vx1; let c1 = x1 * a1 + y1 * b1;
+            let a0 = -vy0;
+            let b0 = vx0;
+            let c0 = x0 * a0 + y0 * b0;
+            let a1 = -vy1;
+            let b1 = vx1;
+            let c1 = x1 * a1 + y1 * b1;
             let determinant = a0 * b1 - a1 * b0;
             if determinant == 0 {
                 eprintln!("NO interaction");
             } else {
-                let x = (c0*b1 - c1*b0) as f64 / determinant as f64;
-                let y = (a0*c1 - a1*c0) as f64 / determinant as f64;
+                let x = (c0 * b1 - c1 * b0) as f64 / determinant as f64;
+                let y = (a0 * c1 - a1 * c0) as f64 / determinant as f64;
 
                 // (x0, y0) -> (x, y) & (x0+vx0, y0+vy0)
                 // 检测 初始点是否在下一个点和交点的中心，如果在中心意味着交点无法抵达
-                let is_xy0_inside = ( vx0 == 0 || ((x0 > x0+vx0) != (x0 as f64 > x)) ) && ( vy0 == 0 || ((y0 > y0+vy0) != (y0 as f64 > y)));
-                let is_xy1_inside = ( vx1 == 0 || ((x1 > x1+vx1) != (x1 as f64 > x)) ) && ( vy1 == 0 || ((y1 > y1+vy1) != (y1 as f64 > y)));
+                let is_xy0_inside = (vx0 == 0 || ((x0 > x0 + vx0) != (x0 as f64 > x)))
+                    && (vy0 == 0 || ((y0 > y0 + vy0) != (y0 as f64 > y)));
+                let is_xy1_inside = (vx1 == 0 || ((x1 > x1 + vx1) != (x1 as f64 > x)))
+                    && (vy1 == 0 || ((y1 > y1 + vy1) != (y1 as f64 > y)));
 
-                eprintln!("{:.5} x {:.5} => {} {}", x, y, !is_xy0_inside, !is_xy1_inside);
-                if !is_xy0_inside && !is_xy1_inside && x >= (axis_min as f64) && x <= (axis_max as f64) && y >= (axis_min as f64) && y <= (axis_max as f64) {
+                eprintln!(
+                    "{:.5} x {:.5} => {} {}",
+                    x, y, !is_xy0_inside, !is_xy1_inside
+                );
+                if !is_xy0_inside
+                    && !is_xy1_inside
+                    && x >= (axis_min as f64)
+                    && x <= (axis_max as f64)
+                    && y >= (axis_min as f64)
+                    && y <= (axis_max as f64)
+                {
                     count += 1;
                 }
             }
@@ -4286,17 +4413,19 @@ pub fn p24() {
     let ((x0, y0, z0), (vx0, vy0, vz0)) = hailstones[0];
     let ((x1, y1, z1), (vx1, vy1, vz1)) = hailstones[1];
 
-    let t0 = 1; let (px0, py0, pz0) = (x0+vx0*t0, y0+vy0*t0, z0+vz0*t0);
-    let t0 = 2; let (px1, py1, pz1) = (x0+vx0*t0, y0+vy0*t0, z0+vz0*t0);
+    let t0 = 1;
+    let (px0, py0, pz0) = (x0 + vx0 * t0, y0 + vy0 * t0, z0 + vz0 * t0);
+    let t0 = 2;
+    let (px1, py1, pz1) = (x0 + vx0 * t0, y0 + vy0 * t0, z0 + vz0 * t0);
     eprintln!("{:?} - {:?}", (px0, py0, pz0), (px1, py1, pz1));
 
-    let t0 = 1; let (qx0, qy0, qz0) = (x1+vx1*t0, y1+vy1*t0, z1+vz1*t0);
-    let t0 = 2; let (qx1, qy1, qz1) = (x1+vx1*t0, y1+vy1*t0, z1+vz1*t0);
+    let t0 = 1;
+    let (qx0, qy0, qz0) = (x1 + vx1 * t0, y1 + vy1 * t0, z1 + vz1 * t0);
+    let t0 = 2;
+    let (qx1, qy1, qz1) = (x1 + vx1 * t0, y1 + vy1 * t0, z1 + vz1 * t0);
     eprintln!("{:?} - {:?}", (qx0, qy0, qz0), (qx1, qy1, qz1));
 
     // (a0, b0, c0, d0) = (??t0, ...)
-
-
 }
 
 // 298793064594510, 263093335773079, 376515029011499 @ -14, 59, -89
@@ -4364,5 +4493,4 @@ frs: qnr lhk lsr"#;
     // 算法太难，不如用 gephi 直接看，选择 Yifan Hu 算法可以快速切割开
     // 直接导出成无向图即可
     eprintln!("766 + 741");
-
 }

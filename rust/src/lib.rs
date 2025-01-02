@@ -12,11 +12,12 @@ pub mod util;
 // pub mod advcode2021;
 // pub mod advcode2022;
 pub mod advcode2023;
+pub mod advcode2024;
 
 // pub mod topic1_array;
 // pub mod topic2_graph;
 // pub mod cpp_algorithms;
 
 pub fn main() {
-    advcode2023::p25();
+    advcode2024::p02();
 }
