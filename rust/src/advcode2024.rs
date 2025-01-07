@@ -2,10 +2,10 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    isize,
+    hash::DefaultHasher,
+    iter::FromIterator,
+    usize,
 };
-
-use nom::character::streaming::newline;
 
 pub fn p01() {
     let contents = r#"3   4
@@ -644,4 +644,919 @@ pub fn p07() {
         .map(|(out, nums)| out)
         .sum();
     dbg!(&sum2);
+}
+
+pub fn p08() {
+    let contents = r#"............
+........0...
+.....0......
+.......0....
+....0.......
+......A.....
+............
+............
+........A...
+.........A..
+............
+............"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv08.txt").unwrap();
+
+    let antennas: Vec<Vec<char>> = contents
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect();
+
+    let height = antennas.len();
+    assert!(height > 0);
+    let width = antennas[0].len();
+    assert!(width > 0);
+    let mut antennas_pos: HashMap<char, Vec<(usize, usize)>> = Default::default();
+    for idx in 0..height {
+        for idy in 0..width {
+            let symbol = antennas[idx][idy];
+            if symbol != '.' {
+                antennas_pos.entry(symbol).or_default().push((idx, idy));
+            }
+        }
+    }
+
+    // eprintln!("{:?}", antennas_pos);
+    let mut antinodes: HashSet<(usize, usize)> = Default::default();
+    for pos in antennas_pos.values() {
+        for idx in 0..pos.len() {
+            for idj in (idx + 1)..pos.len() {
+                let (x0, y0) = pos[idx];
+                let (x1, y1) = pos[idj];
+                let (x0, y0, x1, y1) = (x0 as isize, y0 as isize, x1 as isize, y1 as isize);
+                // eprintln!("{:?} - {:?}", (x0, y0), (x1, y1));
+
+                let xa = x0 - (x1 - x0);
+                let ya = y0 - (y1 - y0);
+                let xb = x1 + (x1 - x0);
+                let yb = y1 + (y1 - y0);
+
+                for (xx, yy) in [(xa, ya), (xb, yb)] {
+                    if xx >= 0 && xx < height as isize && yy >= 0 && yy < height as isize {
+                        antinodes.insert((xx as usize, yy as usize));
+                    }
+                }
+            }
+        }
+    }
+    dbg!(&antinodes.len());
+
+    let mut antinodes: HashSet<(usize, usize)> = Default::default();
+    for pos in antennas_pos.values() {
+        for idx in 0..pos.len() {
+            for idj in (idx + 1)..pos.len() {
+                let (x0, y0) = pos[idx];
+                let (x1, y1) = pos[idj];
+                let (x0, y0, x1, y1) = (x0 as isize, y0 as isize, x1 as isize, y1 as isize);
+                // eprintln!("{:?} - {:?}", (x0, y0), (x1, y1));
+
+                for is_negative in [true, false] {
+                    for count in 0.. {
+                        let (xx, yy) = if is_negative {
+                            (x0 - (x1 - x0) * count, y0 - (y1 - y0) * count)
+                        } else {
+                            (x1 + (x1 - x0) * count, y1 + (y1 - y0) * count)
+                        };
+                        if xx >= 0 && xx < height as isize && yy >= 0 && yy < height as isize {
+                            antinodes.insert((xx as usize, yy as usize));
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    dbg!(&antinodes.len());
+}
+
+pub fn p09() {
+    let contents = r#"2333133121414131402"#;
+    let contents = std::fs::read_to_string("./assets/adv2024/adv09.txt").unwrap();
+    // let contents = r#"90909"#;
+
+    let disk: Vec<_> = contents
+        .trim()
+        .chars()
+        .map(|n| (n as u8 - '0' as u8) as usize)
+        .collect();
+    dbg!(&disk.len());
+
+    let mut count = -1;
+    let mut is_zero: bool = false;
+    let disk: Vec<(isize, usize)> = disk
+        .into_iter()
+        .map(|len| {
+            let out = if !is_zero {
+                count += 1;
+                (count, len)
+            } else {
+                (-1, len)
+            };
+
+            is_zero = !is_zero;
+            out
+        })
+        .collect();
+    // eprintln!("{:?}", disk);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut checksum = 0;
+    let mut left = 0;
+    let mut left_idx = 0;
+    let mut right = disk.len() - 1;
+    let mut right_idx = disk[right].1;
+    let mut pos = 0;
+
+    while (left, left_idx) < (right, right_idx) {
+        let (start_id, start_len) = disk[left];
+
+        if left_idx >= start_len {
+        } else if start_id == -1 {
+            let (end_id, end_len) = disk[right];
+
+            if end_id == -1 {
+                right -= 1;
+                right_idx = disk[right].1;
+            } else {
+                if right_idx == 0 {
+                    right -= 1;
+                    right_idx = disk[right].1;
+                } else {
+                    eprintln!("F: {:>5} x {:>5} = {}", pos, end_id, end_id * pos);
+                    checksum += end_id * pos;
+
+                    right_idx -= 1;
+                    left_idx += 1;
+                    pos += 1;
+                }
+            }
+        } else {
+            eprintln!("X: {:>5} x {:>5} = {}", pos, start_id, start_id * pos);
+            checksum += start_id * pos;
+            pos += 1;
+
+            left_idx += 1;
+        }
+
+        // 左侧进位
+        if left_idx >= start_len {
+            left += 1;
+            left_idx = 0;
+        }
+    }
+    dbg!(checksum);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // eprintln!("{:?}", disk);
+    let mut disk = disk.clone();
+    let mut pos = disk.len() - 1;
+    while pos > 0 {
+        let (symbol, count) = disk[pos];
+        if symbol > 0 {
+            if let Some(inserted) = disk[..pos]
+                .iter()
+                .position(|&(sym, space)| sym < 0 && space >= count)
+            {
+                let (_, space) = disk[inserted];
+                disk[pos] = (-1, count);
+
+                if space > count {
+                    disk[inserted] = (-1, space - count);
+                    disk.insert(inserted, (symbol, count));
+                    pos += 1;
+                } else {
+                    disk[inserted] = (symbol, count);
+                }
+            }
+        }
+        pos -= 1;
+    }
+    // eprintln!("{:?}", disk);
+    let mut checksum = 0;
+    let mut pos = 0;
+    for &(symbol, count) in disk.iter() {
+        for idx in 0..count {
+            if symbol >= 0 {
+                checksum += symbol * pos;
+            }
+
+            pos += 1;
+        }
+    }
+    dbg!(checksum);
+}
+
+fn p10_trace(
+    heights: &Vec<Vec<usize>>,
+    height: usize,
+    width: usize,
+    nine: &(usize, usize),
+    (x0, y0): (usize, usize),
+) -> bool {
+    if &(x0, y0) == nine {
+        return true;
+    }
+
+    let curr = heights[x0][y0];
+    for (offsetx, offsety) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+        let nx = x0 as isize + offsetx;
+        let ny = y0 as isize + offsety;
+
+        // eprintln!("{} {} {} {}", nx, ny, height, width);
+        if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+            if heights[nx as usize][ny as usize] == curr + 1 {
+                if p10_trace(heights, height, width, nine, (nx as usize, ny as usize)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+fn p10_trace_rating(
+    heights: &Vec<Vec<usize>>,
+    height: usize,
+    width: usize,
+    nine: &(usize, usize),
+    (x0, y0): (usize, usize),
+) -> usize {
+    if &(x0, y0) == nine {
+        return 1;
+    }
+
+    let curr = heights[x0][y0];
+    let mut sum = 0;
+    for (offsetx, offsety) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+        let nx = x0 as isize + offsetx;
+        let ny = y0 as isize + offsety;
+
+        // eprintln!("{} {} {} {}", nx, ny, height, width);
+        if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+            if heights[nx as usize][ny as usize] == curr + 1 {
+                sum += p10_trace_rating(heights, height, width, nine, (nx as usize, ny as usize));
+            }
+        }
+    }
+    return sum;
+}
+
+pub fn p10() {
+    let contents = r#"89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732"#;
+    let contents = std::fs::read_to_string("./assets/adv2024/adv10.txt").unwrap();
+
+    let heights: Vec<Vec<usize>> = contents
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| (c as u8 - '0' as u8) as usize)
+                .collect()
+        })
+        .collect();
+    // eprintln!("{:?}", heights);
+
+    let height = heights.len();
+    assert!(height > 0);
+    let width = heights[0].len();
+    assert!(width > 0);
+    let nines: Vec<(usize, usize)> = heights
+        .iter()
+        .enumerate()
+        .flat_map(|(idx, row)| {
+            row.iter()
+                .enumerate()
+                .filter(|(_, &h)| h == 9)
+                .map(move |(idy, _)| (idx, idy))
+        })
+        .collect();
+
+    let zeros: Vec<(usize, usize)> = heights
+        .iter()
+        .enumerate()
+        .flat_map(|(idx, row)| {
+            row.iter()
+                .enumerate()
+                .filter(|(_, &h)| h == 0)
+                .map(move |(idy, _)| (idx, idy))
+        })
+        .collect();
+
+    eprintln!("{:?}", nines);
+    eprintln!("{:?}", zeros);
+    ////////////////////////////////////////////////////////////////////////////////
+    let count1: usize = zeros
+        .iter()
+        .map(|&xy| {
+            nines
+                .iter()
+                .filter(|nine| p10_trace(&heights, height, width, nine, xy))
+                .count()
+        })
+        .inspect(|x| eprintln!("\t{}", x))
+        .sum();
+    dbg!(count1);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let count2: usize = zeros
+        .iter()
+        .map(|&xy| {
+            nines
+                .iter()
+                .map(|nine| p10_trace_rating(&heights, height, width, nine, xy))
+                .sum::<usize>()
+        })
+        .inspect(|x| eprintln!("\t{}", x))
+        .sum();
+    dbg!(count2);
+}
+
+fn p11_exp(mut num: usize) -> usize {
+    for idx in 1.. {
+        if num < 10 {
+            return idx;
+        }
+        num /= 10;
+    }
+    unreachable!();
+}
+
+pub fn p11() {
+    let contents = r#"0 1 10 99 999"#;
+    let contents = r#"125 17"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv11.txt").unwrap();
+
+    let stones: Vec<usize> = contents
+        .split_ascii_whitespace()
+        .map(|n| n.parse().unwrap())
+        .collect();
+    eprintln!("{:?}", stones);
+
+    let mut blinked = stones.clone();
+    for idx in 0..25 {
+        for mut num in std::mem::replace(&mut blinked, Default::default()).into_iter() {
+            let exp = p11_exp(num);
+            if num == 0 {
+                blinked.push(1);
+            } else if exp % 2 == 0 {
+                let half = exp / 2;
+                let mut right = 0;
+                for idx in 0..half {
+                    right += (num % 10) * (10_i32.pow(idx as u32) as usize);
+                    num /= 10;
+                }
+                blinked.push(num);
+                blinked.push(right);
+            } else {
+                blinked.push(num * 2024);
+            };
+        }
+        eprintln!(
+            "\t{:>2} {:>12}- {:?}",
+            idx + 1,
+            blinked.len(),
+            &blinked[..10.min(blinked.len())]
+        );
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    eprintln!();
+    let mut blinked: HashMap<usize, usize> = stones.iter().cloned().map(|n| (n, 1)).collect();
+    for idx in 0..75 {
+        for (mut num, count) in std::mem::replace(&mut blinked, Default::default()).into_iter() {
+            let exp = p11_exp(num);
+            if num == 0 {
+                *blinked.entry(1).or_default() += count;
+            } else if exp % 2 == 0 {
+                let half = exp / 2;
+                let mut right = 0;
+                for idx in 0..half {
+                    right += (num % 10) * (10_i32.pow(idx as u32) as usize);
+                    num /= 10;
+                }
+
+                *blinked.entry(num).or_default() += count;
+                *blinked.entry(right).or_default() += count;
+            } else {
+                *blinked.entry(num * 2024).or_default() += count;
+            };
+        }
+        eprintln!(
+            "\t{:>2} {:>18} - {}",
+            idx + 1,
+            blinked.values().sum::<usize>(),
+            blinked.len(), // &blinked
+        );
+    }
+}
+
+#[derive(Debug, Clone)]
+struct P12Plant {
+    symbol: char,
+    // outside border
+    bounds: Vec<(usize, usize, usize)>,
+    // other plant inside
+    disjoint: Vec<P12Plant>,
+}
+
+impl P12Plant {
+    fn fense(&self) -> usize {
+        self.area() * self.perimeter() + self.disjoint.iter().map(|p| p.fense()).sum::<usize>()
+    }
+
+    fn area(&self) -> usize {
+        let count: usize = self.bounds.iter().map(|&(xx, sy, ey)| ey - sy + 1).sum();
+        let disjoint: usize = self.disjoint.iter().map(|p| p.area()).sum();
+
+        // eprintln!("{:?}", self);
+        // eprintln!("{} - {}", count, disjoint);
+        count - disjoint
+    }
+    fn perimeter(&self) -> usize {
+        let mut outer: usize = 0;
+
+        let mut is_first = true;
+        let mut oey = 0;
+        let mut osy = 0;
+
+        for &(xx, sy, ey) in self.bounds.iter() {
+            let hori = ey - sy + 1;
+            let vert = 1;
+            let combined = if is_first {
+                0
+            } else {
+                ey.min(oey) - sy.max(osy) + 1
+            };
+
+            outer += hori + vert * 2 + hori - combined * 2;
+
+            osy = sy;
+            oey = ey;
+            is_first = false;
+        }
+
+        let inside: usize = self.disjoint.iter().map(|p| p.perimeter()).sum();
+        outer + inside
+    }
+}
+
+fn p12_search(
+    garden: &Vec<Vec<char>>,
+    height: usize,
+    width: usize,
+    (sx, sy): (usize, usize),
+    searched: &mut Vec<Vec<bool>>,
+) -> P12Plant {
+    let symbol = garden[sx][sy];
+    let mut bounds: Vec<(usize, usize, usize)> = vec![];
+
+    let mut xx = sx;
+    let mut sy = sy;
+    let mut ey = sy;
+
+    while xx < height {
+        if garden[xx][sy] != symbol && garden[xx][ey] != symbol {
+            break;
+        }
+        if garden[xx][sy] != symbol {
+            sy = ey;
+        }
+        if garden[xx][ey] != symbol {
+            ey = sy;
+        }
+
+        while sy > 0 && garden[xx][sy] == symbol {
+            sy -= 1;
+        }
+        if garden[xx][sy] != symbol {
+            sy += 1;
+        }
+        while ey < width - 1 && garden[xx][ey] == symbol {
+            ey += 1;
+        }
+        if garden[xx][ey] != symbol {
+            ey -= 1;
+        }
+        bounds.push((xx, sy, ey));
+
+        xx += 1;
+    }
+    let mut disjoint = vec![];
+
+    for (idx, &(xx, sy, ey)) in bounds.iter().enumerate() {
+        for yy in sy..(ey + 1) {
+            if searched[xx][yy] {
+            } else if garden[xx][yy] == symbol {
+                searched[xx][yy] = true;
+            } else {
+                if bounds.len() > 0 && idx >= 1 && idx + 1 < bounds.len() {
+                    let (_, prev_sx, prev_ey) = bounds[idx - 1];
+                    let (_, next_sx, next_ey) = bounds[idx + 1];
+                    if ey >= prev_sx && ey <= prev_ey && ey >= next_sx && ey <= next_ey {
+                        disjoint.push(p12_search(garden, height, width, (xx, yy), searched));
+                    }
+                }
+            }
+        }
+    }
+
+    let minx = bounds[0].0;
+    let maxx = bounds.last().unwrap().0;
+    assert_eq!(bounds.len(), maxx - minx + 1);
+
+    // let mut others = vec![];
+    for dis in std::mem::replace(&mut disjoint, Default::default()).into_iter() {
+        if dis.bounds.iter().all(|&(dis_xx, dis_sy, dis_ey)| {
+            if dis_xx > minx && dis_xx < maxx {
+                let (out_xx, out_sy, out_ey) = bounds[dis_xx - minx];
+                if out_sy < dis_sy && dis_ey < out_ey {
+                    return true;
+                }
+            }
+            return false;
+        }) {
+            disjoint.push(dis);
+        } else {
+            // patch
+            for &(xx, sy, ey) in dis.bounds.iter() {
+                for yy in sy..(ey + 1) {
+                    searched[xx][yy] = false;
+                }
+            }
+            // others.push(dis);
+        }
+    }
+
+    // eprintln!("{} - {:?}", symbol, bounds);
+
+    P12Plant {
+        symbol,
+        bounds,
+        disjoint,
+    }
+}
+
+fn p12_line(points: &Vec<usize>) -> usize {
+    if points.len() == 0 {
+        return 0;
+    }
+    let mut first = 0;
+    let mut is_first = true;
+    let mut count = 0;
+    for idx in 0..points.len() {
+        if is_first || points[idx] != first + 1 {
+            count += 1;
+        }
+        is_first = false;
+        first = points[idx];
+    }
+
+    count
+}
+
+#[derive(Debug, Clone)]
+struct P12PlantRegion {
+    symbol: char,
+    minx: usize,
+    points: Vec<Vec<(usize, usize)>>,
+    height: usize,
+    width: usize,
+}
+
+fn p12_expand(
+    garden: &Vec<Vec<char>>,
+    height: usize,
+    width: usize,
+    (sx, sy): (usize, usize),
+) -> P12PlantRegion {
+    let mut searched: HashSet<(usize, usize)> = Default::default();
+    let symbol = garden[sx][sy];
+    let mut curr: HashSet<(usize, usize)> = vec![(sx, sy)].into_iter().collect();
+    while curr.len() > 0 {
+        for (sx, sy) in std::mem::replace(&mut curr, Default::default()).into_iter() {
+            searched.insert((sx, sy));
+            for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+                let nx = sx as isize + offsetx;
+                let ny = sy as isize + offsety;
+                if nx >= 0 && nx < height as isize && ny >= 0 && ny < height as isize {
+                    let nx = nx as usize;
+                    let ny = ny as usize;
+                    if garden[nx][ny] == symbol && !searched.contains(&(nx, ny)) {
+                        curr.insert((nx, ny));
+                    }
+                }
+            }
+        }
+    }
+
+    let minx = searched.iter().map(|&(xx, _)| xx).min().unwrap();
+    let mut points = vec![];
+    for offset in 0.. {
+        let mut row = vec![];
+        for &(xx, yy) in searched.iter() {
+            if xx == minx + offset {
+                row.push((xx, yy));
+            }
+        }
+        if row.len() == 0 {
+            break;
+        }
+        row.sort_by_key(|&(_, yy)| yy);
+        points.push(row);
+    }
+
+    // eprintln!("{:?}", points);
+
+    P12PlantRegion {
+        symbol,
+        minx,
+        points,
+        height,
+        width,
+    }
+}
+
+impl P12PlantRegion {
+    fn maxx(&self) -> usize {
+        return self.minx + self.points.len();
+    }
+
+    fn contain_point(&self, (sx, sy): (usize, usize)) -> bool {
+        for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+            for count in 1.. {
+                let nx = (sx as isize) + offsetx * count;
+                let ny = (sy as isize) + offsety * count;
+                if nx >= 0 && nx < self.height as isize && ny >= 0 && ny < self.width as isize {
+                    let nx = nx as usize;
+                    let ny = ny as usize;
+                    if self.points[nx - self.minx].iter().any(|&(_, yy)| yy == ny) {
+                        break;
+                    } else {
+                        eprintln!("Checking {:?}, find {:?}", (sx, sy), (nx, ny));
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    fn contains(&self, other: &Self) -> bool {
+        if self.minx >= other.minx || self.maxx() <= other.maxx() {
+            return false;
+        }
+
+        for row in other.points.iter() {
+            for point in row.iter() {
+                if !self.contain_point(*point) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    pub fn area(&self) -> usize {
+        self.points.iter().map(|row| row.len()).sum()
+    }
+
+    pub fn perimeter(&self) -> usize {
+        let mut count = 0;
+        for idx in 0..self.points.len() {
+            for idj in 0..self.points[idx].len() {
+                let (sx, sy) = self.points[idx][idj];
+                count += 4;
+                if idj > 0 && self.points[idx][idj - 1].1 + 1 == sy {
+                    count -= 2;
+                }
+                if idx > 0 && self.points[idx - 1].iter().any(|&(_, yy)| yy == sy) {
+                    count -= 2;
+                }
+            }
+        }
+
+        count
+    }
+
+    pub fn side(&self) -> usize {
+        let mut count = 0;
+        let points_vert: Vec<Vec<usize>> = self
+            .points
+            .iter()
+            .map(|line| line.iter().map(|&(_, yy)| yy).collect())
+            .collect();
+        let mut points_hori: HashMap<usize, Vec<usize>> = Default::default();
+        for line in self.points.iter() {
+            for &(xx, yy) in line.iter() {
+                points_hori.entry(yy).or_default().push(xx);
+            }
+        }
+        let mut points_hori: Vec<_> = points_hori
+            .into_iter()
+            .map(|(k, mut line)| {
+                line.sort();
+                (k, line)
+            })
+            .collect();
+        points_hori.sort();
+        let points_hori: Vec<Vec<usize>> = points_hori.into_iter().map(|(_, line)| line).collect();
+
+        for points in [points_vert, points_hori] {
+            for idx in 1..points.len() {
+                let prevline: HashSet<_> = points[idx - 1].iter().cloned().collect();
+                let currline: HashSet<_> = points[idx].iter().cloned().collect();
+                let mut points: Vec<_> = currline
+                    .difference(&prevline)
+                    .into_iter()
+                    .cloned()
+                    .collect();
+                points.sort();
+                count += p12_line(&points);
+
+                let mut points: Vec<_> = prevline
+                    .difference(&currline)
+                    .into_iter()
+                    .cloned()
+                    .collect();
+                points.sort();
+                count += p12_line(&points);
+
+                // eprintln!(">>>> {:?}", count);
+            }
+            count += p12_line(&Vec::from_iter(points[0].iter().cloned()));
+            count += p12_line(&Vec::from_iter(points.last().unwrap().iter().cloned()));
+        }
+
+        // eprintln!("Fin {}", count);
+
+        count
+    }
+}
+
+pub fn p12() {
+    let contents = r#"OOOOO
+OXOXO
+OOOOO
+OXOXO
+OXOXO"#;
+
+    let contents = r#"OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO"#;
+    let contents = r#"AAAA
+BBCD
+BBCC
+EEEC"#;
+    let contents = r#"EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE"#;
+    let contents = r#"RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE"#;
+    let contents = r#"AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA"#;
+    let contents = std::fs::read_to_string("./assets/adv2024/adv12.txt").unwrap();
+
+    let garden: Vec<Vec<char>> = contents
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect();
+    // eprintln!("{:?}", garden);
+
+    let height = garden.len();
+    assert!(height > 0);
+    let width = garden[0].len();
+    assert!(width > 0);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // let mut plants: Vec<P12Plant> = vec![];
+    // let mut searched: Vec<Vec<bool>> = vec![vec![false; width]; height];
+    // let (mut sx, mut sy) = (0, 0);
+    // loop {
+    //     let plant = p12_search(&garden, height, width, (sx, sy), &mut searched);
+    //     plants.push(plant);
+    //
+    //     let mut is_found = false;
+    //     for idx in 0..height {
+    //         for idy in 0..width {
+    //             if is_found {
+    //                 break;
+    //             }
+    //             if !searched[idx][idy] {
+    //                 sx = idx;
+    //                 sy = idy;
+    //                 is_found = true;
+    //             }
+    //         }
+    //     }
+    //     if !is_found {
+    //         break;
+    //     }
+    // }
+    //
+    // for plant in plants.iter() {
+    //     eprintln!("{:?}", plant);
+    //     eprintln!(
+    //         "\t{}: {} x {}",
+    //         plant.symbol,
+    //         plant.area(),
+    //         plant.perimeter()
+    //     );
+    // }
+    //
+    // dbg!(plants.iter().map(|p| p.fense()).sum::<usize>());
+    ////////////////////////////////////////////////////////////////////////////////
+
+    let mut searched: Vec<Vec<bool>> = vec![vec![false; width]; height];
+    let (mut sx, mut sy) = (0, 0);
+    let mut plants: Vec<P12PlantRegion> = vec![];
+    loop {
+        let plant = p12_expand(&garden, height, width, (sx, sy));
+        for row in plant.points.iter() {
+            for &(xx, yy) in row.iter() {
+                searched[xx][yy] = true;
+            }
+        }
+        eprintln!("{:?}", plant);
+        plants.push(plant);
+
+        let mut is_found = false;
+        for idx in 0..height {
+            for idy in 0..width {
+                if is_found {
+                    break;
+                }
+                if !searched[idx][idy] {
+                    sx = idx;
+                    sy = idy;
+                    is_found = true;
+                }
+            }
+        }
+        if !is_found {
+            break;
+        }
+    }
+
+    // the solution is ugly and fucked, no time to refactor
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut sum = 0;
+    for idx in 0..plants.len() {
+        let plant = &plants[idx];
+        let area = plant.area();
+        let perimeter = plant.perimeter();
+
+        eprintln!("{:?}", plant);
+        eprintln!("\t{}: {} x {}", plant.symbol, area, perimeter,);
+        sum += area * perimeter;
+    }
+    eprintln!("Part A: {}", sum);
+    eprintln!();
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut sum = 0;
+    for idx in 0..plants.len() {
+        let plant = &plants[idx];
+
+        let area = plant.area();
+        let side = plant.side();
+
+        eprintln!("{:?}", plant);
+        eprintln!("\t{}: {} x {}", plant.symbol, area, side,);
+
+        sum += area * side;
+    }
+    eprintln!("Part B: {}", sum);
 }

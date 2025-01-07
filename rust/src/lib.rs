@@ -19,5 +19,5 @@ pub mod advcode2024;
 // pub mod cpp_algorithms;
 
 pub fn main() {
-    advcode2024::p07();
+    advcode2024::p12();
 }
