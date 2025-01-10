@@ -2,10 +2,17 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    hash::DefaultHasher,
+    hash::{DefaultHasher, Hash},
     iter::FromIterator,
-    usize,
+    ops::{BitOr, BitXor},
 };
+
+use nom::{
+    character::streaming::{newline, space1},
+    multi::many1,
+};
+
+use crate::advcode2023::p13_parse;
 
 pub fn p01() {
     let contents = r#"3   4
@@ -1559,4 +1566,1137 @@ AAAAAA"#;
         sum += area * side;
     }
     eprintln!("Part B: {}", sum);
+}
+
+#[derive(Debug, Clone)]
+struct P13Puzzle {
+    ax: isize,
+    ay: isize,
+    bx: isize,
+    by: isize,
+    x: isize,
+    y: isize,
+}
+
+impl P13Puzzle {
+    pub fn parse_one(input: &str) -> nom::IResult<&str, Self> {
+        use nom::bytes::complete::tag;
+        use nom::character::complete::{i64, newline, space0, space1, u64};
+        use nom::combinator::{map, value};
+        use nom::multi::separated_list0;
+        use nom::sequence::tuple;
+
+        let (input, _) = tuple((tag("Button A:"), space0))(input)?;
+        let (input, ax) = map(tuple((tag("X+"), i64)), |(_, n)| n as isize)(input)?;
+        let (input, _) = tuple((tag(","), space0))(input)?;
+        let (input, ay) = map(tuple((tag("Y+"), i64)), |(_, n)| n as isize)(input)?;
+
+        let (input, _) = newline(input)?;
+
+        let (input, _) = tuple((tag("Button B:"), space0))(input)?;
+        let (input, bx) = map(tuple((tag("X+"), i64)), |(_, n)| n as isize)(input)?;
+        let (input, _) = tuple((tag(","), space0))(input)?;
+        let (input, by) = map(tuple((tag("Y+"), i64)), |(_, n)| n as isize)(input)?;
+
+        let (input, _) = newline(input)?;
+
+        let (input, _) = tuple((tag("Prize:"), space0))(input)?;
+        let (input, x) = map(tuple((tag("X="), i64)), |(_, n)| n as isize)(input)?;
+        let (input, _) = tuple((tag(","), space0))(input)?;
+        let (input, y) = map(tuple((tag("Y="), i64)), |(_, n)| n as isize)(input)?;
+
+        Ok((
+            input,
+            Self {
+                ax,
+                ay,
+                bx,
+                by,
+                x,
+                y,
+            },
+        ))
+    }
+
+    pub fn parse_multi(input: &str) -> nom::IResult<&str, Vec<Self>> {
+        nom::multi::separated_list0(
+            nom::multi::many1(nom::character::complete::newline),
+            Self::parse_one,
+        )(input)
+    }
+
+    pub fn solve(&self) -> Option<(isize, isize)> {
+        // let A = (self.x * self.by - self.y * self.bx) / (self.ax * self.by - self.bx * self.ay);
+        let a0 = self.x * self.by - self.y * self.bx;
+        let a1 = self.ax * self.by - self.bx * self.ay;
+        if a0 % a1 == 0 {
+            let a = a0 / a1;
+            // let B = (self.x - self.ax * A) / self.bx;
+            let b0 = self.x - self.ax * a;
+            let b1 = self.bx;
+            if b0 % b1 == 0 {
+                let b = b0 / b1;
+                return Some((a, b));
+            }
+        }
+        None
+    }
+}
+
+pub fn p13() {
+    let contents = r#"Button A: X+94, Y+34
+Button B: X+22, Y+67
+Prize: X=8400, Y=5400
+
+Button A: X+26, Y+66
+Button B: X+67, Y+21
+Prize: X=12748, Y=12176
+
+Button A: X+17, Y+86
+Button B: X+84, Y+37
+Prize: X=7870, Y=6450
+
+Button A: X+69, Y+23
+Button B: X+27, Y+71
+Prize: X=18641, Y=10279"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv13.txt").unwrap();
+
+    let puzzles: Vec<P13Puzzle> = P13Puzzle::parse_multi(contents.as_ref()).unwrap().1;
+    eprintln!(
+        "{:?}",
+        puzzles.iter().map(|p| p.solve()).collect::<Vec<_>>()
+    );
+    dbg!(&puzzles
+        .iter()
+        .filter_map(|p| {
+            if let Some((x, y)) = p.solve() {
+                if x >= 0 && y >= 0 && x <= 100 && y <= 100 {
+                    return Some(x * 3 + y);
+                }
+            }
+            None
+        })
+        .sum::<isize>());
+    eprintln!();
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let puzzles: Vec<_> = puzzles
+        .into_iter()
+        .map(|mut p| {
+            p.x += 10000000000000;
+            p.y += 10000000000000;
+            p
+        })
+        .collect();
+    eprintln!(
+        "{:?}",
+        puzzles.iter().map(|p| p.solve()).collect::<Vec<_>>()
+    );
+    dbg!(&puzzles
+        .iter()
+        .filter_map(|p| {
+            if let Some((x, y)) = p.solve() {
+                if x >= 0 && y >= 0 {
+                    return Some(x * 3 + y);
+                }
+            }
+            None
+        })
+        .sum::<isize>());
+}
+
+#[derive(Debug, Clone, Copy)]
+struct P14Robot {
+    x: isize,
+    y: isize,
+    vx: isize,
+    vy: isize,
+}
+
+impl P14Robot {
+    pub fn parse_one(input: &str) -> nom::IResult<&str, Self> {
+        use nom::bytes::complete::tag;
+        use nom::character::complete::{i64, newline, space0, space1};
+        use nom::combinator::{map, value};
+        use nom::multi::separated_list0;
+        use nom::sequence::tuple;
+
+        let (input, _) = tag("p=")(input)?;
+        let (input, x) = i64(input)?;
+        let (input, _) = tag(",")(input)?;
+        let (input, y) = i64(input)?;
+
+        let (input, _) = space1(input)?;
+
+        let (input, _) = tag("v=")(input)?;
+        let (input, vx) = i64(input)?;
+        let (input, _) = tag(",")(input)?;
+        let (input, vy) = i64(input)?;
+
+        Ok((
+            input,
+            Self {
+                x: x as isize,
+                y: y as isize,
+                vx: vx as isize,
+                vy: vy as isize,
+            },
+        ))
+    }
+    pub fn parse_multi(input: &str) -> nom::IResult<&str, Vec<Self>> {
+        nom::multi::separated_list0(nom::character::complete::newline, Self::parse_one)(input)
+    }
+
+    pub fn iter(&self, maxx: isize, maxy: isize) -> Self {
+        let x = (self.x + self.vx).rem_euclid(maxx);
+        let y = (self.y + self.vy).rem_euclid(maxy);
+
+        Self {
+            x,
+            y,
+            vx: self.vx,
+            vy: self.vy,
+        }
+    }
+
+    pub fn iter_with(&self, maxx: isize, maxy: isize, count: usize) -> Self {
+        let x = (self.x + self.vx * count as isize).rem_euclid(maxx);
+        let y = (self.y + self.vy * count as isize).rem_euclid(maxy);
+
+        Self {
+            x,
+            y,
+            vx: self.vx,
+            vy: self.vy,
+        }
+    }
+}
+
+pub fn p14() {
+    let contents = r#"p=0,4 v=3,-3
+p=6,3 v=-1,-3
+p=10,3 v=-1,2
+p=2,0 v=2,-1
+p=0,0 v=1,3
+p=3,0 v=-2,-2
+p=7,6 v=-1,-3
+p=3,0 v=-1,-2
+p=9,3 v=2,3
+p=7,3 v=-1,2
+p=2,4 v=2,-3
+p=9,5 v=-3,-3"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv14.txt").unwrap();
+
+    let robots: Vec<P14Robot> = P14Robot::parse_multi(contents.as_ref()).unwrap().1;
+    assert!(robots.len() > 0);
+    let maxx = robots.iter().map(|p| p.x).max().unwrap() + 1;
+    let maxy = robots.iter().map(|p| p.y).max().unwrap() + 1;
+
+    eprintln!("{}x{}", maxx, maxy);
+    if maxx > 50 {
+        assert_eq!(maxx, 101);
+        assert_eq!(maxy, 103);
+    }
+
+    let historian: Vec<P14Robot> = robots
+        .iter()
+        .map(|r| r.iter_with(maxx, maxy, 100))
+        .collect();
+    // eprintln!("{:?}", historian);
+
+    let mut quadrant: HashMap<(isize, isize), Vec<P14Robot>> = Default::default();
+    for robot in historian.into_iter() {
+        let xx = (robot.x - maxx / 2).signum();
+        let yy = (robot.y - maxy / 2).signum();
+        quadrant.entry((xx, yy)).or_default().push(robot);
+    }
+
+    let mut factor = 1;
+    for (&(xx, yy), robot) in quadrant.iter() {
+        if xx == 0 || yy == 0 {
+            continue;
+        }
+        eprintln!("{:>2} x {:>2}: {}", xx, yy, robot.len());
+        factor *= robot.len();
+    }
+    // dbg!(factor);
+    // todo!();
+
+    ////////////////////////////////////////////////////////////////////////////////
+    for idx in 0.. {
+        let historian: Vec<_> = robots
+            .iter()
+            .map(|r| {
+                let rx = r.iter_with(maxx, maxy, idx);
+                (rx.x, rx.y)
+            })
+            .collect();
+
+        // try check symetric: not working, since "most robots"
+        // let mut quadrant: HashMap<(isize, isize), usize> = Default::default();
+        // for &(x, y) in historian.iter() {
+        //     let xx = (x - maxx / 2).signum();
+        //     let yy = (y - maxy / 2).signum();
+        //     if xx == 0 || yy == 0 {
+        //         continue;
+        //     }
+        //     *quadrant.entry((xx, yy)).or_default() += 1;
+        // }
+        // let factor: HashSet<_> = quadrant.values().collect();
+
+        // the tree must contain a continus line(maybe?)
+        // - we don't know if its horizontal or vertial
+        // - we don't know if the tree hollow inside
+        // - but just check vertical line >= 10 can lead us to the right answer.
+        let mut lines: HashMap<isize, Vec<isize>> = Default::default();
+        for &(x, y) in historian.iter() {
+            lines.entry(x).or_default().push(y);
+        }
+        let mut maxline = 0;
+        let mut start = -2;
+        let mut count = 1;
+        for (x, mut ys) in lines.into_iter() {
+            ys.sort();
+            for y in ys {
+                if start + 1 == y || y == start {
+                    if start + 1 == y {
+                        count += 1;
+                    }
+                } else {
+                    maxline = maxline.max(count);
+                    count = 1;
+                }
+
+                start = y;
+            }
+        }
+
+        if maxline >= 10 {
+            eprintln!("\n\n\n\nID:{} factor={}", idx, maxline);
+            let rxs: HashSet<_> = historian.iter().collect();
+            for idy in 0..maxy {
+                for idx in 0..maxx {
+                    if rxs.contains(&(idx, idy)) {
+                        print!("#");
+                    } else {
+                        print!(".");
+                    }
+                }
+                println!();
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum P15Dir {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+fn p15_parse(input: &str) -> nom::IResult<&str, (Vec<Vec<char>>, Vec<P15Dir>)> {
+    use nom::branch::alt;
+    use nom::bytes::complete::tag;
+    use nom::character::complete::one_of;
+    use nom::character::complete::{newline, space0, space1, u64};
+    use nom::combinator::{map, value};
+    use nom::multi::separated_list0;
+    use nom::sequence::tuple;
+
+    let (input, warehouse) = separated_list0(newline, many1(one_of("#@.O")))(input)?;
+
+    let (input, _) = many1(newline)(input)?;
+
+    let (input, actions) = separated_list0(
+        newline,
+        many1(alt((
+            value(P15Dir::Left, tag("<")),
+            value(P15Dir::Right, tag(">")),
+            value(P15Dir::Up, tag("^")),
+            value(P15Dir::Down, tag("v")),
+        ))),
+    )(input)?;
+    Ok((
+        input,
+        (
+            warehouse,
+            actions
+                .into_iter()
+                .map(|vs| vs.into_iter())
+                .flatten()
+                .collect(),
+        ),
+    ))
+}
+
+pub fn p15() {
+    let contents = r#"########
+#..O.O.#
+##@.O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+<^^>>>vv<v>>v<<"#;
+
+    let contents = r#"#######
+#...#.#
+#.....#
+#..OO@#
+#..O..#
+#.....#
+#######
+
+<vv<<^^<<^^"#;
+
+    let contents = r#"##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
+
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv15.txt").unwrap();
+
+    let (warehouse, actions) = p15_parse(contents.as_ref()).unwrap().1;
+    // eprintln!("{:?}", warehouse);
+
+    let height = warehouse.len();
+    assert!(height > 0);
+    let width = warehouse[0].len();
+    assert!(width > 0);
+
+    let mut walls = vec![];
+    let mut boxes = vec![];
+    let mut robot = None;
+    for idx in 0..height {
+        for idy in 0..width {
+            match warehouse[idx][idy] {
+                '#' => walls.push((idx, idy)),
+                'O' => boxes.push((idx, idy)),
+                '@' => robot = Some((idx, idy)),
+                _ => {}
+            }
+        }
+    }
+    assert!(robot.is_some());
+    let initial = (walls, boxes, robot.unwrap());
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let (walls, mut boxes, (mut sx, mut sy)) = initial;
+    for (ida, act) in actions.iter().enumerate() {
+        let (offsetx, offsety) = match act {
+            P15Dir::Down => (1, 0),
+            P15Dir::Up => (-1, 0),
+            P15Dir::Right => (0, 1),
+            P15Dir::Left => (0, -1),
+        };
+
+        let mut pushed = vec![];
+        let mut ox = sx;
+        let mut oy = sy;
+        loop {
+            let (nx, ny) = (ox as isize + offsetx, oy as isize + offsety);
+            if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+                let nx = nx as usize;
+                let ny = ny as usize;
+                if walls.iter().find(|&&p| p == (nx, ny)).is_some() {
+                    // stop, this is wall
+                    // nothing changed.
+                    break;
+                } else if let Some(idx) = boxes.iter().position(|p| p == &(nx, ny)) {
+                    pushed.push(idx);
+                } else {
+                    // stop, now do your actions.
+                    sx = (sx as isize + offsetx) as usize;
+                    sy = (sy as isize + offsety) as usize;
+
+                    for idx in pushed.into_iter() {
+                        let (bx, by) = &mut boxes[idx];
+                        *bx = (*bx as isize + offsetx) as usize;
+                        *by = (*by as isize + offsety) as usize;
+                    }
+                    break;
+                }
+                ox = nx;
+                oy = ny;
+            } else {
+                // since we have outside boundary
+                unreachable!();
+            }
+        }
+
+        if ida + 1 == actions.len() {
+            println!("{:?}", act);
+            for idx in 0..height {
+                for idy in 0..width {
+                    if walls.iter().find(|&&p| p == (idx, idy)).is_some() {
+                        print!("#");
+                    } else if boxes.iter().find(|&&p| p == (idx, idy)).is_some() {
+                        print!("O");
+                    } else if idx == sx && idy == sy {
+                        print!("@");
+                    } else {
+                        print!(".");
+                    }
+                }
+                println!();
+            }
+            println!();
+        }
+    }
+
+    dbg!(boxes.iter().map(|&(xx, yy)| 100 * xx + yy).sum::<usize>());
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut walls = vec![];
+    let mut boxes = vec![];
+    let mut robot = None;
+    for idx in 0..height {
+        for idy in 0..width {
+            match warehouse[idx][idy] {
+                '#' => {
+                    walls.push((idx, idy * 2));
+                    walls.push((idx, idy * 2 + 1));
+                }
+                'O' => {
+                    boxes.push((idx, idy * 2, idy * 2 + 1));
+                }
+                '@' => robot = Some((idx, idy * 2)),
+                _ => {}
+            }
+        }
+    }
+    assert!(robot.is_some());
+    let width = width * 2;
+    let initial = (walls, boxes, robot.unwrap());
+
+    let (walls, mut boxes, (mut sx, mut sy)) = initial;
+    for (ida, act) in actions.iter().enumerate() {
+        let (offsetx, offsety) = match act {
+            P15Dir::Down => (1, 0),
+            P15Dir::Up => (-1, 0),
+            P15Dir::Right => (0, 1),
+            P15Dir::Left => (0, -1),
+        };
+
+        let (nx, ny) = (sx as isize + offsetx, sy as isize + offsety);
+        if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+            let nx = nx as usize;
+            let ny = ny as usize;
+            if walls.iter().find(|&&p| p == (nx, ny)).is_some() {
+                // stop, @ can't be moved
+            } else if let Some(idx) = boxes
+                .iter()
+                .position(|&(boxx, boxy0, boxy1)| nx == boxx && (ny == boxy0 || ny == boxy1))
+            {
+                let mut pushed = vec![idx];
+                let mut waiting = vec![];
+                let mut is_movable = true;
+                while let Some(idx) = pushed.pop() {
+                    let (boxx, boxy0, boxy1) = boxes[idx];
+                    let nboxx = boxx as isize + offsetx;
+                    let nboxy0 = boxy0 as isize + offsety;
+                    let nboxy1 = boxy1 as isize + offsety;
+                    assert!(nboxx >= 0 && nboxx < height as isize);
+                    assert!(nboxy0 >= 0 && nboxy0 < width as isize);
+                    assert!(nboxy1 >= 0 && nboxy1 < width as isize);
+                    let nboxx = nboxx as usize;
+                    let nboxy0 = nboxy0 as usize;
+                    let nboxy1 = nboxy1 as usize;
+
+                    let mut is_next_movable = true;
+                    if walls.iter().find(|&&p| p == (nboxx, nboxy0)).is_some() {
+                        is_next_movable = false;
+                    } else if let Some(ndx) = boxes.iter().position(|&(boxx, boxy0, boxy1)| {
+                        nboxx == boxx && (nboxy0 == boxy0 || nboxy0 == boxy1)
+                    }) {
+                        // overlap with self
+                        if idx != ndx {
+                            pushed.push(ndx);
+                        }
+                    }
+
+                    if walls.iter().find(|&&p| p == (nboxx, nboxy1)).is_some() {
+                        is_next_movable = false;
+                    } else if let Some(ndx) = boxes.iter().position(|&(boxx, boxy0, boxy1)| {
+                        nboxx == boxx && (nboxy1 == boxy0 || nboxy1 == boxy1)
+                    }) {
+                        if idx != ndx {
+                            pushed.push(ndx);
+                        }
+                    }
+
+                    if is_next_movable {
+                        waiting.push((idx, nboxx, nboxy0, nboxy1))
+                    } else {
+                        is_movable = false;
+                        break;
+                    }
+                }
+
+                // stop, not only move @, but move boxes inside pushed
+                if is_movable {
+                    sx = nx;
+                    sy = ny;
+                    for (idx, boxx, boxy0, boxy1) in waiting.into_iter() {
+                        boxes[idx] = (boxx, boxy0, boxy1);
+                    }
+                }
+            } else {
+                // stop, only move @, no boxes need to be moved;
+                sx = nx;
+                sy = ny;
+            }
+        }
+
+        if ida + 1 == actions.len() {
+            // if true {
+            println!("{:?}", act);
+            for idx in 0..height {
+                for idy in 0..width {
+                    if walls.iter().find(|&&p| p == (idx, idy)).is_some() {
+                        print!("#");
+                    } else if boxes
+                        .iter()
+                        .find(|&&(boxx, boxy0, boxy1)| (idx, idy) == (boxx, boxy0))
+                        .is_some()
+                    {
+                        print!("[");
+                    } else if boxes
+                        .iter()
+                        .find(|&&(boxx, boxy0, boxy1)| (idx, idy) == (boxx, boxy1))
+                        .is_some()
+                    {
+                        print!("]");
+                    } else if idx == sx && idy == sy {
+                        print!("@");
+                    } else {
+                        print!(".");
+                    }
+                }
+                println!();
+            }
+            println!();
+        }
+    }
+
+    dbg!(boxes
+        .iter()
+        .map(|&(xx, y0, y1)| 100 * xx + y0)
+        .sum::<usize>());
+}
+
+type P16Dir = (isize, isize);
+
+pub fn p16() {
+    let contents = r#"#################
+#...#...#...#..E#
+#.#.#.#.#.#.#.#.#
+#.#.#.#...#...#.#
+#.#.#.#.###.#.#.#
+#...#.#.#.....#.#
+#.#.#.#.#.#####.#
+#.#...#.#.#.....#
+#.#.#####.#.###.#
+#.#.#.......#...#
+#.#.###.#####.###
+#.#.#...#.....#.#
+#.#.#.#####.###.#
+#.#.#.........#.#
+#.#.#.#########.#
+#S#.............#
+#################"#;
+    let contents = r#"###############
+#.......#....E#
+#.#.###.#.###.#
+#.....#.#...#.#
+#.###.#####.#.#
+#.#.#.......#.#
+#.#.#####.###.#
+#...........#.#
+###.#.#####.#.#
+#...#.....#.#.#
+#.#.#.###.#.#.#
+#.....#...#.#.#
+#.###.#.#.#.#.#
+#S..#.....#...#
+###############"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv16.txt").unwrap();
+
+    let maze: Vec<Vec<char>> = contents
+        .lines()
+        .map(|line| line.chars().collect())
+        .collect();
+
+    let height = maze.len();
+    assert!(height > 0);
+    let width = maze[0].len();
+    assert!(width > 0);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut start = None;
+    let mut end = None;
+    for idx in 0..height {
+        for idy in 0..width {
+            match maze[idx][idy] {
+                'S' => start = Some((idx, idy)),
+                'E' => end = Some((idx, idy)),
+                _ => {}
+            }
+        }
+    }
+    assert!(start.is_some());
+    assert!(end.is_some());
+    let initial = (start.unwrap(), end.unwrap());
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // let ((sx, sy), (ex, ey)) = initial;
+    // let mut pathes = vec![vec![(sx, sy)]];
+    // let mut reached: Vec<Vec<(usize, usize)>> = vec![];
+    // eprintln!("{:?} -> {:?}", (sx, sy), (ex, ey));
+    // while let Some(path) = pathes.pop() {
+    //     // eprintln!("{:?}", path);
+    //     let (sx, sy) = path.last().unwrap().clone();
+    //     if sx == ex && sy == ey {
+    //         eprintln!("Found one: {}", path.len());
+    //         reached.push(path);
+    //     } else {
+    //         for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+    //             let nx = sx as isize + offsetx;
+    //             let ny = sy as isize + offsety;
+    //             if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+    //                 let nx = nx as usize;
+    //                 let ny = ny as usize;
+    //
+    //                 if maze[nx][ny] != '#' && (!path.iter().any(|o| o == &(nx, ny))) {
+    //                     let mut np = path.clone();
+    //                     np.push((nx, ny));
+    //                     pathes.push(np);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // // eprintln!("{}: {:?}", reached.len(), reached);
+    // let mut count = usize::MAX;
+    // for path in reached.iter() {
+    //     let mut dir = (0, 1);
+    //     let mut countdir = 0;
+    //     let (mut sx, mut sy) = path[0];
+    //     for &(nx, ny) in path.iter().skip(1) {
+    //         let ndir = (nx as isize - sx as isize, ny as isize - sy as isize);
+    //         if dir != ndir {
+    //             countdir += 1;
+    //             dir = ndir;
+    //         }
+    //
+    //         sx = nx;
+    //         sy = ny;
+    //     }
+    //     let score = 1000 * countdir + path.len() - 1;
+    //     count = score.min(count);
+    //     eprintln!(
+    //         "\t{}+{}={} {:?}\n",
+    //         countdir,
+    //         path.len() - 1,
+    //         score,
+    //         &path[..5.min(path.len())]
+    //     );
+    // }
+    // dbg!(&count);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // let ((sx, sy), (ex, ey)) = initial;
+    // let mut maze_graph: HashMap<(usize, usize, P16Dir, usize, usize, P16Dir), usize> =
+    //     Default::default();
+    // let score_continue = 1;
+    // let score_rotate = 1000;
+    // let mut points = vec![(sx, sy, (0, 1), 0)];
+    // while let Some(((mut sx, mut sy), (mut offsetx, mut offsety), score)) = points.pop() {
+    //     let mut path = vec![];
+    //     loop {
+    //         let nx = sx as isize + offsetx;
+    //         let ny = sy as isize + offsety;
+    //         if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+    //             let nx = nx as usize;
+    //             let ny = ny as usize;
+    //
+    //             if maze[nx][ny] != '#' && (!path.iter().any(|o| o == &(nx, ny))) {
+    //                 let nextpoint = vec![];
+    //                 for (offsetx0, offsety0) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+    //
+    //                 }
+    //                 if nextpoint.len() == 1 {
+    //                     path.push((nx, ny));
+    //                 } else {
+    //                     maze_graph.insert((sx, sy)) = ...;
+    //                     points.push((nx, ny, ))
+    //                 }
+    //
+    //             } else {
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //
+    //     loop {
+    //         let mut nextpoints = vec![];
+    //         for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {}
+    //         if nextpoints.len() == 1 {
+    //         } else {
+    //             points.push();
+    //         }
+    //     }
+    // }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let ((sx, sy), (ex, ey)) = initial;
+    let mut pathes = vec![(0, vec![(sx, sy)], (0, 1))];
+    let mut reached = vec![];
+    let mut minscore = usize::MAX;
+    eprintln!("{:?} -> {:?}", (sx, sy), (ex, ey));
+    while let Some((mut score, mut path, mut dir)) = pathes.pop() {
+        // 优化： 部分点的通路是确定的，我们一直往下走，知道遇到岔路，以控制 pathes 的大小
+        while let Some((sx, sy)) = path.last().cloned() {
+            if sx == ex && sy == ey {
+                let oldpathlen = pathes.len();
+                pathes = pathes.into_iter().filter(|&(s, _, _)| s < score).collect();
+                minscore = minscore.min(score);
+                let newpathlen = pathes.len();
+                eprintln!(
+                    "Found one Limit={} ({})x({}): {} -> {}",
+                    minscore,
+                    score,
+                    path.len(),
+                    oldpathlen,
+                    newpathlen,
+                    // path
+                );
+                reached.push((score, path.clone(), dir));
+                break;
+            } else {
+                let mut nextpoints = vec![];
+                for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+                    let nx = sx as isize + offsetx;
+                    let ny = sy as isize + offsety;
+                    if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+                        let nx = nx as usize;
+                        let ny = ny as usize;
+
+                        if maze[nx][ny] != '#' && (!path.iter().any(|o| o == &(nx, ny))) {
+                            let mut inc = 1;
+                            if dir != (offsetx, offsety) {
+                                if dir == (-offsetx, offsety) || dir == (offsetx, -offsety) {
+                                    inc += 1000 * 2;
+                                } else {
+                                    inc += 1000;
+                                }
+                            }
+                            if score + inc < minscore {
+                                nextpoints.push((score + inc, (nx, ny), (offsetx, offsety)));
+                            }
+                        }
+                    }
+                }
+
+                if nextpoints.len() >= 2 {
+                    // eprintln!(
+                    //     "Found tow dir {:?} -> {:?} <- {}",
+                    //     (sx, sy),
+                    //     nextpoints,
+                    //     pathes.len()
+                    // );
+                    for (nextscore, nextpoint, nextdir) in nextpoints.into_iter() {
+                        let mut np = path.clone();
+                        np.push(nextpoint);
+                        pathes.push((nextscore, np, nextdir));
+                    }
+                    break;
+                } else if nextpoints.len() == 1 {
+                    let (nextscore, nextpoint, nextdir) = nextpoints[0];
+                    // eprintln!(
+                    //     "Find a Continuous path: {:?} vs {}",
+                    //     nextpoint,
+                    //     pathes.len()
+                    // );
+                    score = nextscore;
+                    path.push(nextpoint);
+                    dir = nextdir;
+                } else {
+                    // eprintln!("Removing one path");
+                    break;
+                }
+            }
+        }
+
+        // pathes.sort_by_key(|&(s, _, _)| std::cmp::Reverse(s));
+    }
+    dbg!(&reached.iter().map(|&(s, _, _)| s).min().unwrap_or_default());
+}
+
+#[derive(Clone)]
+struct P17Program {
+    ra: usize,
+    rb: usize,
+    rc: usize,
+
+    instructions: Vec<usize>,
+
+    pointer: usize,
+    output: Vec<usize>,
+}
+
+impl std::fmt::Debug for P17Program {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("P17Program")
+            .field("a", &self.ra)
+            .field("b", &self.rb)
+            .field("c", &self.rc)
+            .field("instructions", &self.instructions)
+            .finish()
+    }
+}
+
+impl P17Program {
+    fn calculate(&mut self, opcode: usize, operand: usize) {}
+
+    fn read_opcode(&mut self) -> Option<usize> {
+        if self.pointer < self.instructions.len() {
+            let opcode = self.instructions[self.pointer];
+            self.pointer += 1;
+            return Some(opcode);
+        }
+        None
+    }
+
+    fn iterate(&mut self) {
+        if let Some(opcode) = self.read_opcode() {
+            // eprintln!("\t - {}@{}", opcode, self.pointer);
+            match opcode {
+                0 => {
+                    self.ra /= 2_usize.pow(self.read_combo() as u32);
+                }
+                1 => {
+                    self.rb = self.rb.bitxor(self.read_lit());
+                }
+                2 => {
+                    self.rb = self.read_combo() % 8;
+                }
+                3 => {
+                    if self.ra != 0 {
+                        self.pointer = self.read_lit();
+                    } else {
+                        let _ = self.read_lit();
+                    }
+                }
+                4 => {
+                    self.rb = self.rb.bitxor(self.rc);
+                    let _ = self.read_lit();
+                }
+                5 => {
+                    let val = self.read_combo() % 8;
+                    self.output.push(val);
+                }
+                6 => {
+                    self.rb = self.ra / 2_usize.pow(self.read_combo() as u32);
+                }
+                7 => {
+                    self.rc = self.ra / 2_usize.pow(self.read_combo() as u32);
+                }
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    fn read_lit(&mut self) -> usize {
+        let operand = self.instructions[self.pointer];
+        self.pointer += 1;
+        operand
+    }
+
+    fn read_combo(&mut self) -> usize {
+        let operand = self.instructions[self.pointer];
+        self.pointer += 1;
+        match operand {
+            0..=3 => operand,
+            4 => self.ra,
+            5 => self.rb,
+            6 => self.rc,
+            7 => todo!(),
+            _ => unreachable!(),
+        }
+    }
+
+    fn parse(input: &str) -> nom::IResult<&str, Self> {
+        use nom::bytes::complete::tag;
+        use nom::character::complete::{newline, space0, space1, u64};
+        use nom::combinator::{map, value};
+        use nom::multi::separated_list0;
+        use nom::sequence::tuple;
+
+        let (input, _) = tag("Register A: ")(input)?;
+        let (input, ra) = map(u64, |n| n as usize)(input)?;
+        let (input, _) = newline(input)?;
+
+        let (input, _) = tag("Register B: ")(input)?;
+        let (input, rb) = map(u64, |n| n as usize)(input)?;
+        let (input, _) = newline(input)?;
+
+        let (input, _) = tag("Register C: ")(input)?;
+        let (input, rc) = map(u64, |n| n as usize)(input)?;
+        let (input, _) = newline(input)?;
+
+        let (input, _) = newline(input)?;
+
+        let (input, _) = tag("Program: ")(input)?;
+        let (input, instructions) = separated_list0(tag(","), map(u64, |n| n as usize))(input)?;
+
+        Ok((
+            input,
+            Self {
+                ra,
+                rb,
+                rc,
+                instructions,
+                pointer: 0,
+                output: vec![],
+            },
+        ))
+    }
+}
+
+pub fn p17() {
+    for contents in [
+        &std::fs::read_to_string("./assets/adv2024/adv17.txt").unwrap(),
+        r#"Register A: 2024
+Register B: 0
+Register C: 9
+
+Program: 2,6"#,
+        r#"Register A: 10
+Register B: 0
+Register C: 0
+
+Program: 5,0,5,1,5,4"#,
+        r#"Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,1,5,4,3,0"#,
+        r#"Register A: 2024
+Register B: 29
+Register C: 0
+
+Program: 1,7"#,
+        r#"Register A: 2024
+Register B: 2024
+Register C: 43690
+
+Program: 4,0"#,
+        r#"Register A: 117440
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0"#,
+    ] {
+        // FIXME: too annoying
+        // break;
+        eprintln!("################################################################");
+        eprintln!("{}", contents);
+        let mut px = P17Program::parse(contents.as_ref()).unwrap().1;
+        // px.ra = 38886110969332;
+
+        while px.pointer < px.instructions.len() {
+            px.iterate();
+        }
+        eprintln!("{:?}", px);
+        eprintln!(
+            "\t{:?}",
+            px.output
+                .iter()
+                .map(|&n| n.to_string())
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+        eprintln!();
+        // todo!();
+    }
+
+    let contents = r#"Register A: 117440
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0"#;
+    let contents = r#"Register A: 117440
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv17.txt").unwrap();
+    let puzzle = P17Program::parse(contents.as_ref()).unwrap().1;
+    let mut guesses = vec![(0, 0, vec![])];
+
+    while let Some((stack, printed_count, path)) = guesses.pop() {
+        if printed_count >= puzzle.instructions.len() {
+            eprintln!("Find one possible answer: {}@{:?}", stack, path);
+            continue;
+        }
+
+        let num = puzzle.instructions[puzzle.instructions.len() - 1 - printed_count];
+
+        let mut found = vec![];
+        for ra in 0..8 {
+            let mut px = puzzle.clone();
+            px.ra = stack * 8 + ra;
+            // eprintln!(">>>> {:?}", px);
+            while px.pointer + 2 < px.instructions.len() {
+                px.iterate();
+            }
+
+            assert_eq!(px.output.len(), 1);
+            if px.output[0] == num {
+                found.push(ra);
+            }
+        }
+
+        for guess in found.into_iter() {
+            let mut np = path.clone();
+            np.push(guess);
+            guesses.push((stack * 8 + guess, printed_count + 1, np))
+        }
+    }
+
+    // // 这题只能使用逆向的法子，找到 instructions 里面特殊的部分，以此做迭代
+    // // 由于逆向并不是一对一的关系，我们还需要尝试所有可能的组合，找到最小值
+    // //
+    // // 使用逆向的办法，可以看到实例中，运算部分简单就是 x / 8,
+    // // 所以逆向就是 x * 8，打印的时候是 x % 8 反推，最小的x起点是0
+    // let mut stack = 0;
+    // for num in puzzle.instructions.iter().rev() {
+    //     stack = (stack + num) * 8
+    // }
+    // dbg!(stack);
 }
