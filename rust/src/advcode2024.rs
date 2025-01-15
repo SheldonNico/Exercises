@@ -1,18 +1,15 @@
 #![allow(unused_imports)]
 
+use core::panic;
 use std::{
     collections::{HashMap, HashSet},
     hash::{DefaultHasher, Hash},
+    isize,
     iter::FromIterator,
     ops::{BitOr, BitXor},
 };
 
-use nom::{
-    character::streaming::{newline, space1},
-    multi::many1,
-};
-
-use crate::advcode2023::p13_parse;
+use nom::sequence::separated_pair;
 
 pub fn p01() {
     let contents = r#"3   4
@@ -1904,7 +1901,7 @@ fn p15_parse(input: &str) -> nom::IResult<&str, (Vec<Vec<char>>, Vec<P15Dir>)> {
     use nom::character::complete::one_of;
     use nom::character::complete::{newline, space0, space1, u64};
     use nom::combinator::{map, value};
-    use nom::multi::separated_list0;
+    use nom::multi::{many1, separated_list0};
     use nom::sequence::tuple;
 
     let (input, warehouse) = separated_list0(newline, many1(one_of("#@.O")))(input)?;
@@ -2699,4 +2696,1463 @@ Program: 0,3,5,4,3,0"#;
     //     stack = (stack + num) * 8
     // }
     // dbg!(stack);
+}
+
+fn p18_parse(input: &str) -> nom::IResult<&str, Vec<(u64, u64)>> {
+    nom::multi::separated_list0(
+        nom::character::complete::newline,
+        nom::sequence::separated_pair(
+            nom::character::complete::u64,
+            nom::character::complete::char(','),
+            nom::character::complete::u64,
+        ),
+    )(input)
+}
+
+pub fn p18() {
+    let contents = r#"5,4
+4,2
+4,5
+3,0
+2,1
+6,3
+2,4
+1,5
+0,6
+3,3
+2,6
+5,1
+1,2
+5,5
+2,5
+6,5
+1,4
+0,4
+6,4
+1,1
+6,1
+1,0
+0,5
+1,6
+2,0"#;
+    let contents = std::fs::read_to_string("./assets/adv2024/adv18.txt").unwrap();
+
+    let bytes_ori = p18_parse(contents.as_ref()).unwrap().1;
+
+    let mut height = 0;
+    let mut width = 0;
+    for &(x, y) in bytes_ori.iter() {
+        height = height.max(x);
+        width = width.max(y);
+    }
+    let height = height as usize + 1;
+    let width = width as usize + 1;
+    let baseline = if width > 10 { 1024 } else { 12 };
+    dbg!(height, width);
+    let bytes: Vec<_> = bytes_ori
+        .iter()
+        .cloned()
+        .map(|(x, y)| (y as usize, x as usize))
+        .take(baseline)
+        .collect();
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut lastpoints: HashSet<(usize, usize)> = vec![(0, 0)].into_iter().collect();
+    let mut reached: HashSet<(usize, usize)> = Default::default();
+    // 由于权重是一样的，所以不可能走回头路，这是与之前那道题的最大区别
+    'outer: for idx in 0.. {
+        for (sx, sy) in std::mem::replace(&mut lastpoints, Default::default()) {
+            reached.insert((sx, sy));
+            if (sx, sy) == (height - 1, width - 1) {
+                eprintln!("Find minimize path: {}", idx);
+                break 'outer;
+            }
+            for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+                let (nx, ny) = (sx as isize + offsetx, sy as isize + offsety);
+                if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+                    let (nx, ny) = (nx as usize, ny as usize);
+                    if bytes.iter().find(|p| p == &&(nx, ny)).is_none()
+                        && !reached.contains(&(nx, ny))
+                    {
+                        lastpoints.insert((nx, ny));
+                    }
+                }
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    eprintln!("######################################");
+    for separator in baseline..bytes_ori.len() {
+        let bytes: Vec<_> = bytes_ori
+            .iter()
+            .cloned()
+            .map(|(x, y)| (y as usize, x as usize))
+            .take(separator)
+            .collect();
+
+        let mut lastpoints: HashSet<(usize, usize)> = vec![(0, 0)].into_iter().collect();
+        let mut reached: HashSet<(usize, usize)> = Default::default();
+        let mut is_success: bool = false;
+        // 由于权重是一样的，所以不可能走回头路，这是与之前那道题的最大区别
+        'outer: for idx in 0.. {
+            if lastpoints.len() == 0 {
+                break;
+            }
+            for (sx, sy) in std::mem::replace(&mut lastpoints, Default::default()) {
+                reached.insert((sx, sy));
+                if (sx, sy) == (height - 1, width - 1) {
+                    eprintln!("Find minimize path@{}: {}", separator, idx);
+                    is_success = true;
+                    break 'outer;
+                }
+                for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+                    let (nx, ny) = (sx as isize + offsetx, sy as isize + offsety);
+                    if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+                        let (nx, ny) = (nx as usize, ny as usize);
+                        if bytes.iter().find(|p| p == &&(nx, ny)).is_none()
+                            && !reached.contains(&(nx, ny))
+                        {
+                            lastpoints.insert((nx, ny));
+                        }
+                    }
+                }
+            }
+        }
+        if !is_success {
+            eprintln!(
+                "\t>>>>>>>>>>>>> Find first separator {} -> {:?}",
+                separator,
+                bytes_ori[separator - 1]
+            );
+            break;
+        }
+    }
+}
+
+fn p19_parse(input: &str) -> nom::IResult<&str, (Vec<Vec<char>>, Vec<Vec<char>>)> {
+    use nom::branch::alt;
+    use nom::bytes::complete::tag;
+    use nom::character::complete::{anychar, one_of};
+    use nom::character::complete::{newline, space0, space1, u64};
+    use nom::combinator::{map, value};
+    use nom::multi::{many1, separated_list0};
+    use nom::sequence::tuple;
+
+    let (input, patterns) =
+        separated_list0(tuple((tag(","), space0)), many1(one_of("wubrg")))(input)?;
+    let (input, _) = many1(newline)(input)?;
+
+    let (input, towers) = separated_list0(newline, many1(one_of("wubrg")))(input)?;
+    Ok((input, (patterns, towers)))
+}
+
+pub fn p19() {
+    let contents = r#"r, wr, b, g, bwu, rb, gb, br
+
+brwrr
+bggr
+gbbr
+rrbgbr
+ubwu
+bwurrg
+brgr
+bbrgwb"#;
+    let contents = std::fs::read_to_string("./assets/adv2024/adv19.txt").unwrap();
+
+    let (patterns, towers) = p19_parse(contents.as_ref()).unwrap().1;
+    // eprintln!("{:?}", patterns);
+    // eprintln!("{:?}", towers);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut count_succ = 0;
+    for tower in towers.iter() {
+        let mut offsets: Vec<usize> = vec![0];
+        let mut is_succ = false;
+        while let Some(offset) = offsets.pop() {
+            if offset >= tower.len() {
+                is_succ = true;
+                break;
+            }
+            for pattern in patterns.iter() {
+                let noffset = offset + pattern.len();
+                if noffset <= tower.len()
+                    && pattern == &tower[offset..noffset]
+                    && offsets.iter().find(|&&p| p == noffset).is_none()
+                {
+                    offsets.push(noffset);
+                }
+            }
+        }
+        if is_succ {
+            // eprintln!("succ: {:?}", tower.iter().collect::<String>());
+            count_succ += 1;
+        } else {
+            // eprintln!("fail: {:?}", tower.iter().collect::<String>());
+        }
+    }
+    dbg!(count_succ);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut count_all = 0;
+    for tower in towers.iter() {
+        let mut offsets: Vec<(usize, usize)> = vec![(0, 1)];
+        let mut count_this = 0;
+        while let Some((offset, count)) = offsets.pop() {
+            // eprintln!("{:?}", offsets);
+            if offset >= tower.len() {
+                count_this += count;
+                continue;
+            }
+            for pattern in patterns.iter() {
+                let noffset = offset + pattern.len();
+                if noffset <= tower.len() && pattern == &tower[offset..noffset] {
+                    if let Some((_, old_count)) =
+                        offsets.iter_mut().find(|&&mut (p, _)| p == noffset)
+                    {
+                        *old_count += count;
+                    } else {
+                        offsets.push((noffset, count));
+                    }
+                }
+            }
+            offsets.sort_by_key(|&(o, _)| std::cmp::Reverse(o));
+        }
+        eprintln!("{:?}: {}", tower.iter().collect::<String>(), count_this);
+        count_all += count_this;
+    }
+    dbg!(count_all);
+}
+
+pub fn p20_parse(input: &str) -> nom::IResult<&str, Vec<Vec<char>>> {
+    nom::multi::separated_list0(
+        nom::character::complete::newline,
+        nom::multi::many1(nom::character::complete::one_of("#.SE")),
+    )(input)
+}
+
+pub fn p20_solve(
+    maze: &Vec<Vec<char>>,
+    height: usize,
+    width: usize,
+    (sx, sy): (usize, usize),
+    (ex, ey): (usize, usize),
+) -> Option<usize> {
+    let mut curr = vec![(sx, sy)];
+    let mut reached: HashSet<(usize, usize)> = vec![(sx, sy)].into_iter().collect();
+    for step in 0.. {
+        if curr.len() == 0 {
+            break;
+        }
+        for (sx, sy) in std::mem::replace(&mut curr, Default::default()).into_iter() {
+            if (sx, sy) == (ex, ey) {
+                return Some(step);
+            }
+            for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+                let nx = sx as isize + offsetx;
+                let ny = sy as isize + offsety;
+
+                if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+                    let nx = nx as usize;
+                    let ny = ny as usize;
+
+                    if maze[nx][ny] != '#' && !reached.contains(&(nx, ny)) {
+                        reached.insert((nx, ny));
+                        curr.push((nx, ny));
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+pub fn p20() {
+    let contents = r#"###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############"#;
+
+    // let contents = std::fs::read_to_string("./assets/adv2024/adv20.txt").unwrap();
+
+    let maze = p20_parse(contents.as_ref()).unwrap().1;
+    // eprintln!("{:?}", maze);
+
+    let height = maze.len();
+    assert!(height > 0);
+    let width = maze[0].len();
+    assert!(width > 0);
+    let mut start = None;
+    let mut end = None;
+    for idx in 0..height {
+        for idy in 0..width {
+            match maze[idx][idy] {
+                'S' => start = Some((idx, idy)),
+                'E' => end = Some((idx, idy)),
+                _ => {}
+            }
+        }
+    }
+    assert!(start.is_some());
+    assert!(end.is_some());
+    let initial = (maze, height, width, start.unwrap(), end.unwrap());
+    ////////////////////////////////////////////////////////////////////////////////
+    let (maze, height, width, (sx, sy), (ex, ey)) = initial.clone();
+    let benchmark = p20_solve(&maze, height, width, (sx, sy), (ex, ey)).expect("Error in question");
+    let mut improve: HashMap<usize, Vec<((usize, usize, usize, usize))>> = Default::default();
+    for idx in 0..height {
+        for idy in 0..width {
+            let (x0, y0) = (idx, idy);
+            if maze[x0][y0] != '#' {
+                continue;
+            }
+
+            for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+                let x1 = x0 as isize + offsetx;
+                let y1 = y0 as isize + offsety;
+                if x1 >= 0 && x1 < height as isize && y1 >= 0 && y1 < width as isize {
+                    let x1 = x1 as usize;
+                    let y1 = y1 as usize;
+                    if maze[x1][y1] == '#' {
+                        continue;
+                    }
+
+                    let mut maze = maze.clone();
+                    maze[x0][y0] = '.';
+                    let ans1 = p20_solve(&maze, height, width, (sx, sy), (x0, y0));
+                    maze[x0][y0] = '#';
+                    maze[x1][y1] = '#';
+                    let ans2 = p20_solve(&maze, height, width, (x1, y1), (ex, ey));
+                    match (ans1, ans2) {
+                        (Some(ans1), Some(ans2)) => {
+                            let ans = ans1 + ans2 + 1;
+                            if benchmark > ans {
+                                improve
+                                    .entry(benchmark - ans)
+                                    .or_default()
+                                    .push((x0, y0, x1, y1));
+                                if benchmark - ans > 40 {
+                                    eprintln!(
+                                        "{:?} - {:?}: {} => {}",
+                                        (x0, y0),
+                                        (x1, y1),
+                                        ans,
+                                        benchmark - ans
+                                    );
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+    let mut improve: Vec<(usize, usize)> = improve
+        .into_iter()
+        .map(|(k, vs)| (vs.len(), k))
+        .collect::<Vec<_>>();
+    improve.sort_by_key(|&(_, k)| k);
+    let sum: usize = improve
+        .iter()
+        .filter(|&&(len, k)| k >= 100)
+        .map(|&(len, _)| len)
+        .sum();
+    eprintln!("{} => {:?}", sum, improve);
+    eprintln!();
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let (maze, height, width, (sx, sy), (ex, ey)) = initial.clone();
+    let benchmark = p20_solve(&maze, height, width, (sx, sy), (ex, ey)).expect("Error in question");
+    let mut improve: HashMap<usize, Vec<((usize, usize, usize, usize))>> = Default::default();
+    for idx in 0..height {
+        for idy in 0..width {
+            let (x0, y0) = (idx, idy);
+            if maze[x0][y0] == '#' || (x0, y0) == (ex, ey) {
+                continue;
+            }
+
+            let mut reached: HashMap<(usize, usize), usize> = Default::default();
+            let mut reach_in_20s = vec![(x0, y0)];
+            for step in 1..=20 {
+                if reach_in_20s.len() == 0 {
+                    break;
+                }
+                for (x0, y0) in std::mem::replace(&mut reach_in_20s, Default::default()).into_iter()
+                {
+                    for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+                        let x1 = x0 as isize + offsetx;
+                        let y1 = y0 as isize + offsety;
+                        if x1 >= 0 && x1 < height as isize && y1 >= 0 && y1 < width as isize {
+                            let x1 = x1 as usize;
+                            let y1 = y1 as usize;
+                            if step == 1 && maze[x1][y1] != '#' {
+                                // 至少要有一个 #
+                                continue;
+                            } else if maze[x1][y1] == '#' {
+                                if !reach_in_20s.iter().any(|p| p == &(x1, y1)) {
+                                    reach_in_20s.push((x1, y1));
+                                }
+                            } else {
+                                if !reached.contains_key(&(x1, y1)) {
+                                    reached.insert((x1, y1), step);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for ((x1, y1), step) in reached.into_iter() {
+                // let mut maze = maze.clone();
+                // maze[x0][y0] = '.';
+                let ans1 = p20_solve(&maze, height, width, (sx, sy), (x0, y0));
+                // maze[x0][y0] = '#';
+                // maze[x1][y1] = '#';
+                let ans2 = p20_solve(&maze, height, width, (x1, y1), (ex, ey));
+                match (ans1, ans2) {
+                    (Some(ans1), Some(ans2)) => {
+                        let ans = ans1 + ans2 + step;
+                        if benchmark > ans {
+                            improve
+                                .entry(benchmark - ans)
+                                .or_default()
+                                .push((x0, y0, x1, y1));
+                            if benchmark - ans == 70 {
+                                eprintln!(
+                                    "{:?} - {:?}: {} => {}",
+                                    (x0 + 1, y0),
+                                    (x1 + 1, y1),
+                                    ans,
+                                    benchmark - ans
+                                );
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    let mut improve: Vec<(usize, usize)> = improve
+        .into_iter()
+        .map(|(k, vs)| (vs.len(), k))
+        .collect::<Vec<_>>();
+    improve.sort_by_key(|&(_, k)| k);
+    let sum: usize = improve
+        .iter()
+        .filter(|&&(len, k)| k >= 100)
+        .map(|&(len, _)| len)
+        .sum();
+    eprintln!("{} => {:?}", sum, improve);
+}
+
+fn p21_solve(
+    numpad: &HashMap<(isize, isize), char>,
+    dirpad: &HashMap<(isize, isize), char>,
+    signals: Vec<char>,
+    (sx, sy): (isize, isize),
+) -> usize {
+    let mut steps = vec![(sx, sy)];
+
+    0
+}
+
+fn p21_search(
+    anypad: &HashMap<(isize, isize), char>,
+    signal: char,
+    (sx, sy): (isize, isize),
+) -> Option<(Vec<char>, (isize, isize))> {
+    let ((ex, ey), _) = anypad.iter().find(|(p, c)| c == &&signal)?;
+
+    let dirx = (ex - sx, (1, 0, 'v'), (-1, 0, '^'));
+    let diry = (ey - sy, (0, 1, '>'), (0, -1, '<'));
+
+    for dirs in vec![vec![dirx, diry], vec![diry, dirx]].into_iter() {
+        let (mut x0, mut y0) = (sx, sy);
+        let mut instructions = vec![];
+        let mut is_broken = false;
+        'dirloop: for (offset, positive, negative) in dirs.into_iter() {
+            let (offsetx, offsety, sym) = if offset >= 0 { positive } else { negative };
+            for _ in 0..(offset.abs()) {
+                x0 += offsetx;
+                y0 += offsety;
+                instructions.push(sym);
+                if !anypad.contains_key(&(x0, y0)) {
+                    is_broken = true;
+                    break 'dirloop;
+                }
+            }
+        }
+        if !is_broken {
+            return Some((instructions, (x0, y0)));
+        }
+    }
+
+    None
+}
+
+pub fn p21() {
+    let contents = r#"029A
+980A
+179A
+456A
+379A"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv21.txt").unwrap();
+
+    // +---+---+---+
+    // | 7 | 8 | 9 |
+    // +---+---+---+
+    // | 4 | 5 | 6 |
+    // +---+---+---+
+    // | 1 | 2 | 3 |
+    // +---+---+---+
+    //     | 0 | A |
+    //     +---+---+
+    let numpad: HashMap<(isize, isize), char> = vec![
+        ((0, 0), '7'),
+        ((0, 1), '8'),
+        ((0, 2), '9'),
+        ((1, 0), '4'),
+        ((1, 1), '5'),
+        ((1, 2), '6'),
+        ((2, 0), '1'),
+        ((2, 1), '2'),
+        ((2, 2), '3'),
+        ((3, 1), '0'),
+        ((3, 2), 'A'),
+    ]
+    .into_iter()
+    .collect();
+
+    //     +---+---+
+    //     | ^ | A |
+    // +---+---+---+
+    // | < | v | > |
+    // +---+---+---+
+    let dirpad: HashMap<(isize, isize), char> = vec![
+        ((0, 1), '^'),
+        ((0, 2), 'A'),
+        ((1, 0), '<'),
+        ((1, 1), 'v'),
+        ((1, 2), '>'),
+    ]
+    .into_iter()
+    .collect();
+
+    // eprintln!("{:?}", p21_search(&numpad, '3', (3, 2)));
+    // eprintln!("{:?}", p21_search(&numpad, '5', (3, 2)));
+    // eprintln!("{:?}", p21_search(&numpad, '4', (3, 2)));
+    // eprintln!("{:?}", p21_search(&numpad, '7', (3, 2)));
+    // eprintln!("{:?}", p21_search(&numpad, '9', (3, 1)));
+    // eprintln!("{:?}", p21_search(&numpad, 'A', (2, 0)));
+    // eprintln!("{:?}", p21_search(&dirpad, '<', (0, 2)));
+
+    let signals: Vec<Vec<char>> = contents
+        .lines()
+        .map(|line| line.trim().chars().collect())
+        .collect();
+    let mut sum = 0;
+    for signal in signals.iter() {
+        let (mut sx, mut sy) = (3, 2);
+        let mut sequence0 = vec![];
+        for &sym in signal.iter() {
+            let (mut ins, (nx, ny)) = p21_search(&numpad, sym, (sx, sy)).expect("unsolvable");
+            // eprintln!("{:?} {}", ins, sym);
+            sequence0.append(&mut ins);
+            sequence0.push('A');
+            sx = nx;
+            sy = ny;
+        }
+        eprintln!("{} {:?}", sequence0.len(), sequence0);
+
+        let (mut sx, mut sy) = (0, 2);
+        let mut sequence1 = vec![];
+        for &sym in sequence0.iter() {
+            let (mut ins, (nx, ny)) = p21_search(&dirpad, sym, (sx, sy)).expect("unsolvable");
+            // eprintln!("{:?} {}", ins, sym);
+            sequence1.append(&mut ins);
+            sequence1.push('A');
+            sx = nx;
+            sy = ny;
+        }
+        eprintln!("{} {:?}", sequence1.len(), sequence1);
+
+        let (mut sx, mut sy) = (0, 2);
+        let mut sequence2 = vec![];
+        for &sym in sequence1.iter() {
+            let (mut ins, (nx, ny)) = p21_search(&dirpad, sym, (sx, sy)).expect("unsolvable");
+            // eprintln!("{:?} {}", ins, sym);
+            sequence2.append(&mut ins);
+            sequence2.push('A');
+            sx = nx;
+            sy = ny;
+        }
+        eprintln!(
+            "{} {:?}",
+            sequence2.len(),
+            sequence2.iter().collect::<String>()
+        );
+
+        let step: usize = sequence2.len();
+        let num: usize = signal
+            .iter()
+            .take_while(|c| c.is_digit(10))
+            .collect::<String>()
+            .parse()
+            .unwrap();
+        sum += step * num;
+        eprintln!("{:?}: {} x {} = {}", signal, step, num, step * num);
+        eprintln!();
+    }
+    dbg!(sum);
+}
+
+fn p22_process(mut num: isize) -> isize {
+    fn mix(v: isize, s: isize) -> isize {
+        v.bitxor(s)
+    }
+
+    fn prune(v: isize) -> isize {
+        v % 16777216
+    }
+
+    // step 1
+    let r = num * 64;
+    num = mix(r, num);
+    num = prune(num);
+
+    // step 2
+    let r = num / 32;
+    num = mix(r, num);
+    num = prune(num);
+
+    // step 3
+    let r = num * 2048;
+    num = mix(r, num);
+    num = prune(num);
+
+    num
+}
+
+fn p22_encode(num1: isize, num2: isize, num3: isize, num4: isize) -> i32 {
+    // num: [-9, 9] = 19 combinations can be filled into one u32
+    let out = ((num1 + 9) << 24) | ((num2 + 9) << 16) | ((num3 + 9) << 8) | (num4 + 9);
+    out as i32
+}
+
+pub fn p22() {
+    let contents = r#"1
+10
+100
+2024"#;
+
+    let contents = r#"1
+2
+3
+2024"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv22.txt").unwrap();
+
+    let secretes: Vec<isize> = contents.lines().map(|n| n.parse().unwrap()).collect();
+
+    // let secretes = vec![123];
+
+    let mut sum = 0;
+    for &secrete in secretes.iter() {
+        let mut num = secrete;
+
+        for _ in 0..2000 {
+            num = p22_process(num);
+        }
+        // eprintln!("{} -> {}", secrete, num);
+        sum += num;
+    }
+    dbg!(sum);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // 打印第一组所有可能性发现，遍历所有可能性可以完成，不需要特殊算法。
+    // 而且我们通过一个 u32 可以 encode 连续4个价差
+    let mut prices = vec![];
+    let mut signals = vec![];
+    for &secrete in secretes.iter() {
+        let mut num = secrete;
+        let mut price = vec![num % 10];
+        let mut signal: HashMap<i32, isize> = Default::default();
+
+        let mut signature = vec![];
+        let mut prev = num % 10;
+        for _ in 0..2000 {
+            num = p22_process(num);
+            let sig = num % 10;
+            signature.push(sig - prev);
+            if signature.len() >= 5 {
+                signature.remove(0);
+            }
+            if signature.len() >= 4 {
+                let four = p22_encode(signature[0], signature[1], signature[2], signature[3]);
+                if !signal.contains_key(&four) {
+                    signal.insert(four, sig);
+                }
+            }
+
+            price.push(sig);
+            prev = sig;
+        }
+
+        eprintln!(
+            "{}: {} -> {:?}",
+            secrete,
+            signal.len(),
+            // signal.get(&p22_encode(-1, -1, 0, 2))
+            signal.get(&p22_encode(-2, 1, -1, 3))
+        );
+        prices.push(price);
+        signals.push(signal);
+    }
+
+    let mut sums: HashMap<i32, isize> = Default::default();
+    for signal in signals.iter() {
+        for (&k, &v) in signal.into_iter() {
+            *sums.entry(k).or_default() += v;
+        }
+    }
+    dbg!(sums.values().max());
+}
+
+#[derive(Debug)]
+pub struct P23Graph {
+    nodes: Vec<String>,
+    edges: Vec<(usize, usize)>,
+}
+
+impl P23Graph {
+    pub fn parse_str(input: &str) -> nom::IResult<&str, Vec<(&str, &str)>> {
+        use nom::bytes::complete::{is_not, tag};
+        use nom::character::complete::{newline, space0, space1, u64};
+        use nom::combinator::{map, value};
+        use nom::multi::separated_list0;
+        use nom::sequence::{separated_pair, tuple};
+
+        separated_list0(
+            newline,
+            separated_pair(is_not("-\n\t\r"), tag("-"), is_not("-\n\t\r")),
+        )(input)
+    }
+
+    pub fn collect(ori: &[(&str, &str)]) -> Self {
+        let mut nodes = vec![];
+        let mut edges = vec![];
+        for (node0, node1) in ori.into_iter() {
+            let idx0;
+            let idx1;
+            if let Some(idx) = nodes.iter().position(|n| n == node0) {
+                idx0 = idx;
+            } else {
+                let idx = nodes.len();
+                nodes.push(node0.to_string());
+                idx0 = idx;
+            }
+
+            if let Some(idx) = nodes.iter().position(|n| n == node1) {
+                idx1 = idx;
+            } else {
+                let idx = nodes.len();
+                nodes.push(node1.to_string());
+                idx1 = idx;
+            }
+
+            edges.push((idx0, idx1));
+        }
+        Self { nodes, edges }
+    }
+}
+
+pub fn p23() {
+    let contents = r#"kh-tc
+qp-kh
+de-cg
+ka-co
+yn-aq
+qp-ub
+cg-tb
+vc-aq
+tb-ka
+wh-tc
+yn-cg
+kh-ub
+ta-co
+de-co
+tc-td
+tb-wq
+wh-td
+ta-ka
+td-qp
+aq-cg
+wq-ub
+ub-vc
+de-ta
+wq-aq
+wq-vc
+wh-yn
+ka-de
+kh-ta
+co-tc
+wh-qp
+tb-vc
+td-yn"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv23.txt").unwrap();
+
+    let graph = P23Graph::collect(&P23Graph::parse_str(contents.as_ref()).unwrap().1);
+
+    let mut relations: HashMap<usize, HashSet<usize>> = Default::default();
+    for &(n0, n1) in graph.edges.iter() {
+        relations.entry(n0).or_default().insert(n1);
+        relations.entry(n1).or_default().insert(n0);
+    }
+    eprintln!("{:?}", relations);
+
+    let mut collection3: Vec<(usize, usize, usize)> = Default::default();
+    for n0 in 0..graph.nodes.len() {
+        let n0to: HashSet<usize> = relations
+            .get(&n0)
+            .unwrap_or(&Default::default())
+            .into_iter()
+            .cloned()
+            .collect();
+
+        for n1 in n0to.iter().cloned() {
+            if !(n1 > n0) {
+                continue;
+            }
+            let n1to: HashSet<usize> = relations
+                .get(&n1)
+                .unwrap_or(&Default::default())
+                .into_iter()
+                .cloned()
+                .collect();
+
+            // if graph.nodes[n0] == "ub" && graph.nodes[n1] == "tb" {
+            //     eprintln!(">>> {:?} {:?} {:?}", n0to, n1to, graph.nodes[11]);
+            // }
+
+            for &n2 in n0to.intersection(&n1to) {
+                if n2 > n0 && n2 > n1 {
+                    collection3.push((n0, n1, n2));
+                }
+            }
+        }
+    }
+    let mut count = 0;
+    for &(n0, n1, n2) in collection3.iter() {
+        let (n0, n1, n2) = (&graph.nodes[n0], &graph.nodes[n1], &graph.nodes[n2]);
+
+        if vec![n0, n1, n2].into_iter().any(|n| n.starts_with("t")) {
+            count += 1;
+            eprintln!("{:?}", (n0, n1, n2));
+        }
+    }
+    dbg!(count);
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut parties: Vec<Vec<usize>> = graph
+        .edges
+        .iter()
+        .map(|&(n0, n1)| if n0 < n1 { vec![n0, n1] } else { vec![n1, n0] })
+        .collect();
+    loop {
+        for party in std::mem::replace(&mut parties, Default::default()) {
+            let all: HashSet<usize> = party.iter().skip(1).fold(
+                relations
+                    .get(&party[0])
+                    .unwrap_or(&Default::default())
+                    .clone(),
+                |acc, x| {
+                    acc.intersection(relations.get(x).unwrap_or(&Default::default()))
+                        .cloned()
+                        .collect()
+                },
+            );
+            for nx in all.into_iter() {
+                if &nx < party.last().unwrap() {
+                    continue;
+                }
+                let mut px = party.clone();
+                px.push(nx);
+                parties.push(px);
+            }
+        }
+
+        if parties.len() < 15 {
+            let mut pwd: Vec<_> = parties[0]
+                .iter()
+                .map(|&n| graph.nodes[n].to_string())
+                .collect();
+            pwd.sort();
+            let pwd = pwd.join(",");
+
+            eprintln!(
+                "{:?}: {:?}",
+                pwd,
+                parties
+                    .iter()
+                    .map(|px| px.iter().map(|&n| &graph.nodes[n]).collect::<Vec<_>>())
+                    .collect::<Vec<_>>()
+            );
+        }
+        if parties.len() <= 1 {
+            eprintln!("Got it!");
+            break;
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum P24Op {
+    And,
+    Or,
+    Xor,
+}
+
+impl P24Op {
+    pub fn op(&self, left: bool, right: bool) -> bool {
+        match self {
+            P24Op::And => left & right,
+            P24Op::Or => left | right,
+            P24Op::Xor => left.bitxor(right),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct P24System {
+    nodes: Vec<String>,
+    values: Vec<bool>,
+    operations: Vec<(P24Op, usize, usize, usize)>,
+}
+
+impl P24System {
+    pub fn parse(input: &str) -> nom::IResult<&str, Self> {
+        use nom::branch::alt;
+        use nom::bytes::complete::tag;
+        use nom::character::complete::{alphanumeric1, newline, space0, space1, u64};
+        use nom::combinator::{map, value};
+        use nom::multi::{many1, separated_list0};
+        use nom::sequence::{preceded, separated_pair, tuple};
+
+        let mut nodes = vec![];
+        let mut values = vec![];
+        let (input, nodes0) = separated_list0(
+            newline,
+            separated_pair(
+                alphanumeric1,
+                tag(": "),
+                alt((value(true, tag("1")), value(false, tag("0")))),
+            ),
+        )(input)?;
+
+        for (node, value) in nodes0.into_iter() {
+            nodes.push(node.to_string());
+            values.push(value);
+        }
+
+        let (input, _) = many1(newline)(input)?;
+
+        let (input, operations) = separated_list0(
+            newline,
+            map(
+                tuple((
+                    alphanumeric1::<&str, _>,
+                    preceded(
+                        space1,
+                        alt((
+                            value(P24Op::And, tag("AND")),
+                            value(P24Op::Or, tag("OR")),
+                            value(P24Op::Xor, tag("XOR")),
+                        )),
+                    ),
+                    preceded(space1, alphanumeric1),
+                    preceded(tuple((space1, tag("->"), space1)), alphanumeric1),
+                )),
+                |(op0, op, op1, ans)| {
+                    let op0 = if let Some(ndx) = nodes.iter().position(|n| n == op0) {
+                        ndx
+                    } else {
+                        let odx = nodes.len();
+                        nodes.push(op0.to_string());
+                        odx
+                    };
+
+                    let op1 = if let Some(ndx) = nodes.iter().position(|n| n == op1) {
+                        ndx
+                    } else {
+                        let odx = nodes.len();
+                        nodes.push(op1.to_string());
+                        odx
+                    };
+                    let ans = if let Some(ndx) = nodes.iter().position(|n| n == ans) {
+                        ndx
+                    } else {
+                        let odx = nodes.len();
+                        nodes.push(ans.to_string());
+                        odx
+                    };
+                    (op, op0, op1, ans)
+                },
+            ),
+        )(input)?;
+
+        Ok((
+            input,
+            Self {
+                nodes,
+                values,
+                operations,
+            },
+        ))
+    }
+}
+
+pub fn p24_encode(system: &P24System, prefix: &str) -> i64 {
+    let mut names: Vec<_> = system
+        .nodes
+        .iter()
+        .filter(|n| n.starts_with(prefix))
+        .cloned()
+        .collect();
+    names.sort();
+    let mut sum: i64 = 0;
+    for name in names.iter().rev() {
+        let idx = system.nodes.iter().position(|n| n == name).unwrap();
+        // eprintln!("{:?} -> {:?}", name, system.values[idx]);
+        sum = (sum << 1).bitor(if system.values[idx] { 1 } else { 0 });
+    }
+    sum
+}
+
+pub fn p24_decode(mut num: i64) -> Vec<bool> {
+    let mut out = vec![];
+    for _ in 0..64 {
+        let sig = num & 1;
+        out.push(sig > 0);
+        num = num >> 1;
+    }
+    out
+}
+
+pub fn p24_encode_bool(flag: bool) -> isize {
+    if flag {
+        1
+    } else {
+        0
+    }
+}
+
+pub fn p24_solve(system: &P24System) -> i64 {
+    let mut values: Vec<_> = system.values.iter().cloned().map(Some).collect();
+    values.resize(system.nodes.len(), None);
+    let mut activated = vec![false; system.operations.len()];
+    for _ in 0.. {
+        let mut is_updated: bool = false;
+        for (&(opx, op0, op1, res), activate) in system.operations.iter().zip(activated.iter_mut())
+        {
+            match (values[op0], values[op1]) {
+                (Some(left), Some(right)) if !*activate => {
+                    is_updated = true;
+                    values[res] = Some(opx.op(left, right));
+                    *activate = true;
+                }
+                _ => {}
+            }
+        }
+        if !is_updated {
+            break;
+        }
+    }
+
+    let mut ans = system.clone();
+    ans.values = values.into_iter().map(|n| n.unwrap()).collect();
+    p24_encode(&ans, "z")
+}
+
+pub fn p24() {
+    let contents = r#"x00: 1
+x01: 0
+x02: 1
+x03: 1
+x04: 0
+y00: 1
+y01: 1
+y02: 1
+y03: 1
+y04: 1
+
+ntg XOR fgs -> mjb
+y02 OR x01 -> tnw
+kwq OR kpj -> z05
+x00 OR x03 -> fst
+tgd XOR rvg -> z01
+vdt OR tnw -> bfw
+bfw AND frj -> z10
+ffh OR nrd -> bqk
+y00 AND y03 -> djm
+y03 OR y00 -> psh
+bqk OR frj -> z08
+tnw OR fst -> frj
+gnj AND tgd -> z11
+bfw XOR mjb -> z00
+x03 OR x00 -> vdt
+gnj AND wpb -> z02
+x04 AND y00 -> kjc
+djm OR pbm -> qhw
+nrd AND vdt -> hwm
+kjc AND fst -> rvg
+y04 OR y02 -> fgs
+y01 AND x02 -> pbm
+ntg OR kjc -> kwq
+psh XOR fgs -> tgd
+qhw XOR tgd -> z09
+pbm OR djm -> kpj
+x03 XOR y03 -> ffh
+x00 XOR y04 -> ntg
+bfw OR bqk -> z06
+nrd XOR fgs -> wpb
+frj XOR qhw -> z04
+bqk OR frj -> z07
+y03 OR x01 -> nrd
+hwm AND bqk -> z03
+tgd XOR rvg -> z12
+tnw OR pbm -> gnj"#;
+    let contents = r#"x00: 1
+x01: 1
+x02: 1
+y00: 0
+y01: 1
+y02: 0
+
+x00 AND y00 -> z00
+x01 XOR y01 -> z01
+x02 OR y02 -> z02"#;
+    let contents = r#"x00: 0
+x01: 1
+x02: 0
+x03: 1
+x04: 0
+x05: 1
+y00: 0
+y01: 0
+y02: 1
+y03: 1
+y04: 0
+y05: 1
+
+x00 AND y00 -> z05
+x01 AND y01 -> z02
+x02 AND y02 -> z01
+x03 AND y03 -> z03
+x04 AND y04 -> z04
+x05 AND y05 -> z00"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv24.txt").unwrap();
+
+    let system = P24System::parse(contents.as_ref()).unwrap().1;
+    dbg!(p24_solve(&system));
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut system = system;
+    // system.values[44] = false;
+
+    // 题目含义是所有加法都可以完成，所以我们必然不能只通过实例去做
+    // 但可以通过简单的打印，发现每一步都是符合同样的逻辑，找到需要替换的项，尝试替换即可
+    let pairs = vec![
+        /* on solution
+        ("kth", "z12"),
+        ("gsd", "z26"),
+        // z32
+        ("nwm", "z32"),
+        // ("tbt", "z32"),
+        // z36
+        ("vpm", "z36"),
+        */
+        ("kth", "z12"),
+        ("gsd", "z26"),
+        ("tbt", "z32"),
+        ("vpm", "qnf"),
+    ];
+
+    for &(name0, name1) in pairs.iter() {
+        let _: &'static str = name0;
+        let _: &'static str = name1;
+        let n0 = system.nodes.iter().position(|n| n == name0).unwrap();
+        let n1 = system.nodes.iter().position(|n| n == name1).unwrap();
+        let o0 = system
+            .operations
+            .iter()
+            .position(|(_, _, _, r)| r == &n0)
+            .unwrap();
+        let o1 = system
+            .operations
+            .iter()
+            .position(|(_, _, _, r)| r == &n1)
+            .unwrap();
+        system.operations[o0].3 = n1;
+        system.operations[o1].3 = n0;
+    }
+    ////////////////////////////////////////////////////////////////////////////////
+
+    // system.values[..45].fill(true);
+    // eprintln!("{}", p24_encode(&system, "x"));
+    const MAXNUM: i64 = 35184372088831;
+
+    eprintln!("New result is: {}", p24_solve(&system));
+    let xx = p24_encode(&system, "x");
+    let yy = p24_encode(&system, "y");
+    let zz = xx + yy;
+    eprintln!(
+        "{xx}({xx:0b}) + {yy}({yy:0b}) = {zz}({zz:0b}) vs {}",
+        p24_solve(&system)
+    );
+    // assert_eq!(zz, p24_solve(&system));
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let zzs = p24_decode(zz);
+    // eprintln!("{:?}", zzs);
+    let mut values: Vec<_> = system.values.iter().cloned().map(Some).collect();
+    values.resize(system.nodes.len(), None);
+    let symbols_order: Vec<isize> = system
+        .nodes
+        .iter()
+        .map(|n| n[1..].parse().unwrap_or(-1))
+        .collect();
+    let mut activated = vec![false; system.operations.len()];
+
+    for idx in 0..64 {
+        let zz = format!("z{:02}", idx);
+        let zdx = system.nodes.iter().position(|n| n == &zz);
+        if zdx.is_none() {
+            break;
+        }
+        let zdx = zdx.unwrap();
+
+        let mut assembles = vec![P24Op::And, P24Op::Xor, P24Op::Xor, P24Op::And, P24Op::Or];
+        loop {
+            let mut is_updated: bool = false;
+            for (&(opx, op0, op1, res), activate) in
+                system.operations.iter().zip(activated.iter_mut())
+            {
+                match (values[op0], values[op1]) {
+                    (Some(left), Some(right))
+                        if !*activate
+                            && symbols_order[op0] <= idx
+                            && symbols_order[op1] <= idx
+                            && &opx == assembles.first().unwrap() =>
+                    {
+                        is_updated = true;
+                        values[res] = Some(opx.op(left, right));
+                        *activate = true;
+                        assembles.remove(0);
+
+                        let (left, right, val) = (
+                            p24_encode_bool(left),
+                            p24_encode_bool(right),
+                            p24_encode_bool(opx.op(left, right)),
+                        );
+                        eprintln!(
+                            "\t{left} ({} {op0}) {opx:?} {right}({} {op1}) => {val}({} {res})",
+                            system.nodes[op0], system.nodes[op1], system.nodes[res]
+                        );
+                    }
+                    _ => {}
+                }
+            }
+            if !is_updated {
+                break;
+            }
+        }
+
+        let calculated = values[zdx].map(p24_encode_bool).unwrap_or(-1);
+        let target = p24_encode_bool(zzs[idx as usize]);
+        eprintln!("{idx}: values={calculated} vs target={target}",);
+        assert_eq!(calculated, target, "target={target}");
+        eprintln!("=================");
+    }
+
+    let mut pairs: Vec<_> = pairs
+        .into_iter()
+        .map(|(xx, yy)| vec![xx, yy].into_iter())
+        .flatten()
+        .collect();
+    pairs.sort();
+    dbg!(pairs.join(","));
+
+    // // 尝试用图形依赖关系找到问题，失败了
+    // // 当我做出结果后，发现这个方法才是对的，因为要对所有两数加法得到正确的解，
+    // // 那么意味着第n位一定必须依赖第n位，不多不少，swap 两项使得该关系成立即可
+    // let mut relationship: HashMap<usize, (usize, usize)> = Default::default();
+    // for &(_, n0, n1, no) in system.operations.iter() {
+    //     relationship.insert(no, (n0, n1));
+    // }
+    //
+    // for idx in 0..64 {
+    //     let zz = format!("z{:02}", idx);
+    //     let zdx = system.nodes.iter().position(|n| n == &zz);
+    //     if zdx.is_none() {
+    //         break;
+    //     }
+    //     let zdx = zdx.unwrap();
+    //     let (n0, n1) = relationship.get(&zdx).unwrap().clone();
+    //     let mut xymap: Vec<(usize, String)> = vec![];
+    //     let mut reached = vec![n0, n1];
+    //     while let Some(nn) = reached.pop() {
+    //         let name = system.nodes[nn].clone();
+    //         if name.starts_with("x") || name.starts_with("y") {
+    //             xymap.push((nn, name))
+    //         } else {
+    //             let (n0, n1) = relationship.get(&nn).unwrap().clone();
+    //             for nx in vec![n0, n1].into_iter() {
+    //                 if xymap.iter().all(|(nmap, _)| &nx != nmap)
+    //                     && reached.iter().all(|nreach| nreach != &nx)
+    //                 {
+    //                     reached.push(nx);
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     let mut dep = xymap.iter().map(|(_, n)| n.clone()).collect::<Vec<_>>();
+    //     dep.sort();
+    //     let dep: String = dep.join(",");
+    //     eprintln!("{zz:?} <- {:?}", dep,);
+    // }
+}
+
+fn p25_parse(input: &str) -> nom::IResult<&str, Vec<Vec<Vec<char>>>> {
+    use nom::bytes::complete::tag;
+    use nom::character::complete::{newline, one_of, space0, space1, u64};
+    use nom::combinator::{map, value};
+    use nom::multi::{many1, separated_list0, separated_list1};
+    use nom::sequence::tuple;
+
+    separated_list1(
+        many1(newline),
+        separated_list1(newline, many1(one_of(".#"))),
+    )(input)
+}
+
+pub fn p25() {
+    let contents = r#"#####
+.####
+.####
+.####
+.#.#.
+.#...
+.....
+
+#####
+##.##
+.#.##
+...##
+...#.
+...#.
+.....
+
+.....
+#....
+#....
+#...#
+#.#.#
+#.###
+#####
+
+.....
+.....
+#.#..
+###..
+###.#
+###.#
+#####
+
+.....
+.....
+.....
+#....
+#.#..
+#.#.#
+#####"#;
+
+    let contents = std::fs::read_to_string("./assets/adv2024/adv25.txt").unwrap();
+
+    let puzzles = p25_parse(contents.as_ref()).unwrap().1;
+    let mut locks: Vec<Vec<usize>> = vec![];
+    let mut keys: Vec<Vec<usize>> = vec![];
+
+    for puzzle in puzzles.iter() {
+        if puzzle[0].iter().all(|&w| w == '#') {
+            let height = puzzle.len();
+            let width = puzzle[0].len();
+
+            locks.push(
+                (0..width)
+                    .into_iter()
+                    .map(|column| {
+                        for row in 1..height {
+                            if puzzle[row][column] == '.' {
+                                return row - 1;
+                            }
+                        }
+                        return 0;
+                    })
+                    .collect(),
+            );
+        } else {
+            assert!(puzzle.last().unwrap().iter().all(|&w| w == '#'));
+            let height = puzzle.len();
+            let width = puzzle[0].len();
+
+            keys.push(
+                (0..width)
+                    .into_iter()
+                    .map(|column| {
+                        for row in 1..height {
+                            if puzzle[height - 1 - row][column] == '.' {
+                                return row - 1;
+                            }
+                        }
+                        return 0;
+                    })
+                    .collect(),
+            );
+        }
+    }
+    // eprintln!("{:?}", locks);
+    // eprintln!("{:?}", keys);
+    let mut count = 0;
+
+    for lock in locks.iter() {
+        for key in keys.iter() {
+            if lock
+                .iter()
+                .cloned()
+                .zip(key.iter().cloned())
+                .all(|(l, k)| l + k <= 5)
+            {
+                eprintln!("{:?} vs {:?}", lock, key);
+                count += 1;
+            }
+        }
+    }
+    dbg!(count);
 }
