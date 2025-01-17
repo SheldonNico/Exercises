@@ -2,14 +2,13 @@
 
 use core::panic;
 use std::{
+    any,
     collections::{HashMap, HashSet},
     hash::{DefaultHasher, Hash},
     isize,
     iter::FromIterator,
     ops::{BitOr, BitXor},
 };
-
-use nom::sequence::separated_pair;
 
 pub fn p01() {
     let contents = r#"3   4
@@ -2207,6 +2206,21 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^"#;
 type P16Dir = (isize, isize);
 
 pub fn p16() {
+    let contents = r#"###############
+#.......#....E#
+#.#.###.#.###.#
+#.....#.#...#.#
+#.###.#####.#.#
+#.#.#.......#.#
+#.#.#####.###.#
+#...........#.#
+###.#.#####.#.#
+#...#.....#.#.#
+#.#.#.###.#.#.#
+#.....#...#.#.#
+#.###.#.#.#.#.#
+#S..#.....#...#
+###############"#;
     let contents = r#"#################
 #...#...#...#..E#
 #.#.#.#.#.#.#.#.#
@@ -2224,23 +2238,8 @@ pub fn p16() {
 #.#.#.#########.#
 #S#.............#
 #################"#;
-    let contents = r#"###############
-#.......#....E#
-#.#.###.#.###.#
-#.....#.#...#.#
-#.###.#####.#.#
-#.#.#.......#.#
-#.#.#####.###.#
-#...........#.#
-###.#.#####.#.#
-#...#.....#.#.#
-#.#.#.###.#.#.#
-#.....#...#.#.#
-#.###.#.#.#.#.#
-#S..#.....#...#
-###############"#;
 
-    let contents = std::fs::read_to_string("./assets/adv2024/adv16.txt").unwrap();
+    // let contents = std::fs::read_to_string("./assets/adv2024/adv16.txt").unwrap();
 
     let maze: Vec<Vec<char>> = contents
         .lines()
@@ -2369,88 +2368,162 @@ pub fn p16() {
     // }
 
     ////////////////////////////////////////////////////////////////////////////////
+    // let ((sx, sy), (ex, ey)) = initial;
+    // let mut pathes = vec![(0, vec![(sx, sy)], (0, 1))];
+    // let mut reached = vec![];
+    // let mut minscore = usize::MAX;
+    // eprintln!("{:?} -> {:?}", (sx, sy), (ex, ey));
+    // while let Some((mut score, mut path, mut dir)) = pathes.pop() {
+    //     // 优化： 部分点的通路是确定的，我们一直往下走，知道遇到岔路，以控制 pathes 的大小
+    //     while let Some((sx, sy)) = path.last().cloned() {
+    //         if sx == ex && sy == ey {
+    //             let oldpathlen = pathes.len();
+    //             pathes = pathes.into_iter().filter(|&(s, _, _)| s < score).collect();
+    //             minscore = minscore.min(score);
+    //             let newpathlen = pathes.len();
+    //             eprintln!(
+    //                 "Found one Limit={} ({})x({}): {} -> {}",
+    //                 minscore,
+    //                 score,
+    //                 path.len(),
+    //                 oldpathlen,
+    //                 newpathlen,
+    //                 // path
+    //             );
+    //             reached.push((score, path.clone(), dir));
+    //             break;
+    //         } else {
+    //             let mut nextpoints = vec![];
+    //             for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+    //                 let nx = sx as isize + offsetx;
+    //                 let ny = sy as isize + offsety;
+    //                 if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+    //                     let nx = nx as usize;
+    //                     let ny = ny as usize;
+    //
+    //                     if maze[nx][ny] != '#' && (!path.iter().any(|o| o == &(nx, ny))) {
+    //                         let mut inc = 1;
+    //                         if dir != (offsetx, offsety) {
+    //                             if dir == (-offsetx, offsety) || dir == (offsetx, -offsety) {
+    //                                 inc += 1000 * 2;
+    //                             } else {
+    //                                 inc += 1000;
+    //                             }
+    //                         }
+    //                         if score + inc < minscore {
+    //                             nextpoints.push((score + inc, (nx, ny), (offsetx, offsety)));
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //
+    //             if nextpoints.len() >= 2 {
+    //                 // eprintln!(
+    //                 //     "Found tow dir {:?} -> {:?} <- {}",
+    //                 //     (sx, sy),
+    //                 //     nextpoints,
+    //                 //     pathes.len()
+    //                 // );
+    //                 for (nextscore, nextpoint, nextdir) in nextpoints.into_iter() {
+    //                     let mut np = path.clone();
+    //                     np.push(nextpoint);
+    //                     pathes.push((nextscore, np, nextdir));
+    //                 }
+    //                 break;
+    //             } else if nextpoints.len() == 1 {
+    //                 let (nextscore, nextpoint, nextdir) = nextpoints[0];
+    //                 // eprintln!(
+    //                 //     "Find a Continuous path: {:?} vs {}",
+    //                 //     nextpoint,
+    //                 //     pathes.len()
+    //                 // );
+    //                 score = nextscore;
+    //                 path.push(nextpoint);
+    //                 dir = nextdir;
+    //             } else {
+    //                 // eprintln!("Removing one path");
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //
+    //     // pathes.sort_by_key(|&(s, _, _)| std::cmp::Reverse(s));
+    // }
+    // dbg!(&reached.iter().map(|&(s, _, _)| s).min().unwrap_or_default());
+
+    ////////////////////////////////////////////////////////////////////////////////
     let ((sx, sy), (ex, ey)) = initial;
-    let mut pathes = vec![(0, vec![(sx, sy)], (0, 1))];
-    let mut reached = vec![];
-    let mut minscore = usize::MAX;
-    eprintln!("{:?} -> {:?}", (sx, sy), (ex, ey));
-    while let Some((mut score, mut path, mut dir)) = pathes.pop() {
-        // 优化： 部分点的通路是确定的，我们一直往下走，知道遇到岔路，以控制 pathes 的大小
-        while let Some((sx, sy)) = path.last().cloned() {
+    let mut scores: HashMap<(usize, usize, (isize, isize)), (usize, HashSet<(usize, usize)>)> =
+        vec![((sx, sy, (0, 1)), (0, vec![(sx, sy)].into_iter().collect()))]
+            .into_iter()
+            .collect();
+
+    let mut last_score_updated = 0;
+    'outer: for score in 0.. {
+        // eprintln!("{}", score);
+        let mut updated: HashMap<(usize, usize, (isize, isize)), HashSet<(usize, usize)>> =
+            Default::default();
+        for (&(sx, sy, (offsetx, offsety)), (last_score, steps)) in scores.iter() {
             if sx == ex && sy == ey {
-                let oldpathlen = pathes.len();
-                pathes = pathes.into_iter().filter(|&(s, _, _)| s < score).collect();
-                minscore = minscore.min(score);
-                let newpathlen = pathes.len();
                 eprintln!(
-                    "Found one Limit={} ({})x({}): {} -> {}",
-                    minscore,
-                    score,
-                    path.len(),
-                    oldpathlen,
-                    newpathlen,
-                    // path
+                    "Found minimum: {}@{} => {:?}",
+                    last_score,
+                    steps.len(),
+                    steps
                 );
-                reached.push((score, path.clone(), dir));
-                break;
-            } else {
-                let mut nextpoints = vec![];
-                for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
-                    let nx = sx as isize + offsetx;
-                    let ny = sy as isize + offsety;
-                    if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
-                        let nx = nx as usize;
-                        let ny = ny as usize;
+                break 'outer;
+            }
 
-                        if maze[nx][ny] != '#' && (!path.iter().any(|o| o == &(nx, ny))) {
-                            let mut inc = 1;
-                            if dir != (offsetx, offsety) {
-                                if dir == (-offsetx, offsety) || dir == (offsetx, -offsety) {
-                                    inc += 1000 * 2;
-                                } else {
-                                    inc += 1000;
-                                }
-                            }
-                            if score + inc < minscore {
-                                nextpoints.push((score + inc, (nx, ny), (offsetx, offsety)));
-                            }
-                        }
+            let gap = score - last_score;
+            let mut nxt = vec![];
+            if gap == 1 {
+                // move 1
+                let nx = sx as isize + offsetx;
+                let ny = sy as isize + offsety;
+                if nx >= 0 && nx < height as isize && ny >= 0 && ny < width as isize {
+                    let nx = nx as usize;
+                    let ny = ny as usize;
+
+                    if maze[nx][ny] != '#' && !scores.contains_key(&(nx, ny, (offsetx, offsety))) {
+                        nxt.push((nx, ny, (offsetx, offsety)));
                     }
                 }
-
-                if nextpoints.len() >= 2 {
-                    // eprintln!(
-                    //     "Found tow dir {:?} -> {:?} <- {}",
-                    //     (sx, sy),
-                    //     nextpoints,
-                    //     pathes.len()
-                    // );
-                    for (nextscore, nextpoint, nextdir) in nextpoints.into_iter() {
-                        let mut np = path.clone();
-                        np.push(nextpoint);
-                        pathes.push((nextscore, np, nextdir));
+            } else if gap == 1000 || gap == 2000 {
+                // move dir
+                for dir in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+                    if scores.contains_key(&(sx, sy, dir)) {
+                        continue;
                     }
-                    break;
-                } else if nextpoints.len() == 1 {
-                    let (nextscore, nextpoint, nextdir) = nextpoints[0];
-                    // eprintln!(
-                    //     "Find a Continuous path: {:?} vs {}",
-                    //     nextpoint,
-                    //     pathes.len()
-                    // );
-                    score = nextscore;
-                    path.push(nextpoint);
-                    dir = nextdir;
-                } else {
-                    // eprintln!("Removing one path");
-                    break;
+                    if (dir == (-offsetx, offsety) || dir == (offsetx, -offsety)) && gap == 2000 {
+                        nxt.push((sx, sy, dir));
+                    } else if dir != (offsetx, offsety) && gap == 1000 {
+                        nxt.push((sx, sy, dir));
+                    }
                 }
+            }
+
+            for (xx, yy, dir) in nxt.into_iter() {
+                let last_steps = updated.entry((xx, yy, dir)).or_insert(steps.clone());
+
+                for &s in steps.iter() {
+                    last_steps.insert(s);
+                }
+                last_steps.insert((xx, yy));
             }
         }
 
-        // pathes.sort_by_key(|&(s, _, _)| std::cmp::Reverse(s));
+        if updated.len() != 0 {
+            last_score_updated = score;
+        }
+        if score - last_score_updated > 1000 * 4 {
+            eprintln!("score not updated till 4 dir");
+            break;
+        }
+
+        for (k, v) in updated.into_iter() {
+            scores.insert(k, (score, v));
+        }
     }
-    dbg!(&reached.iter().map(|&(s, _, _)| s).min().unwrap_or_default());
 }
 
 #[derive(Clone)]
@@ -2968,6 +3041,21 @@ pub fn p20_solve(
     None
 }
 
+pub fn p20_solve_mem(
+    maze: &Vec<Vec<char>>,
+    height: usize,
+    width: usize,
+    (sx, sy): (usize, usize),
+    (ex, ey): (usize, usize),
+    mem: &mut HashMap<(usize, usize, usize, usize), Option<usize>>,
+) -> Option<usize> {
+    if !mem.contains_key(&(sx, sy, ex, ey)) {
+        let out = p20_solve(maze, height, width, (sx, sy), (ex, ey));
+        mem.insert((sx, sy, ex, ey), out);
+    }
+    mem.get(&(sx, sy, ex, ey)).unwrap().clone()
+}
+
 pub fn p20() {
     let contents = r#"###############
 #...#...#.....#
@@ -2985,7 +3073,7 @@ pub fn p20() {
 #...#...#...###
 ###############"#;
 
-    // let contents = std::fs::read_to_string("./assets/adv2024/adv20.txt").unwrap();
+    let contents = std::fs::read_to_string("./assets/adv2024/adv20.txt").unwrap();
 
     let maze = p20_parse(contents.as_ref()).unwrap().1;
     // eprintln!("{:?}", maze);
@@ -3077,75 +3165,91 @@ pub fn p20() {
     let (maze, height, width, (sx, sy), (ex, ey)) = initial.clone();
     let benchmark = p20_solve(&maze, height, width, (sx, sy), (ex, ey)).expect("Error in question");
     let mut improve: HashMap<usize, Vec<((usize, usize, usize, usize))>> = Default::default();
+    let mut mem = Default::default();
+    let mut nonwalls = vec![];
     for idx in 0..height {
         for idy in 0..width {
-            let (x0, y0) = (idx, idy);
-            if maze[x0][y0] == '#' || (x0, y0) == (ex, ey) {
-                continue;
-            }
-
-            let mut reached: HashMap<(usize, usize), usize> = Default::default();
-            let mut reach_in_20s = vec![(x0, y0)];
-            for step in 1..=20 {
-                if reach_in_20s.len() == 0 {
-                    break;
-                }
-                for (x0, y0) in std::mem::replace(&mut reach_in_20s, Default::default()).into_iter()
-                {
-                    for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
-                        let x1 = x0 as isize + offsetx;
-                        let y1 = y0 as isize + offsety;
-                        if x1 >= 0 && x1 < height as isize && y1 >= 0 && y1 < width as isize {
-                            let x1 = x1 as usize;
-                            let y1 = y1 as usize;
-                            if step == 1 && maze[x1][y1] != '#' {
-                                // 至少要有一个 #
-                                continue;
-                            } else if maze[x1][y1] == '#' {
-                                if !reach_in_20s.iter().any(|p| p == &(x1, y1)) {
-                                    reach_in_20s.push((x1, y1));
-                                }
-                            } else {
-                                if !reached.contains_key(&(x1, y1)) {
-                                    reached.insert((x1, y1), step);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            for ((x1, y1), step) in reached.into_iter() {
-                // let mut maze = maze.clone();
-                // maze[x0][y0] = '.';
-                let ans1 = p20_solve(&maze, height, width, (sx, sy), (x0, y0));
-                // maze[x0][y0] = '#';
-                // maze[x1][y1] = '#';
-                let ans2 = p20_solve(&maze, height, width, (x1, y1), (ex, ey));
-                match (ans1, ans2) {
-                    (Some(ans1), Some(ans2)) => {
-                        let ans = ans1 + ans2 + step;
-                        if benchmark > ans {
-                            improve
-                                .entry(benchmark - ans)
-                                .or_default()
-                                .push((x0, y0, x1, y1));
-                            if benchmark - ans == 70 {
-                                eprintln!(
-                                    "{:?} - {:?}: {} => {}",
-                                    (x0 + 1, y0),
-                                    (x1 + 1, y1),
-                                    ans,
-                                    benchmark - ans
-                                );
-                            }
-                        }
-                    }
-                    _ => {}
-                }
+            if maze[idx][idy] != '#' {
+                nonwalls.push((idx, idy));
             }
         }
     }
+
+    for &(x0, y0) in nonwalls.iter() {
+        if maze[x0][y0] == '#' || (x0, y0) == (ex, ey) {
+            continue;
+        }
+
+        // let mut reached: HashMap<(usize, usize), usize> = Default::default();
+        // let mut reach_in_20s = vec![(x0, y0)];
+        // for step in 1..=20 {
+        //     if reach_in_20s.len() == 0 {
+        //         break;
+        //     }
+        //     for (x0, y0) in std::mem::replace(&mut reach_in_20s, Default::default()).into_iter() {
+        //         for (offsetx, offsety) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
+        //             let x1 = x0 as isize + offsetx;
+        //             let y1 = y0 as isize + offsety;
+        //             if x1 >= 0 && x1 < height as isize && y1 >= 0 && y1 < width as isize {
+        //                 let x1 = x1 as usize;
+        //                 let y1 = y1 as usize;
+        //                 if step == 1 && maze[x1][y1] != '#' {
+        //                     // 至少要有一个 #
+        //                     continue;
+        //                 } else if maze[x1][y1] == '#' {
+        //                     if !reach_in_20s.iter().any(|p| p == &(x1, y1)) {
+        //                         reach_in_20s.push((x1, y1));
+        //                     }
+        //                 } else {
+        //                     if !reached.contains_key(&(x1, y1)) {
+        //                         reached.insert((x1, y1), step);
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+        // for ((x1, y1), step) in reached.into_iter() {
+
+        for &(x1, y1) in nonwalls.iter() {
+            let step =
+                ((x1 as isize - x0 as isize).abs() + (y1 as isize - y0 as isize).abs()) as usize;
+            if !(step > 0 && step <= 20) {
+                continue;
+            }
+
+            // let mut maze = maze.clone();
+            // maze[x0][y0] = '.';
+            let ans1 = p20_solve_mem(&maze, height, width, (sx, sy), (x0, y0), &mut mem);
+            // maze[x0][y0] = '#';
+            // maze[x1][y1] = '#';
+            let ans2 = p20_solve_mem(&maze, height, width, (x1, y1), (ex, ey), &mut mem);
+            match (ans1, ans2) {
+                (Some(ans1), Some(ans2)) => {
+                    let ans = ans1 + ans2 + step;
+                    if benchmark > ans {
+                        improve
+                            .entry(benchmark - ans)
+                            .or_default()
+                            .push((x0, y0, x1, y1));
+                        if benchmark - ans == 72 {
+                            eprintln!(
+                                "{:?} - {:?}:({}) {} => {}",
+                                (x0, y0),
+                                (x1, y1),
+                                step,
+                                ans,
+                                benchmark - ans
+                            );
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
     let mut improve: Vec<(usize, usize)> = improve
         .into_iter()
         .map(|(k, vs)| (vs.len(), k))
@@ -3159,15 +3263,68 @@ pub fn p20() {
     eprintln!("{} => {:?}", sum, improve);
 }
 
-fn p21_solve(
-    numpad: &HashMap<(isize, isize), char>,
-    dirpad: &HashMap<(isize, isize), char>,
-    signals: Vec<char>,
-    (sx, sy): (isize, isize),
-) -> usize {
-    let mut steps = vec![(sx, sy)];
+fn p21_solve<'m>(
+    anypad: &HashMap<(isize, isize), char>,
+    sym_from: char,
+    sym_to: char,
+    mem: &'m mut HashMap<(char, char), Vec<Vec<char>>>,
+) -> &'m Vec<Vec<char>> {
+    if !mem.contains_key(&(sym_from, sym_to)) {
+        let ((sx, sy), _) = anypad.iter().find(|(_, sym)| sym == &&sym_from).unwrap();
+        let ((ex, ey), _) = anypad.iter().find(|(_, sym)| sym == &&sym_to).unwrap();
 
-    0
+        let mut lastpoints: Vec<(isize, isize, Vec<Vec<char>>)> = vec![(*sx, *sy, vec![vec![]])];
+        let mut reached: HashSet<char> = Default::default();
+
+        reached.insert(sym_from);
+        mem.insert((sym_from, sym_to), vec![vec![]]);
+
+        while lastpoints.len() > 0 {
+            let mut updated: HashMap<(char, isize, isize), Vec<Vec<char>>> = Default::default();
+            for (sx, sy, path) in std::mem::replace(&mut lastpoints, Default::default()).into_iter()
+            {
+                // mem.insert((sym_from, sym_curr));
+                for (offsetx, offsety, sym) in
+                    vec![(1, 0, 'v'), (-1, 0, '^'), (0, 1, '>'), (0, -1, '<')].into_iter()
+                {
+                    let nx = sx + offsetx;
+                    let ny = sy + offsety;
+
+                    if let Some(&nsym) = anypad.get(&(nx, ny)) {
+                        if !reached.contains(&nsym) {
+                            // eprintln!("\t {sym_from} - {sym_to} >>> {nsym:?}");
+                            let mut npath = path.clone();
+                            for mut p in
+                                std::mem::replace(&mut npath, Default::default()).into_iter()
+                            {
+                                p.push(sym);
+                                npath.push(p);
+                            }
+                            // npath.iter_mut().for_each(|p| p.push(sym));
+                            updated
+                                .entry((nsym, nx, ny))
+                                .or_default()
+                                .append(&mut npath);
+                        }
+                    }
+                }
+                // eprintln!();
+            }
+            let mut is_stop = false;
+            for ((nsym, nx, ny), path) in updated.into_iter() {
+                lastpoints.push((nx, ny, path.clone()));
+                mem.insert((sym_from, nsym), path);
+                reached.insert(nsym);
+                if nsym == sym_to {
+                    is_stop = true;
+                }
+            }
+            if is_stop {
+                break;
+            }
+        }
+    }
+    mem.get(&(sym_from, sym_to)).unwrap()
 }
 
 fn p21_search(
@@ -3204,6 +3361,59 @@ fn p21_search(
     None
 }
 
+fn p21_solve_optima<'m>(
+    anypad: &HashMap<(isize, isize), char>,
+    sym_from: char,
+    sym_to: char,
+    mem: &'m mut HashMap<(char, char), Vec<char>>,
+) -> &'m Vec<char> {
+    // '<' > 'v' > '^' = '>'
+    if !mem.contains_key(&(sym_from, sym_to)) {
+        let ((mut sx, mut sy), _) = anypad.iter().find(|(_, sym)| sym == &&sym_from).unwrap();
+        let ((ex, ey), _) = anypad.iter().find(|(_, sym)| sym == &&sym_to).unwrap();
+        let (ex, ey) = (*ex, *ey);
+
+        let mut track = vec![];
+        while (sx, sy) != (ex, ey) {
+            let mut is_updted = false;
+            for (offset, (offsetx, offsety, sym)) in vec![
+                (sy - ey, (0, -1, '<')),
+                (ex - sx, (1, 0, 'v')),
+                (sx - ex, (-1, 0, '^')),
+                (ey - sy, (0, 1, '>')),
+            ]
+            .into_iter()
+            {
+                if offset > 0
+                    && (0..offset).all(|n| {
+                        anypad.contains_key(&(sx + offsetx * (n + 1), sy + offsety * (n + 1)))
+                    })
+                {
+                    for _ in 0..offset {
+                        sx += offsetx;
+                        sy += offsety;
+                        track.push(sym);
+                    }
+                    is_updted = true;
+
+                    break;
+                }
+            }
+            assert!(
+                is_updted,
+                "no update found for {:?} -> {:?}",
+                (sx, sy),
+                (ex, ey)
+            );
+        }
+        // eprintln!("Optima: {sym_from:?} -> {sym_to:?}: {track:?}");
+
+        mem.insert((sym_from, sym_to), track);
+    }
+
+    mem.get(&(sym_from, sym_to)).unwrap()
+}
+
 pub fn p21() {
     let contents = r#"029A
 980A
@@ -3222,18 +3432,12 @@ pub fn p21() {
     // +---+---+---+
     //     | 0 | A |
     //     +---+---+
+    #[rustfmt::skip]
     let numpad: HashMap<(isize, isize), char> = vec![
-        ((0, 0), '7'),
-        ((0, 1), '8'),
-        ((0, 2), '9'),
-        ((1, 0), '4'),
-        ((1, 1), '5'),
-        ((1, 2), '6'),
-        ((2, 0), '1'),
-        ((2, 1), '2'),
-        ((2, 2), '3'),
-        ((3, 1), '0'),
-        ((3, 2), 'A'),
+        ((0, 0), '7'), ((0, 1), '8'), ((0, 2), '9'),
+        ((1, 0), '4'), ((1, 1), '5'), ((1, 2), '6'),
+        ((2, 0), '1'), ((2, 1), '2'), ((2, 2), '3'),
+                       ((3, 1), '0'), ((3, 2), 'A'),
     ]
     .into_iter()
     .collect();
@@ -3243,12 +3447,10 @@ pub fn p21() {
     // +---+---+---+
     // | < | v | > |
     // +---+---+---+
+    #[rustfmt::skip]
     let dirpad: HashMap<(isize, isize), char> = vec![
-        ((0, 1), '^'),
-        ((0, 2), 'A'),
-        ((1, 0), '<'),
-        ((1, 1), 'v'),
-        ((1, 2), '>'),
+                       ((0, 1), '^'), ((0, 2), 'A'),
+        ((1, 0), '<'), ((1, 1), 'v'), ((1, 2), '>'),
     ]
     .into_iter()
     .collect();
@@ -3261,53 +3463,142 @@ pub fn p21() {
     // eprintln!("{:?}", p21_search(&numpad, 'A', (2, 0)));
     // eprintln!("{:?}", p21_search(&dirpad, '<', (0, 2)));
 
+    let mut mem_num: HashMap<(char, char), Vec<Vec<char>>> = Default::default();
+    let mut mem_dir: HashMap<(char, char), Vec<Vec<char>>> = Default::default();
+    // eprintln!("{:?}", p21_solve(&numpad, 'A', '3', &mut mem_num));
+    // eprintln!("{:?}", p21_solve(&numpad, 'A', '2', &mut mem_num));
+    // eprintln!("{:?}", p21_solve(&numpad, 'A', '8', &mut mem_num));
+    // eprintln!("{:?}", p21_solve(&numpad, '2', '9', &mut mem_num));
+    // eprintln!("{:?}", p21_solve(&dirpad, 'A', '<', &mut mem_dir));
+
     let signals: Vec<Vec<char>> = contents
         .lines()
         .map(|line| line.trim().chars().collect())
         .collect();
+
+    // let dirs: Vec<_> = dirpad.values().cloned().collect();
+    // let mut dirrank: HashMap<(char, char), usize> = Default::default();
+    // for &sx in dirs.iter() {
+    //     for &sy in dirs.iter() {
+    //         if sx == 'A' || sy == 'A' || sx == sy {
+    //             let _ = p21_solve(&dirpad, sx, sy, &mut mem_dir);
+    //             continue;
+    //         }
+    //
+    //         eprintln!("{sx:?}-{sy:?}");
+    //         let orders = vec![sx, sy, 'A'];
+    //
+    //         let mut sumlen = 0;
+    //         for (sc, ec) in
+    //             (std::iter::once('A').chain(orders.iter().cloned())).zip(orders.iter().cloned())
+    //         {
+    //             let mut pathes = p21_solve(&dirpad, sc, ec, &mut mem_dir).clone();
+    //             pathes.iter_mut().for_each(|ps| ps.push('A'));
+    //
+    //             eprintln!("\t{sc} -> {ec}: {pathes:?}");
+    //
+    //             let mut next_pathes: Vec<Vec<char>> = vec![];
+    //             for path in pathes.into_iter() {
+    //                 let mut curr_pathes: Vec<Vec<char>> = vec![vec![]];
+    //                 for (sc, ec) in
+    //                     (std::iter::once('A').chain(path.iter().cloned())).zip(path.iter().cloned())
+    //                 {
+    //                     let possible = p21_solve(&dirpad, sc, ec, &mut mem_dir).clone();
+    //                     eprintln!("\t\t{sc} -> {ec}: {possible:?}");
+    //
+    //                     for ss in std::mem::replace(&mut curr_pathes, Default::default()) {
+    //                         for path1 in possible.iter() {
+    //                             let mut ss = ss.clone();
+    //                             let mut path1 = path1.clone();
+    //                             ss.append(&mut path1);
+    //                             ss.push('A');
+    //
+    //                             curr_pathes.push(ss);
+    //                         }
+    //                     }
+    //                 }
+    //                 next_pathes.append(&mut curr_pathes);
+    //             }
+    //
+    //             let minlen = next_pathes.iter().map(|ps| ps.len()).min().unwrap();
+    //             pathes = next_pathes
+    //                 .into_iter()
+    //                 .filter(|ps| ps.len() == minlen)
+    //                 .collect();
+    //             sumlen += minlen;
+    //
+    //             eprintln!("\tIterate {}x{minlen} {pathes:?}", pathes.len());
+    //         }
+    //
+    //         dirrank.insert((sx, sy), sumlen);
+    //         eprintln!("{sx:?} - {sy:?}: {sumlen}");
+    //         eprintln!();
+    //     }
+    // }
+    // eprintln!("{:?}", dirrank);
+
+    // '^' = '>'
+    // 'v' > '^'
+    // 'v' > '>'
+    // '<' > '>'
+    // '<' > '^'
+    // '<' > 'v'
+    // so the order of all directions is:
+    // '<' > 'v' > '^' = '>' > 'A'
+    // 由此我们可以对 mem_dir 进行筛选，虽然不明白原理，但似乎是离 A 越远，应该越被排在最优先的位置，
+    // 同时重复的项目要合并到一起，不要出现 [ < ^ > ] 这样的组合，应该归并为 [ < < ^ ]
+    //
+    // 迭代25次还是太夸张了，我们还需要引入计数器，因为每个 c1 -> c2 都是由一组固定的值生成的，我们
+    // 可以通过计数避免膨胀
+
+    ////////////////////////////////////////////////////////////////////////////////
+    let mut mem_num: HashMap<(char, char), Vec<char>> = Default::default();
+    let mut mem_dir: HashMap<(char, char), Vec<char>> = Default::default();
     let mut sum = 0;
+    const MAXLOOP: usize = 25; // 2 or 25
     for signal in signals.iter() {
-        let (mut sx, mut sy) = (3, 2);
-        let mut sequence0 = vec![];
-        for &sym in signal.iter() {
-            let (mut ins, (nx, ny)) = p21_search(&numpad, sym, (sx, sy)).expect("unsolvable");
-            // eprintln!("{:?} {}", ins, sym);
-            sequence0.append(&mut ins);
-            sequence0.push('A');
-            sx = nx;
-            sy = ny;
-        }
-        eprintln!("{} {:?}", sequence0.len(), sequence0);
+        let mut step = 0;
+        for (sc, ec) in
+            (std::iter::once('A').chain(signal.iter().cloned())).zip(signal.iter().cloned())
+        {
+            let pathes: Vec<char> = p21_solve_optima(&numpad, sc, ec, &mut mem_num).clone();
+            let mut pathes: Vec<(Vec<char>, usize)> = vec![(pathes, 1)];
 
-        let (mut sx, mut sy) = (0, 2);
-        let mut sequence1 = vec![];
-        for &sym in sequence0.iter() {
-            let (mut ins, (nx, ny)) = p21_search(&dirpad, sym, (sx, sy)).expect("unsolvable");
-            // eprintln!("{:?} {}", ins, sym);
-            sequence1.append(&mut ins);
-            sequence1.push('A');
-            sx = nx;
-            sy = ny;
-        }
-        eprintln!("{} {:?}", sequence1.len(), sequence1);
+            eprintln!("\t{sc} -> {ec}: {pathes:?}");
 
-        let (mut sx, mut sy) = (0, 2);
-        let mut sequence2 = vec![];
-        for &sym in sequence1.iter() {
-            let (mut ins, (nx, ny)) = p21_search(&dirpad, sym, (sx, sy)).expect("unsolvable");
-            // eprintln!("{:?} {}", ins, sym);
-            sequence2.append(&mut ins);
-            sequence2.push('A');
-            sx = nx;
-            sy = ny;
-        }
-        eprintln!(
-            "{} {:?}",
-            sequence2.len(),
-            sequence2.iter().collect::<String>()
-        );
+            for gen in 0..MAXLOOP {
+                for (pattern, count) in
+                    std::mem::replace(&mut pathes, Default::default()).into_iter()
+                {
+                    for (sc, ec) in (std::iter::once('A').chain(pattern.iter().cloned()))
+                        .zip(pattern.iter().cloned().chain(std::iter::once('A')))
+                    {
+                        let npattern = p21_solve_optima(&dirpad, sc, ec, &mut mem_dir);
+                        if let Some((_, count_old)) =
+                            pathes.iter_mut().find(|(op, _)| op == npattern)
+                        {
+                            *count_old += count;
+                        } else {
+                            pathes.push((npattern.clone(), count));
+                        }
+                    }
+                }
 
-        let step: usize = sequence2.len();
+                // eprintln!(
+                //     "\tIterate @{gen} {} {:?}",
+                //     pathes
+                //         .iter()
+                //         .map(|(ps, count)| (ps.len() + 1) * count)
+                //         .sum::<usize>(),
+                //     pathes.iter().take(10).collect::<Vec<_>>()
+                // );
+            }
+            step += pathes
+                .iter()
+                .map(|(ps, count)| (ps.len() + 1) * count)
+                .sum::<usize>();
+        }
+
         let num: usize = signal
             .iter()
             .take_while(|c| c.is_digit(10))
@@ -3319,6 +3610,137 @@ pub fn p21() {
         eprintln!();
     }
     dbg!(sum);
+
+    // ////////////////////////////////////////////////////////////////////////////////
+    // let mut sum = 0;
+    // for signal in signals.iter() {
+    //     let mut step = 0;
+    //     for (sc, ec) in
+    //         (std::iter::once('A').chain(signal.iter().cloned())).zip(signal.iter().cloned())
+    //     {
+    //         let mut sequences0: Vec<Vec<char>> = vec![];
+    //         let pathes = p21_solve(&numpad, sc, ec, &mut mem_num);
+    //         eprintln!("\t{sc} -> {ec}: {pathes:?}");
+    //
+    //         for path0 in pathes.iter() {
+    //             let mut sequences1: Vec<Vec<char>> = vec![vec![]];
+    //             for (sc, ec) in (std::iter::once('A').chain(path0.iter().cloned()))
+    //                 .zip(path0.iter().cloned().chain(std::iter::once('A')))
+    //             {
+    //                 let pathes = p21_solve(&dirpad, sc, ec, &mut mem_dir).clone();
+    //                 eprintln!("\t\t{sc} -> {ec}: {pathes:?}");
+    //
+    //                 let mut res = vec![];
+    //                 for path1 in pathes.iter() {
+    //                     let mut sequences2: Vec<Vec<char>> = vec![vec![]];
+    //                     for (sc, ec) in (std::iter::once('A').chain(path1.iter().cloned()))
+    //                         .zip(path1.iter().cloned().chain(std::iter::once('A')))
+    //                     {
+    //                         let pathes = p21_solve(&dirpad, sc, ec, &mut mem_dir).clone();
+    //                         eprintln!("\t\t\t{sc} -> {ec}: {pathes:?}");
+    //
+    //                         for ss in std::mem::replace(&mut sequences2, Default::default()) {
+    //                             for path1 in pathes.iter() {
+    //                                 let mut ss = ss.clone();
+    //                                 let mut path1 = path1.clone();
+    //                                 ss.append(&mut path1);
+    //                                 ss.push('A');
+    //
+    //                                 sequences2.push(ss);
+    //                             }
+    //                         }
+    //                     }
+    //                     eprintln!("\t\t\tChecking {sequences2:?}");
+    //                     res.append(&mut sequences2);
+    //                 }
+    //
+    //                 for ss in std::mem::replace(&mut sequences1, Default::default()) {
+    //                     for path1 in res.iter() {
+    //                         let mut ss = ss.clone();
+    //                         let mut path1 = path1.clone();
+    //                         ss.append(&mut path1);
+    //                         sequences1.push(ss);
+    //                     }
+    //                 }
+    //             }
+    //
+    //             sequences1.sort_by_key(|cs| cs.len());
+    //             eprintln!("\t\tChecking {:?}", sequences1[0]);
+    //             sequences0.push(sequences1[0].clone());
+    //         }
+    //         sequences0.sort_by_key(|cs| cs.len());
+    //         step += sequences0[0].len();
+    //         eprintln!("\tChecking {}@{:?}", sequences0[0].len(), sequences0[0]);
+    //     }
+    //     eprintln!("{signal:?} -> {step}");
+    //
+    //     let num: usize = signal
+    //         .iter()
+    //         .take_while(|c| c.is_digit(10))
+    //         .collect::<String>()
+    //         .parse()
+    //         .unwrap();
+    //     sum += step * num;
+    //     eprintln!("{:?}: {} x {} = {}", signal, step, num, step * num);
+    //     eprintln!();
+    // }
+    // dbg!(sum);
+    // todo!();
+    //
+    // let mut sum = 0;
+    // for signal in signals.iter() {
+    //     let (mut sx, mut sy) = (3, 2);
+    //     let mut sequence0 = vec![];
+    //     for &sym in signal.iter() {
+    //         let (mut ins, (nx, ny)) = p21_search(&numpad, sym, (sx, sy)).expect("unsolvable");
+    //         // eprintln!("{:?} {}", ins, sym);
+    //         sequence0.append(&mut ins);
+    //         sequence0.push('A');
+    //         sx = nx;
+    //         sy = ny;
+    //     }
+    //     eprintln!("{} {:?}", sequence0.len(), sequence0);
+    //
+    //     let (mut sx, mut sy) = (0, 2);
+    //     let mut sequence1 = vec![];
+    //     for &sym in sequence0.iter() {
+    //         let (mut ins, (nx, ny)) = p21_search(&dirpad, sym, (sx, sy)).expect("unsolvable");
+    //         // eprintln!("{:?} {}", ins, sym);
+    //         sequence1.append(&mut ins);
+    //         sequence1.push('A');
+    //         sx = nx;
+    //         sy = ny;
+    //     }
+    //     eprintln!("{} {:?}", sequence1.len(), sequence1);
+    //
+    //     let (mut sx, mut sy) = (0, 2);
+    //     let mut sequence2 = vec![];
+    //     for &sym in sequence1.iter() {
+    //         let (mut ins, (nx, ny)) = p21_search(&dirpad, sym, (sx, sy)).expect("unsolvable");
+    //         // eprintln!("{:?} {}", ins, sym);
+    //         sequence2.append(&mut ins);
+    //         sequence2.push('A');
+    //         sx = nx;
+    //         sy = ny;
+    //     }
+    //     eprintln!(
+    //         "{} {:?}",
+    //         sequence2.len(),
+    //         sequence2.iter().collect::<String>()
+    //     );
+    //
+    //     let step: usize = sequence2.len();
+    //     let num: usize = signal
+    //         .iter()
+    //         .take_while(|c| c.is_digit(10))
+    //         .collect::<String>()
+    //         .parse()
+    //         .unwrap();
+    //     sum += step * num;
+    //     eprintln!("{:?}: {} x {} = {}", signal, step, num, step * num);
+    //     eprintln!();
+    // }
+    // dbg!(sum);
 }
 
 fn p22_process(mut num: isize) -> isize {
