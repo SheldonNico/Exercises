@@ -2,6 +2,10 @@
 *~
 *#*
 *.tmp
+*.tar
+
+csapp/**/*.pdf
+csapp/**/*lab-handout
 
 # CABAL
 /dist
