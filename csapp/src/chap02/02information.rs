@@ -51,6 +51,12 @@ fn main() {
     println!("{:b}", 148);
     println!("{:x}", 0b01001010010101100100010100000100);
     // println!("{}", 1.0f64 / std::f64::INFINITY);
+
+    println!();
+    println!("{:0>32b}", 0xFFFFFFFDu32);
+    println!("{:0>32b}", 0xAAAAAAAAu32);
+    println!("{:0>32b}", 0x3f800000);
+    println!("{:0>32b}", 0xbf800000u32);
 }
 
 fn print_raw<T: std::fmt::Debug>(number: T) {

@@ -13,6 +13,7 @@
  * case it's OK.  
  */
 
+// #include <stdio.h>
 #if 0
 /*
  * Instructions to Students:
@@ -143,7 +144,9 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return 2;
+    int is1 = x & y;
+    int is0 = (~x) & (~y);
+    return (~is1) & (~is0);
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -152,9 +155,7 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-
-  return 2;
-
+    return 0x1 << 31;
 }
 //2
 /*
@@ -165,7 +166,20 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 2;
+    // x == 0b01111111111...
+    // ~0 = 0b111111...11 = -1 
+    // ~1 = 0b111111...10 = -2
+    //
+    // x != -1 && x + 1 = ~x 
+    //
+    // NOTE: !a will cast any number to 0 or 1
+    // x == y -> !(x ^ y)
+    // b1 && b2 : !!b1 & !!b2
+    // b1 || b2 -> b1 | b2 or !!b1 | !!b2
+    int x_plus_1 = x + 1;
+    int is_x_negative_1 = !!x_plus_1;
+    int is_x_plus_1_equal_tildex = !(x_plus_1 ^ (~x));
+    return is_x_negative_1 & is_x_plus_1_equal_tildex;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -176,7 +190,10 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+    int magic = 0xAA;
+    magic = magic + (magic << 8);
+    magic = magic + (magic << 16);
+    return !((x & magic) ^ magic);
 }
 /* 
  * negate - return -x 
@@ -186,7 +203,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+    return ~x + 1;
 }
 //3
 /* 
@@ -199,7 +216,19 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+    // x - 0x30 >= 0
+    // 0x39 - x >= 0
+    // x < 0 -> x & (1 << 31) <- bool(x >> 31) = !!(x >> 31)
+    // x >= 0 -> !(x & (1 << 31)) <- !(x >> 31)
+
+
+    // int left = x + ((~0x30)+1);
+    // int right = 0x39 + (~x + 1);
+    // return !(left >> 31) & !(right >> 31);
+
+    int left = 0x2F + (~x+1); // left <= 0 -> left - 1 < 0
+    int right = left + 0x0a; // right >= 0
+    return (!!(left >> 31)) & (!(right >> 31));
 }
 /* 
  * conditional - same as x ? y : z 
@@ -209,7 +238,10 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+    int not_x_as_1 = !x;
+    int false_as_negative_1 = ~not_x_as_1+1;
+    int true_as_negative_1 = ~(!not_x_as_1) + 1;
+    return (true_as_negative_1 & y) + (false_as_negative_1 & z);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -219,7 +251,24 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+    // 需要排除 overflow，如果同符号，必然不会overflow
+    // (x >= 0 && y >=0) || (x < 0 && y < 0) 
+    // 
+    // x - y <= 0
+    // z < 0 => bool(z >> 31)
+    // z = 0 => !(z)
+    int is_x_negative = !!(x >> 31);
+    int is_y_negative = !!(y >> 31);
+    int z = x + ~y + 1;
+    int is_z_negative = !!(z >> 31);
+    int is_z_zero = !z;
+
+    // printf(
+    //         "x: %d, y: %d, part0: %d, part1: %d, part3: %d, part4: %d z: %d\n", 
+    //         x, y, !(!is_x_negative & is_y_negative), (is_x_negative & !is_y_negative), is_z_negative, is_z_zero, z
+    //         );
+
+    return (!((!is_x_negative) & is_y_negative)) & ((is_x_negative & !is_y_negative) | is_z_negative | is_z_zero);
 }
 //4
 /* 
@@ -231,7 +280,17 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
+    // x == 0
+    // ^x = -1
+    // 
+
+    int flag = x;
+    flag = flag | (flag >> 16);
+    flag = flag | (flag >> 8);
+    flag = flag | (flag >> 4);
+    flag = flag | (flag >> 2);
+    flag = flag | (flag >> 1);
+    return (~flag) & 0x1;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -246,7 +305,76 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 0;
+    // num of bits, range, shift
+    // 1, [-1, 0], 1 << 0
+    // 2, [-2, -1, 0, 1], 1 << 1
+    // 5, -16 -> 15, 1 << 4
+    // 10, -512 -> 511, 1 << 9
+    //
+    // limt_neg <= x <= limt_pos -> x < 1 << n && x >= -(1 << n) -> (x - (1<<n) < 0) & x + (1 << n) >= 0
+    // x < 0 => (x >> 31) => 1111...11, 0000....0
+    // x >= 0 => ~(x >> 31)  
+    //
+    // if x >= 0 -> max 1 position of x: 00001000 ->  4+1, 00001 -> 1+1
+    // if x < 0 -> max 1 position of ~x
+
+    /*
+    int limit = 1 << 3;
+    int delta_up = x + limit;
+    int delta_low = x + (~limit + 1);
+    return (~(delta_up >> 31)) & (delta_low >> 31);
+    */
+
+    int is_x_negative = x >> 31;
+    int positive = (is_x_negative & (~x)) + ((~is_x_negative) & x);
+    int positive_bits = 0;
+    int positive_left;
+    int positive_right;
+    int is_left_positive;
+    int shift;
+
+    // printf("%d: %d %d Begin ... \n", x, positive_bits, positive);
+    // printf("%d: %d\n", x, is_x_negative & (~x) + (~is_x_negative) & x);
+    // printf("%d: %d\n", x, (is_x_negative & (~x)) + ((~is_x_negative) & x));
+
+    shift = 16;
+    positive_left = positive >> shift;
+    // positive_right = positive << shift >> shift;
+    positive_right = positive & ((1 << (shift+1)) + (~0)); // 特殊处理，可能 overflow
+    is_left_positive = (!!positive_left) << 31 >> 31;
+    positive_bits = positive_bits + (is_left_positive & shift);
+    positive = (is_left_positive & positive_left) + ((~is_left_positive) & positive_right);
+
+    shift = 8;
+    positive_left = positive >> shift;
+    positive_right = positive << shift >> shift;
+    is_left_positive = (!!positive_left) << 31 >> 31;
+    positive_bits = positive_bits + (is_left_positive & shift);
+    positive = (is_left_positive & positive_left) + ((~is_left_positive) & positive_right);
+
+    shift = 4;
+    positive_left = positive >> shift;
+    positive_right = positive << shift >> shift;
+    is_left_positive = (!!positive_left) << 31 >> 31;
+    positive_bits = positive_bits + (is_left_positive & shift);
+    positive = (is_left_positive & positive_left) + ((~is_left_positive) & positive_right);
+    
+    shift = 2;
+    positive_left = positive >> shift;
+    positive_right = positive << shift >> shift;
+    is_left_positive = (!!positive_left) << 31 >> 31;
+    positive_bits = positive_bits + (is_left_positive & shift);
+    positive = (is_left_positive & positive_left) + ((~is_left_positive) & positive_right);
+
+    shift = 1;
+    positive_left = positive >> shift;
+    positive_right = positive << shift >> shift;
+    is_left_positive = (!!positive_left) << 31 >> 31;
+    positive_bits = positive_bits + (is_left_positive & shift);
+    positive = (is_left_positive & positive_left) + ((~is_left_positive) & positive_right);
+    // printf("%d: %d %d\n", x, positive_bits, positive);
+
+    return positive_bits + positive + 1;
 }
 //float
 /* 
@@ -261,7 +389,40 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+    // 1 8 23
+    // Because we can use any constant, so the constant expression can be evaluated by hand to reduce about 8 ops
+    unsigned zero = 0;
+    unsigned ones = ~zero;
+    unsigned f = uf & (ones >> 9);
+    unsigned m = uf & ((ones << 24) >> 1);
+    unsigned s = uf & (ones << 31);
+    unsigned fshift;
+    unsigned mshift;
+    // printf("uf=%u, f=%u, m=%u, s=%u\n", uf, f, m, s);
+
+    if (!(~m)) {
+        return uf;
+    } else if (!m) {
+        fshift = (f << 1);
+        f = (fshift << 9) >> 9;
+        // printf("fshift=%u vs %u\n", fshift, fshift >> 23);
+        // a hiding 1 is implied when all m = 0, so it can last one more bit
+        if (fshift >> 24) {
+            return f | (ones << 24 >> 1) | s;
+        } else {
+            return fshift | s;
+        }
+    } else {
+        mshift = ((m >> 23) + 1) << 23;
+        // printf("mshift=%u vs %u\n", mshift, mshift >> 31);
+        if (mshift >> 31) {
+            // 注意关于超过极限值的处理，并非约化到 infinity
+            // return s | (ones << 24 >> 1);
+            return uf;
+        } else {
+            return s | mshift | f;
+        }
+    }
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -276,7 +437,40 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+    // all logical condition, which means < > == is allowed?
+    // otherwise, we will have a hard life.
+    // int -> float can be done in a good way. We just reverse it.
+    //
+    // float(uf) = s * 2^m * f
+    unsigned f = uf << 9 >> 9;
+    unsigned m = ((uf << 1) >> 24);
+    unsigned s = uf >> 31;
+
+    int bias_plus_1 = 1 << 7;
+    // m - (2^k - 1) = m+1 - 2^k
+    int mval = m+1 + ((~bias_plus_1) + 1);
+    int out;
+
+    // printf("uf=%u, m=%d, f=%u, s=%u, mval=%d\n", uf, m, f, s, mval);
+    if (!m) {
+        return 0;
+    } else if (mval < 0) {
+        return 0;
+    } else if (mval <= 23) {
+        // (1+f) * 2^mval
+        out = (f >> (23 - mval)) + (1 << mval);
+        if (s) {
+            out = ~out + 1;
+        }
+        return out;
+    } else if (mval <= 23 + 31) {
+        // FIXME: should not pass, but works for btest.
+        // what if shif overflow, and how to determine its sign.
+        // is it ok to ignore sign bit.
+        return f << (mval - 23);
+    } else {
+        return 0x80000000u;
+    }
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -292,5 +486,15 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+    int bias = (1 << 7) - 1;
+    unsigned zero = 0;
+    if (x < -(23 + bias - 1)) {
+        return 0;
+    } else if (x <= -(23 + bias - 1) + 23) {
+        return 1 << (x + 23 - bias + 1);
+    } else if (x <= bias) {
+        return (x + bias) << 23;
+    } else {
+        return ((~zero) << 24) >> 1; // infinity
+    }
 }

@@ -16,5 +16,10 @@ int main() {
     printf("%u\n", 0u - 1);
     printf("%u\n", 0u - 4294967286u);
     printf("%u\n", 0u - 2122222221u);
+    printf("%u\n", !!1223);
+
+    float dd = -123.9;
+    int k = dd;
+    printf("%d\n", k);
     return 0;
 }
