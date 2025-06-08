@@ -5,7 +5,7 @@
 *.tar
 
 csapp/**/*.pdf
-csapp/**/*lab-handout
+csapp/**/*lab-*
 
 # CABAL
 /dist
