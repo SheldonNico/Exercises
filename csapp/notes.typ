@@ -2580,7 +2580,7 @@ double dsqrt(double x) {
 }
 ```
 
-== Lab
+== Lab::Bomb
 Use pwndbg to save your life: https://github.com/pwndbg/pwndbg
 === phase4::func4
 输入 `%rdi` 必须小于等于14，同时让该函数返回 0，发现会按照条件 (arg / 2) - arg < 0 进行循环，
@@ -2872,5 +2872,10 @@ Dump of assembler code for function fun7:
 // 2. 8 < arg0
 // 3. 22 == arg0
 ```
+
+== Lab::Attack
++ run `attack.hex2raw.py attack.ctarget.01.in` to get output text for 01. Same for other levels.
++ ref to https://pwn.elmo.sg/miscellaneous/movaps-issue.html to fix movaps bugs. This is not mentioned by instructor.
++ use pwndbg to save your life.
 
 
